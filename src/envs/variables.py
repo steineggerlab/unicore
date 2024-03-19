@@ -1,6 +1,7 @@
 # Global variables and constants
 import os
 from pathlib import Path
+import src.envs.error_handler as err
 
 VERSION = "0.0.1"
 STABLE = False
@@ -59,7 +60,7 @@ VALID_KEYMAP = {
 }
 def config_init(config_file: str):
     if not os.path.exists(config_file):
-        return # TODO: pass error to error handler
+        err.error(err.ERR_FILE_NOT_FOUND, config_file)
     with open(config_file, 'r') as f:
         while buf := f.readline().rstrip():
             if buf.startswith("#"): continue

@@ -1,4 +1,4 @@
-import envs.variables as var
+import src.envs.variables as var
 
 def main():
     var.config_init(f'{var.PARENT_DIR}/path.cfg')
