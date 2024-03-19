@@ -1,15 +1,17 @@
 # Global variables and constants
 import os
 from pathlib import Path
-import src.envs.error_handler as err
+import envs.error_handler as err
 
 VERSION = "0.0.1"
 STABLE = False
-STABLE_TEXT = "Stable" if STABLE else "Unstable"
+STABLE_TEXT = "" if STABLE else "unstable"
+STABLE_FULL = "Stable" if STABLE else "Unstable"
+LOGO_ART = "██╗   ██╗███╗   ██╗██╗ ██████╗ ██████╗ ██████╗ ███████╗\n██║   ██║████╗  ██║██║██╔════╝██╔═══██╗██╔══██╗██╔════╝\n██║   ██║██╔██╗ ██║██║██║     ██║   ██║██████╔╝█████╗\n██║   ██║██║╚██╗██║██║██║     ██║   ██║██╔══██╗██╔══╝\n╚██████╔╝██║ ╚████║██║╚██████╗╚██████╔╝██║  ██║███████╗\n ╚═════╝ ╚═╝  ╚═══╝╚═╝ ╚═════╝ ╚═════╝ ╚═╝  ╚═╝╚══════╝"
 
 # Enviornmental paths
-WORKING_DIR = Path(os.getcwd())
-PARENT_DIR = WORKING_DIR.parent.absolute()
+# WORKING_DIR = Path(os.getcwd())
+PARENT_DIR = Path(os.getcwd()).absolute()
 
 # Binary paths
 # Use default -> config file -> arguments
