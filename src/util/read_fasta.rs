@@ -3,7 +3,7 @@ use std::fs::File;
 use std::io::{self, BufRead, BufReader, Write};
 
 // Function that reads in a fasta file and outputs a hashmap of the sequences
-fn read_fasta(file: &str) -> HashMap<String, String> {
+pub fn read_fasta(file: &str) -> HashMap<String, String> {
     let file = File::open(file).expect("Unable to open file");
     let reader = BufReader::new(file);
     let mut sequences = HashMap::new();

@@ -1,6 +1,7 @@
 use crate::envs::variables as var;
+use crate::util::arg_parser::Args as Args;
 
-pub fn run(_: &Vec<String>, _: var::BinaryPaths) {
+pub fn run(_: &Args, _: var::BinaryPaths) {
     println!("{}", var::LOGO_ART);
     println!();
     println!("Unicore: Universal and efficient core gene phylogeny with Foldseek and ProstT5");

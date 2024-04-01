@@ -1,7 +1,10 @@
 mod envs;
 mod modules;
+mod util;
 use envs::error_handler as err;
 use envs::variables as var;
+use util::arg_parser as parser;
+use clap::Parser;
 
 fn usage() {
     println!("Unicore v{} {}", var::VERSION, var::STABLE_TEXT);
@@ -17,19 +20,7 @@ fn usage() {
 const VALID_MODULES: [&str; 4] = [
     "help", "usage", "info", "version",
 ];
-fn init(args: &Vec<String>) -> var::BinaryPaths {
-    // check module
-    let module = args.iter().nth(1).unwrap_or_else(|| {
-        err::warning(err::ERR_GENERAL, Some("No module specified".to_string()));
-        usage();
-        std::process::exit(err::ERR_GENERAL);
-    });
-    if !VALID_MODULES.contains(&module.as_str()) {
-        err::warning(err::ERR_MODULE_NOT_FOUND, Some(module.to_string()));
-        usage();
-        std::process::exit(err::ERR_MODULE_NOT_FOUND);
-    }
-
+fn init() -> var::BinaryPaths {
     // load path config
     let cfg_path = format!("{}{}path.cfg", var::parent_dir(), std::path::MAIN_SEPARATOR);
     let mut bin = var::BinaryPaths::new();
@@ -37,16 +28,19 @@ fn init(args: &Vec<String>) -> var::BinaryPaths {
     bin
 }
 
-fn run(args: &Vec<String>, bin: var::BinaryPaths) -> Result<(), Box<dyn std::error::Error>> {
-    match args[1].as_str() {
-        "help" | "usage" => usage(),
-        "version" | "info" => modules::version::run(&args, bin),
+fn run(args: &parser::Args, bin: var::BinaryPaths) -> Result<(), Box<dyn std::error::Error>> {
+    match args.command {
+        Some(parser::Commands::profile { .. }) => {
+            // TODO: error handling
+            modules::profile::run(args).unwrap_or_else(|e| err::error(err::ERR_GENERAL, Some(e.to_string())));
+        },
         _ => unreachable!(),
     }
     Ok(())
 }
 fn main() {
-    let args: Vec<String> = std::env::args().collect();
-    let bin = init(&args);
+    let args = parser::Args::parse();
+    // Retrieve bin from the config file
+    let bin = init();
     run(&args, bin).unwrap_or_else(|e| err::error(err::ERR_GENERAL, Some(e.to_string())));
 }

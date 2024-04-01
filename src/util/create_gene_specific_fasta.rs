@@ -3,31 +3,9 @@ use std::env;
 use std::fs::{self, File};
 use std::io::{self, BufRead, BufReader, Write};
 use std::path::Path;
+use crate::util::read_fasta as read_fasta;
 
-fn read_fasta(file: &str) -> HashMap<String, String> {
-    let file = File::open(file).expect("Unable to open file");
-    let reader = BufReader::new(file);
-    let mut sequences = HashMap::new();
-    let mut header = String::new();
-    let mut sequence = String::new();
-    for line in reader.lines() {
-        let line = line.expect("Unable to read line");
-        if line.starts_with('>') {
-            if !header.is_empty() {
-                sequences.insert(header.clone(), sequence.clone());
-                sequence.clear();
-            }
-            header = line[1..].to_string();
-        } else {
-            sequence.push_str(&line);
-        }
-    }
-    sequences.insert(header, sequence);
-    sequences
-}
-
-fn main() -> io::Result<()> {
-    let args: Vec<String> = env::args().collect();
+fn create_gene_specific_fasta(args: Vec<String>) -> io::Result<()> {
     if args.len() != 4 {
         eprintln!("Usage: {} <input_aa_fasta> <input_3di_fasta> <gene_dir>", args[0]);
         std::process::exit(1);
@@ -38,10 +16,10 @@ fn main() -> io::Result<()> {
     let gene_dir = &args[3];
 
     // Read amino acid fasta file
-    let aa_hash = read_fasta(input_aa_fasta);
+    let aa_hash = read_fasta::read_fasta(input_aa_fasta);
 
     // Read 3di fasta file
-    let di_hash = read_fasta(input_3di_fasta);
+    let di_hash = read_fasta::read_fasta(input_3di_fasta);
     // Check if the sequences in the 3di fasta file exist in the aa fasta file
     // If not, throw an error
     for (name, _seq) in &di_hash {
