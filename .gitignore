@@ -155,6 +155,9 @@ cython_debug/
 # JetBrains
 .idea/
 
+# model
+cnn*
+
 # Cargo
 /target
 Cargo.lock

@@ -37,6 +37,9 @@ impl Binary {
             path: path.to_string(),
         }
     }
+    pub fn get_path(&self) -> &str {
+        &self.path
+    }
     fn test(&self, args: Vec<&str>) -> bool {
         std::process::Command::new(&self.path)
             .args(args)

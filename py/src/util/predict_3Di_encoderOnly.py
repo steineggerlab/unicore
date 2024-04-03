@@ -159,7 +159,7 @@ def download_file(url, local_path):
     return None
 
 
-def load_predictor(weights_link="https://rostlab.org/~deepppi/prostt5/cnn_chkpnt/model.pt"):
+def load_predictor(weights_link="https://github.com/mheinzinger/ProstT5/raw/main/cnn_chkpnt/model.pt"):
     model = CNN()
     checkpoint_p = Path.cwd() / "cnn_chkpnt" / "model.pt"
     # if no pre-trained model is available, yet --> download it
@@ -171,7 +171,7 @@ def load_predictor(weights_link="https://rostlab.org/~deepppi/prostt5/cnn_chkpnt
     global device
 
     #state = torch.load(checkpoint_p, map_location=device)
-    state = torch.load("/home/sukhwan/stco/BENCHMARKS/cnn_chkpnt/model.pt", map_location=device)
+    state = torch.load(checkpoint_p, map_location=device)
 
     model.load_state_dict(state["state_dict"])
 
@@ -211,6 +211,7 @@ def get_embeddings(seq_path, out_path, model_dir, split_char, id_field, half_pre
 
     avg_length = sum([len(seq) for _, seq in seq_dict.items()]) / len(seq_dict)
     n_long = sum([1 for _, seq in seq_dict.items() if len(seq) > max_seq_len])
+    seq_dict_names = list(seq_dict.keys())
     # sort sequences by length to trigger OOM at the beginning
     seq_dict = sorted(seq_dict.items(), key=lambda kv: len(
         seq_dict[kv[0]]), reverse=True)
@@ -298,6 +299,10 @@ def get_embeddings(seq_path, out_path, model_dir, split_char, id_field, half_pre
         end-start, (end-start)/len(predictions), avg_length))
     print("Writing results now to disk ...")
 
+    # Sort the prediction as the input fasta file only if the name exists
+    predictions = {seq_name: predictions[seq_name]
+                   for seq_name in seq_dict_names if seq_name in predictions}
+
     write_predictions(predictions, out_path)
     if output_probs:
         write_probs(predictions, out_path, probs_name=probs_name)
@@ -370,7 +375,9 @@ def main():
     id_field = args.id
 
     half_precision = False if int(args.half) == 0 else True
-    assert not (half_precision and device == "cpu"), print(
+    print(half_precision, device)
+    print(half_precision and device == torch.device("cpu"))
+    assert not (half_precision and device == torch.device("cpu")), print(
         "Running fp16 on CPU is not supported, yet")
     
     output_probs = False if int(args.output_probs) == 0 else True

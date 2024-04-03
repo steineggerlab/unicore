@@ -5,6 +5,7 @@ use envs::error_handler as err;
 use envs::variables as var;
 use util::arg_parser as parser;
 use clap::Parser;
+use clap::parser::ArgMatches as ArgMatches;
 
 // load path config
 fn load_config(bin: &mut var::BinaryPaths) {
@@ -15,6 +16,9 @@ fn load_config(bin: &mut var::BinaryPaths) {
 fn run(args: &parser::Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error::Error>> {
     if args.version { modules::version::run(args, bin); return Ok(()); }
     match &args.command {
+        Some(parser::Commands::Createdb { .. }) => {
+            modules::createdb::run(args, bin).unwrap_or_else(|e| err::error(err::ERR_GENERAL, Some(e.to_string())));
+        },
         Some(parser::Commands::Profile { .. }) => {
             modules::profile::run(args, bin).unwrap_or_else(|e| err::error(err::ERR_GENERAL, Some(e.to_string())));
         },
