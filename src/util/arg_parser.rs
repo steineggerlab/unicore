@@ -1,25 +1,29 @@
 use std::path::PathBuf;
 use clap::{Parser, Subcommand};
-use crate::var;
 
 #[derive(Parser)]
-#[clap(name = "unicore", version = var::VERSION, about = format!("Unicore v{}\nPhylogenetic inference with Universal core gene", var::VERSION))]
+#[clap(disable_version_flag = true, arg_required_else_help = true)]
 pub struct Args {
     #[command(subcommand)]
     pub command: Option<Commands>,
+    /// Print version and information
+    #[arg(short, long)]
+    pub version: bool,
 }
 
 #[derive(Subcommand)]
 pub enum Commands {
-    /// Create foldseek database from amino acid sequences
-    createdb {
+    /// Create Foldseek database from amino acid sequences
+    #[clap(arg_required_else_help = true)]
+    Createdb {
         /// Input fasta file
         input: Option<PathBuf>,
         /// Output database
         output_db: Option<PathBuf>,
     },
-    /// Search foldseek database against swissprot
-    search {
+    /// Search Foldseek database against reference database
+    #[clap(arg_required_else_help = true)]
+    Search {
         /// Input db
         #[arg(short, long)]
         input_db: PathBuf,
@@ -30,14 +34,15 @@ pub enum Commands {
         #[arg(short, long)]
         output_db: PathBuf,
         /// tmp directory
-        #[arg(long)]
+        #[arg(short = 'm', long)]
         tmp: PathBuf,
         /// Delete tmp directory
         #[arg(short, long, default_value="true")]
         delete_tmp: bool,
     },
-    /// Create core structures from
-    profile {
+    /// Create core structures from Foldseek database
+    #[clap(arg_required_else_help = true)]
+    Profile {
         /// Input m8 file
         input: PathBuf,
         /// Output directory
@@ -46,8 +51,9 @@ pub enum Commands {
         #[arg(short, long, default_value="true")]
         print_copiness: bool,
     },
-    /// Inference phylogenetic tree from
-    tree {
+    /// Infer phylogenetic tree from core structures
+    #[clap(arg_required_else_help = true)]
+    Tree {
         /// Input directory
         #[arg(short, long)]
         input: PathBuf,
@@ -60,5 +66,5 @@ pub enum Commands {
         /// Tree method
         #[arg(short, long, default_value="iqtree")]
         tree_method: String,
-    }
+    },
 }
