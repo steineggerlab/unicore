@@ -1,53 +1,40 @@
 use std::collections::HashMap;
-use std::env;
 use std::fs::{self, File};
-use std::io::{self, BufRead, BufReader, Write};
-use std::path::Path;
-use crate::util::fasta_io as fasta;
+use std::io::{BufWriter, BufRead, BufReader, Write};
+use std::path::{Path, PathBuf};
+use crate::util::read_db;
+use crate::envs::error_handler as err;
 
-fn create_gene_specific_fasta(args: Vec<String>) -> io::Result<()> {
-    if args.len() != 4 {
-        eprintln!("Usage: {} <input_aa_fasta> <input_3di_fasta> <gene_dir>", args[0]);
-        std::process::exit(1);
+pub fn create_gene_specific_fasta(input_db: &str, gene_dir: &str, gene_list: &Vec<PathBuf>) -> Result<(), Box<dyn std::error::Error>> {
+
+    // Read names, amino acid and 3di sequences
+    let names = read_db::read_db(&format!("{}_h", input_db));
+    let aa_seqs = read_db::read_db(&input_db.to_string());
+    let di_seqs = read_db::read_db(&format!("{}_ss", input_db));
+
+    // Check the lengths are all same
+    if names.len() != aa_seqs.len() || names.len() != di_seqs.len() {
+        err::error(err::ERR_GENERAL, Some("Lengths of names, amino acid and 3di sequences in database are not same".to_string()));
     }
-
-    let input_aa_fasta = &args[1];
-    let input_3di_fasta = &args[2];
-    let gene_dir = &args[3];
-
-    // Read amino acid fasta file
-    let aa_hash = fasta::read_fasta(input_aa_fasta);
-
-    // Read 3di fasta file
-    let di_hash = fasta::read_fasta(input_3di_fasta);
-    // Check if the sequences in the 3di fasta file exist in the aa fasta file
-    // If not, throw an error
-    for (name, _seq) in &di_hash {
-        if let Some(_aa_seq) = aa_hash.get(name) {
-            continue;
-        } else {
-            eprintln!("Error: Sequence {} not found in the amino acid fasta file", name);
-            std::process::exit(1);
-        }
+    // Create a hash map of names and sequences
+    let mut aa_hash = HashMap::new();
+    let mut di_hash = HashMap::new();
+    for i in 0..names.len() {
+        aa_hash.insert(names[i].clone(), aa_seqs[i].clone());
+        di_hash.insert(names[i].clone(), di_seqs[i].clone());
     }
 
     // Process each gene
-    let gene_list = fs::read_dir(gene_dir)?
-        .filter_map(|entry| entry.ok())
-        .map(|entry| entry.path())
-        .filter(|path| path.is_file() && path.extension().map_or(false, |ext| ext == "txt"))
-        .collect::<Vec<_>>();
-
     let mut cnt = 0;
-    for gene_path in &gene_list {
+    for gene_path in gene_list {
         if let Some(gene_name) = gene_path.file_stem().and_then(|name| name.to_str()) {
             let gene_output_dir = Path::new(gene_dir).join(gene_name);
             fs::create_dir_all(&gene_output_dir)?;
 
             let aa_file_path = gene_output_dir.join("aa.fasta");
             let di_file_path = gene_output_dir.join("3di.fasta");
-            let mut aa_file = File::create(aa_file_path)?;
-            let mut di_file = File::create(di_file_path)?;
+            let mut aa_file = BufWriter::new(File::create(aa_file_path)?);
+            let mut di_file = BufWriter::new(File::create(di_file_path)?);
 
             let gene_file = File::open(gene_path)?;
             let reader = BufReader::new(gene_file);
@@ -55,22 +42,18 @@ fn create_gene_specific_fasta(args: Vec<String>) -> io::Result<()> {
                 let parts: Vec<_> = line.split_whitespace().collect();
                 if parts.len() == 2 {
                     if let Some(aa_seq) = aa_hash.get(parts[0]) {
-                        writeln!(aa_file, ">{}", parts[1])?;
-                        writeln!(aa_file, "{}", aa_seq)?;
+                        writeln!(aa_file, ">{}\n{}", parts[1], aa_seq)?;
                     } else {
-                        eprintln!("Error: Sequence {} not found in the amino acid fasta file", parts[0]);
-                        std::process::exit(1);
+                        err::error(err::ERR_GENERAL, Some(format!("Sequence {} not found in the database", parts[1])));
                     }
                     if let Some(di_seq) = di_hash.get(parts[0]) {
-                        writeln!(di_file, ">{}", parts[1])?;
-                        writeln!(di_file, "{}", di_seq)?;
+                        writeln!(di_file, ">{}\n{}", parts[1], di_seq)?;
                     } else {
-                        eprintln!("Error: Sequence {} not found in the 3di fasta file", parts[1]);
-                        std::process::exit(1);
+                        err::error(err::ERR_GENERAL, Some(format!("Sequence {} not found in the database", parts[1])));
                     }
                 } else {
                     // Raise an error
-                    eprintln!("Error: Invalid line in gene file: {}", line);
+                    err::error(err::ERR_GENERAL, Some(format!("Invalid line in gene mapping file: {}", line)));
                 }
             }
 

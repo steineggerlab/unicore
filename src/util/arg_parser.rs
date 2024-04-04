@@ -85,11 +85,11 @@ pub enum Commands {
     /// Infer phylogenetic tree from core structures
     #[clap(arg_required_else_help = true, allow_hyphen_values = true)]
     Tree {
-        /// Input directory
-        #[arg(short, long)]
+        /// Proteome database
+        proteome_db: PathBuf,
+        /// Input directory containing core structures
         input: PathBuf,
         /// Output directory
-        #[arg(short, long)]
         output: PathBuf,
         /// Alignment method
         #[arg(short, long, default_value="foldmason")]
@@ -97,5 +97,11 @@ pub enum Commands {
         /// Tree method
         #[arg(short, long, default_value="iqtree")]
         tree_method: String,
+        /// Options for aligner
+        #[arg(short='o', long, default_value="")]
+        aligner_options: String,
+        /// Options for tree method
+        #[arg(short='p', long, default_value="-m JTT+F+I+G -B 1000")]
+        tree_options: String,
     },
 }

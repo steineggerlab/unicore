@@ -1,6 +1,8 @@
 use std::env;
 use std::fs::File;
-use std::io::{self, BufRead, BufReader, Write};
+use std::path::PathBuf;
+use std::io::{self, BufRead, BufReader, BufWriter, Write};
+use crate::envs::error_handler as err;
 
 // Function that loops until a line that starts with '>' is found
 fn skip_to_next_fasta_line(reader: &mut BufReader<File>, sequence: &mut String, line: &mut String, add_this_tmp: &mut usize, eof: &mut bool) -> io::Result<()> {
@@ -23,21 +25,7 @@ fn skip_to_next_fasta_line(reader: &mut BufReader<File>, sequence: &mut String, 
     }
     Ok(())
 }
-fn main() -> io::Result<()> {
-    let args: Vec<String> = env::args().collect();
-    if args.len() != 3 {
-        eprintln!("Usage: {} <list_of_fasta_files> <output_file>", args[0]);
-        std::process::exit(1);
-    }
-
-    let fasta_list_path = &args[1];
-    let output_path = &args[2];
-
-    // Read the list of FASTA file paths
-    let file_list = File::open(fasta_list_path)?;
-    let reader = BufReader::new(file_list);
-    let fasta_files: Vec<String> = reader.lines().collect::<Result<_, _>>()?;
-
+pub fn combine_fasta(fasta_files: &Vec<String>, output_file: &PathBuf) -> Result<(), Box<dyn std::error::Error>> {
     let mut names: Vec<String> = Vec::new();
     let mut sequences: Vec<String> = Vec::new();
     let mut prev_len = 0;
@@ -52,7 +40,7 @@ fn main() -> io::Result<()> {
         match reader.read_line(&mut line) {
             Ok(0) => continue,
             Ok(_) => (),
-            Err(e) => return Err(e),
+            Err(e) => err::error(err::ERR_GENERAL, Some("Problem in reading fasta file".to_string())),
         }
 
         let mut eof = false;
@@ -87,7 +75,7 @@ fn main() -> io::Result<()> {
                 match reader.read_line(&mut line) {
                     Ok(0) => break,
                     Ok(_) => (),
-                    Err(e) => return Err(e),
+                    Err(e) => err::error(err::ERR_GENERAL, Some("Problem in reading fasta file".to_string()))
                 }
             }
         }
@@ -102,7 +90,7 @@ fn main() -> io::Result<()> {
     }
 
     // Write to output file
-    let mut output = File::create(output_path)?;
+    let mut output = BufWriter::new(File::create(output_file)?);
     for (name, sequence) in names.iter().zip(sequences.iter()) {
         writeln!(output, ">{}\n{}", name, sequence)?;
     }

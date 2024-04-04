@@ -27,8 +27,8 @@ pub fn parent_dir() -> String {
 }
 
 // binary paths
-const VALID_BINARY: [&str; 6] = [
-    "mmseqs", "foldseek", "mafft", "mafft-linsi", "iqtree", "fasttree",
+const VALID_BINARY: [&str; 7] = [
+    "mmseqs", "foldseek", "mafft", "mafft-linsi", "foldmason", "iqtree", "fasttree",
 ];
 pub struct Binary {
     name: String,
