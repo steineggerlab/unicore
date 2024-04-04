@@ -26,7 +26,7 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
     // Run python script
     let mut cmd = std::process::Command::new("python3");
     let mut cmd = cmd
-        .arg(format!("{}{}lib{}predict_3Di_encoderOnly.py", var::parent_dir(), SEP, SEP))
+        .arg(format!("{}{}src{}py{}predict_3Di_encoderOnly.py", var::parent_dir(), SEP, SEP, SEP))
         .arg("-i").arg(&input)
         .arg("-o").arg(&input_3di)
         .arg("--model").arg(&model)
