@@ -3,7 +3,7 @@ use std::env;
 use std::fs::{self, File};
 use std::io::{self, BufRead, BufReader, Write};
 use std::path::Path;
-use crate::util::read_fasta as read_fasta;
+use crate::util::fasta_io as fasta;
 
 fn create_gene_specific_fasta(args: Vec<String>) -> io::Result<()> {
     if args.len() != 4 {
@@ -16,10 +16,10 @@ fn create_gene_specific_fasta(args: Vec<String>) -> io::Result<()> {
     let gene_dir = &args[3];
 
     // Read amino acid fasta file
-    let aa_hash = read_fasta::read_fasta(input_aa_fasta);
+    let aa_hash = fasta::read_fasta(input_aa_fasta);
 
     // Read 3di fasta file
-    let di_hash = read_fasta::read_fasta(input_3di_fasta);
+    let di_hash = fasta::read_fasta(input_3di_fasta);
     // Check if the sequences in the 3di fasta file exist in the aa fasta file
     // If not, throw an error
     for (name, _seq) in &di_hash {

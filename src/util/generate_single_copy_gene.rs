@@ -3,22 +3,12 @@ use std::env;
 use std::fs::File;
 use std::io::{self, BufRead, BufReader, Write};
 
-fn main() -> io::Result<()> {
-    let args: Vec<String> = env::args().collect();
-    if args.len() != 4 {
-        eprintln!("Usage: {} <gene_to_spe_list> <m8_file> <output_file>", args[0]);
-        std::process::exit(1);
-    }
-
-    let gene_to_spe_list = &args[1];
-    let m8_file = &args[2];
-    let output_file = &args[3];
-
+pub fn profile(m8_file: &str, mapping: &str, output_dir: &str, threshold: &f32, print_copiness: &bool) -> io::Result<()> {
     let mut gene_to_spe: HashMap<String, HashSet<String>> = HashMap::new();
     let mut species_set: HashSet<String> = HashSet::new();
 
     // Read the gene to species list
-    let file = File::open(gene_to_spe_list)?;
+    let file = File::open(mapping)?;
     let reader = BufReader::new(file);
     for line in reader.lines().filter_map(|l| l.ok()) {
         let parts: Vec<&str> = line.split_whitespace().collect();
@@ -38,7 +28,7 @@ fn main() -> io::Result<()> {
     let species_count = species_set.len() as f64;
 
     // Process the m8 file and output the statistics
-    let mut output = File::create(output_file)?;
+    let mut output = File::create(format!("{}/copiness.tsv",output_dir))?;
     // Write out the first line
     writeln!(output, "Query\tMultipleCopyPercent\tSingleCopyPercent")?;
     let file = File::open(m8_file)?;

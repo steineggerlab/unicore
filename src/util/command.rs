@@ -17,6 +17,6 @@ pub fn run(cmd: &mut std::process::Command) {
             err::error(err::ERR_GENERAL, Some("Could not get status".to_string()));
         }
     } else {
-        err::error(err::ERR_GENERAL, Some("Could not run command".to_string()));
+        err::error(err::ERR_GENERAL, Some(format!("Could not run command {}", cmdstr)));
     }
 }
