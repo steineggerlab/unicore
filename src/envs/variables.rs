@@ -28,7 +28,7 @@ const VALID_BINARY: [&str; 6] = [
 ];
 pub struct Binary {
     name: String,
-    path: String,
+    pub path: String,
 }
 impl Binary {
     fn new(name: &str, path: &str) -> Self {
@@ -36,9 +36,6 @@ impl Binary {
             name: name.to_string(),
             path: path.to_string(),
         }
-    }
-    pub fn get_path(&self) -> &str {
-        &self.path
     }
     fn test(&self, args: Vec<&str>) -> bool {
         std::process::Command::new(&self.path)

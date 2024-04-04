@@ -17,9 +17,22 @@ pub enum Commands {
     #[clap(arg_required_else_help = true)]
     Createdb {
         /// Input fasta file
-        input: Option<PathBuf>,
+        #[arg(short, long)]
+        input: PathBuf,
         /// Output database
-        output_db: Option<PathBuf>,
+        #[arg(short, long)]
+        output: PathBuf,
+        /// ProstT5 model
+        #[arg(short, long)]
+        model: PathBuf,
+/* TODO: Implement optional arguments
+        /// Custom foldseek binary
+        #[arg(long)]
+        foldseek: Option<PathBuf>,
+        /// Custom foldseek options
+        #[arg(long)]
+        foldseek_options: Option<String>,
+ */
     },
     /// Search Foldseek database against reference database
     #[clap(arg_required_else_help = true)]

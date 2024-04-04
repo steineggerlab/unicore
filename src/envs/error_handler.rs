@@ -4,6 +4,8 @@
 pub const ERR_GENERAL: i32 = 0x01;
 pub const ERR_FILE_NOT_FOUND: i32 = 0x02;
 pub const ERR_MODULE_NOT_IMPLEMENTED: i32 = 0x03;
+pub const ERR_ARGPARSE: i32 = 0x04;
+pub const ERR_BINARY_NOT_FOUND: i32 = 0x05;
 
 fn build_message(code: i32, passed_object: Option<String>) -> String {
     let object = passed_object.unwrap_or_else(|| "".to_string());
@@ -11,6 +13,8 @@ fn build_message(code: i32, passed_object: Option<String>) -> String {
         ERR_GENERAL => format!("Error: {}", object),
         ERR_FILE_NOT_FOUND => format!("File not found: {}", object),
         ERR_MODULE_NOT_IMPLEMENTED => format!("Module not implemented: {}", object),
+        ERR_ARGPARSE => format!("Argument parsing error: {}", object),
+        ERR_BINARY_NOT_FOUND => format!("Binary not found: {}", object),
         _ => "Unknown error".to_string(),
     }
 }
