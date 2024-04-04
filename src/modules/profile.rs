@@ -27,6 +27,6 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
     };
 
     generate_single_copy_gene::profile(&input, &mapping, &output, &threshold, &print_copiness)?;
-    
+
     Ok(())
 }

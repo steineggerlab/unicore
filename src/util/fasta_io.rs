@@ -9,8 +9,7 @@ pub fn read_fasta(file: &str) -> HashMap<String, String> {
     let mut sequences = HashMap::new();
     let mut header = String::new();
     let mut sequence = String::new();
-    for line in reader.lines() {
-        let line = line.expect("Unable to read line");
+    for line in reader.lines().filter_map(|l| l.ok()) {
         if line.starts_with('>') {
             if !header.is_empty() {
                 sequences.insert(header.clone(), sequence.clone());
