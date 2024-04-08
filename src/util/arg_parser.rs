@@ -1,6 +1,5 @@
 use std::path::PathBuf;
 use clap::{Parser, Subcommand};
-use crate::envs::error_handler as err;
 
 #[derive(Parser)]
 #[clap(disable_version_flag = true, arg_required_else_help = true)]
@@ -25,19 +24,17 @@ fn threshold_in_range(s: &str) -> Result<f32, String> {
 #[derive(Subcommand)]
 pub enum Commands {
     /// Create Foldseek database from amino acid sequences
-    /// combined_aa.fasta is a fasta file of all sequences in the input directory
-    /// combined_3di.fasta is a fasta file of all sequences in the input directory converted into 3Di sequences
     #[clap(arg_required_else_help = true, allow_hyphen_values = true, verbatim_doc_comment)]
     Createdb {
-        /// Input directory with fasta files
+        /// Input directory with fasta files or a single fasta file
         input: PathBuf,
         /// Output foldseek database
         output: PathBuf,
         /// ProstT5 model
         model: PathBuf,
-        /// Delete combined fasta files (combined_aa.fasta and combined_3di.fasta)
+        /// Keep combined aa/3di fasta files
         #[arg(short, long, default_value="false")]
-        delete_fasta: bool,
+        keep_fasta: bool,
 /* TODO: Implement optional arguments
         /// Custom foldseek binary
         #[arg(long)]

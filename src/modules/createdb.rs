@@ -1,12 +1,12 @@
-use std::path::MAIN_SEPARATOR as SEP;
-
 use crate::util::arg_parser::{Args, Commands::Createdb};
 use crate::util::fasta_io as fasta;
 use crate::envs::variables as var;
 use crate::envs::error_handler as err;
 use crate::util::command as cmd;
-use std::io::Write;
+
+use std::io::{BufWriter, Write};
 use std::collections::HashMap;
+use std::path::{Path, MAIN_SEPARATOR as SEP};
 
 pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error::Error>> {
     // Retrieve mandatory arguments
@@ -22,34 +22,44 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
         Some(Createdb { model, .. }) => model.clone().to_string_lossy().into_owned(),
         _ => { err::error(err::ERR_ARGPARSE, Some("createdb - model".to_string())); }
     };
-    let delete_fasta = match &args.command {
-        Some(Createdb { delete_fasta, .. }) => delete_fasta,
-        _ => { err::error(err::ERR_ARGPARSE, Some("createdb - delete_fasta".to_string())); }
+    let keep_fasta = match &args.command {
+        Some(Createdb { keep_fasta, .. }) => keep_fasta,
+        _ => { err::error(err::ERR_ARGPARSE, Some("createdb - keep_fasta".to_string())); }
     };
 
     // Get all the fasta files in input directory
     let mut fasta_files = Vec::new();
-    for entry in std::fs::read_dir(&input)? {
-        let entry = entry?;
-        let path = entry.path();
-        if path.is_file() && (path.extension().unwrap_or_default() == "fasta" || path.extension().unwrap_or_default() == "fa")  {
-            fasta_files.push(path.display().to_string());
+    if Path::new(&input).is_dir() {
+        for entry in std::fs::read_dir(&input)? {
+            let entry = entry?;
+            let path = entry.path();
+            if path.is_file() && (path.extension().unwrap_or_default() == "fasta" || path.extension().unwrap_or_default() == "fa") {
+                fasta_files.push(path.clone().to_string_lossy().into_owned());
+            }
         }
+    } else {
+        let path = Path::new(&input);
+        if !path.is_file() { err::error(err::ERR_GENERAL, Some("Input is not a directory or a file".to_string())); }
+        fasta_files.push(path.to_string_lossy().into_owned());
     }
 
     // Read in the fasta files
     // In the same time, write out the mapping file from gene to species (file name)
-    // Parent directory of the output
-    let parent = std::path::Path::new(&output).parent().unwrap().display().to_string();
+    // Try to obtain the parent directory of the output
+    let parent = if let Some(p) = Path::new(&output).parent() {
+        p.to_string_lossy().into_owned()
+    } else {
+        err::error(err::ERR_GENERAL, Some("Could not obtain parent directory of the output".to_string()))
+    };
     // If the parent directory of the output doesn't exist, make one
-    if !std::path::Path::new(&parent).exists() {
+    if !Path::new(&parent).exists() {
         std::fs::create_dir_all(&parent)?;
     }
-    let mapping_file = format!("{}/prot2spe.tsv", parent);
-    let mut mapping_writer = std::io::BufWriter::new(std::fs::File::create(&mapping_file)?);
+    let mapping_file = format!("{}{}prot2spe.tsv", SEP, parent);
+    let mut mapping_writer = BufWriter::new(std::fs::File::create(&mapping_file)?);
     let mut fasta_data = HashMap::new();
     for file in fasta_files {
-        let species = std::path::Path::new(&file).file_stem().unwrap().to_str().unwrap();
+        let species = Path::new(&file).file_stem().unwrap().to_str().unwrap();
         let each_fasta = fasta::read_fasta(&file);
         for (key, value) in each_fasta {
             fasta_data.insert(key.clone(), value);
@@ -58,10 +68,10 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
     }
 
     // Write out the combined amino acid fasta file into output directory
-    let combined_aa = format!("{}/combined_aa.fasta", parent);
+    let combined_aa = format!("{}{}combined_aa.fasta", SEP, parent);
     fasta::write_fasta(&combined_aa, &fasta_data)?;
 
-    let input_3di = format!("{}/combined_3di.fasta", parent);
+    let input_3di = format!("{}{}combined_3di.fasta", SEP, parent);
     let output_3di = format!("{}_ss", output);
 
     // Run python script
@@ -93,7 +103,7 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
     cmd::run(&mut cmd);
 
     // Delete fasta files
-    if *delete_fasta {
+    if !*keep_fasta {
         std::fs::remove_file(combined_aa)?;
         std::fs::remove_file(input_3di)?;
     }
