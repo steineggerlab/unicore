@@ -32,9 +32,10 @@ pub enum Commands {
         output: PathBuf,
         /// ProstT5 model
         model: PathBuf,
-        /// Keep combined aa/3di fasta files
+        /// Keep intermediate files
         #[arg(short, long, default_value="false")]
-        keep_fasta: bool,
+        keep: bool,
+        /// Force overwrite output database
         #[arg(short, long, default_value="false")]
         overwrite: bool,
 /* TODO: Implement optional arguments

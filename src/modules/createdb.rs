@@ -22,9 +22,9 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
         Some(Createdb { model, .. }) => model.clone().to_string_lossy().into_owned(),
         _ => { err::error(err::ERR_ARGPARSE, Some("createdb - model".to_string())); }
     };
-    let keep_fasta = match &args.command {
-        Some(Createdb { keep_fasta, .. }) => keep_fasta,
-        _ => { err::error(err::ERR_ARGPARSE, Some("createdb - keep_fasta".to_string())); }
+    let keep = match &args.command {
+        Some(Createdb { keep, .. }) => keep,
+        _ => { err::error(err::ERR_ARGPARSE, Some("createdb - keep".to_string())); }
     };
     let overwrite = match &args.command {
         Some(Createdb { overwrite, .. }) => overwrite,
@@ -64,7 +64,7 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
     if !Path::new(&parent).exists() {
         std::fs::create_dir_all(&parent)?;
     }
-    let mapping_file = format!("{}{}prot2spe.tsv", SEP, parent);
+    let mapping_file = format!("{}{}prot2spe.tsv", parent, SEP);
     let mut mapping_writer = BufWriter::new(std::fs::File::create(&mapping_file)?);
     let mut fasta_data = HashMap::new();
     for file in fasta_files {
@@ -81,6 +81,7 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
     fasta::write_fasta(&combined_aa, &fasta_data)?;
 
     let input_3di = format!("{}{}combined_3di.fasta", parent, SEP);
+    let inter_prob = format!("{}{}output_probabilities.csv", parent, SEP);
     let output_3di = format!("{}_ss", output);
 
     // Run python script
@@ -91,7 +92,7 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
         .arg("-o").arg(&input_3di)
         .arg("--model").arg(&model)
         .arg("--half").arg("0");
-    cmd::run(&mut cmd);
+    cmd::run_at(&mut cmd, &Path::new(&var::parent_dir()));
 
     // Build foldseek db
     let foldseek_path = match &bin.get("foldseek") {
@@ -111,10 +112,12 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
         .arg("--shuffle").arg("0");
     cmd::run(&mut cmd);
 
-    // Delete fasta files
-    if !*keep_fasta {
+    // Delete intermediate files
+    if !*keep {
+        std::fs::remove_file(mapping_file)?;
         std::fs::remove_file(combined_aa)?;
         std::fs::remove_file(input_3di)?;
+        std::fs::remove_file(inter_prob)?;
     }
 
     Ok(())
