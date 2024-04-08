@@ -26,6 +26,10 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
         Some(Createdb { keep_fasta, .. }) => keep_fasta,
         _ => { err::error(err::ERR_ARGPARSE, Some("createdb - keep_fasta".to_string())); }
     };
+    let overwrite = match &args.command {
+        Some(Createdb { overwrite, .. }) => overwrite,
+        _ => { err::error(err::ERR_ARGPARSE, Some("createdb - overwrite".to_string())); }
+    };
 
     // Get all the fasta files in input directory
     let mut fasta_files = Vec::new();
@@ -41,6 +45,11 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
         let path = Path::new(&input);
         if !path.is_file() { err::error(err::ERR_GENERAL, Some("Input is not a directory or a file".to_string())); }
         fasta_files.push(path.to_string_lossy().into_owned());
+    }
+
+    // Check if output file already exists
+    if Path::new(&output).exists() && !*overwrite {
+        err::error(err::ERR_OUTPUT_EXISTS, Some(output.clone()));
     }
 
     // Read in the fasta files
@@ -68,10 +77,10 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
     }
 
     // Write out the combined amino acid fasta file into output directory
-    let combined_aa = format!("{}{}combined_aa.fasta", SEP, parent);
+    let combined_aa = format!("{}{}combined_aa.fasta", parent, SEP);
     fasta::write_fasta(&combined_aa, &fasta_data)?;
 
-    let input_3di = format!("{}{}combined_3di.fasta", SEP, parent);
+    let input_3di = format!("{}{}combined_3di.fasta", parent, SEP);
     let output_3di = format!("{}_ss", output);
 
     // Run python script

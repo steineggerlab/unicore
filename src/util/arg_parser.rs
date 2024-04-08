@@ -35,6 +35,8 @@ pub enum Commands {
         /// Keep combined aa/3di fasta files
         #[arg(short, long, default_value="false")]
         keep_fasta: bool,
+        #[arg(short, long, default_value="false")]
+        overwrite: bool,
 /* TODO: Implement optional arguments
         /// Custom foldseek binary
         #[arg(long)]

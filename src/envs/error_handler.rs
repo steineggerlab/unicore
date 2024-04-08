@@ -6,6 +6,7 @@ pub const ERR_FILE_NOT_FOUND: i32 = 0x02;
 pub const ERR_MODULE_NOT_IMPLEMENTED: i32 = 0x03;
 pub const ERR_ARGPARSE: i32 = 0x04;
 pub const ERR_BINARY_NOT_FOUND: i32 = 0x05;
+pub const ERR_OUTPUT_EXISTS: i32 = 0x06;
 
 fn build_message(code: i32, passed_object: Option<String>) -> String {
     let object = passed_object.unwrap_or_else(|| "".to_string());
@@ -15,6 +16,7 @@ fn build_message(code: i32, passed_object: Option<String>) -> String {
         ERR_MODULE_NOT_IMPLEMENTED => format!("Module not implemented: {}", object),
         ERR_ARGPARSE => format!("Argument parsing error: {}", object),
         ERR_BINARY_NOT_FOUND => format!("Binary not found: {}", object),
+        ERR_OUTPUT_EXISTS => format!("Output file already exists: {}; use -o to overwrite", object),
         _ => "Unknown error".to_string(),
     }
 }
