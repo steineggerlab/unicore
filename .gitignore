@@ -161,3 +161,5 @@ cnn*
 # Cargo
 /target
 Cargo.lock
+
+test/

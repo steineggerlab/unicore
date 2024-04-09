@@ -1,3 +1,4 @@
+use std::path::Path;
 use crate::util::arg_parser::{Args, Commands::Search};
 use crate::envs::error_handler as err;
 use crate::util::command as cmd;
@@ -29,6 +30,17 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
         Some(Search { search_options, .. }) => search_options.clone(),
         _ => { err::error(err::ERR_ARGPARSE, Some("search - foldseek_args".to_string())); }
     };
+
+    // Try to obtain the parent directory of the output
+    let parent = if let Some(p) = Path::new(&output).parent() {
+        p.to_string_lossy().into_owned()
+    } else {
+        err::error(err::ERR_GENERAL, Some("Could not obtain parent directory of the output".to_string()))
+    };
+    // If the parent directory of the output doesn't exist, make one
+    if !Path::new(&parent).exists() {
+        std::fs::create_dir_all(&parent)?;
+    }
 
     // foldseek_arg into vector, parsing by space
     let foldseek_args: Vec<&str> = search_options.split_whitespace().collect();
