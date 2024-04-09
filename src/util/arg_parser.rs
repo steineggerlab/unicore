@@ -47,22 +47,21 @@ pub enum Commands {
         foldseek_options: Option<String>,
  */
     },
-    /// Search Foldseek database against reference database.
-    /// Name of the output m8 file will be OUTPUT_DB.m8
+    /// Search Foldseek database against reference database
     #[clap(arg_required_else_help = true, allow_hyphen_values = true)]
     Search {
-        /// Input db
-        input_db: PathBuf,
-        /// Database to search against
-        target_db: PathBuf,
-        /// Output db
-        output_db: PathBuf,
-        /// tmp directory
+        /// Input database
+        input: PathBuf,
+        /// Target database to search against
+        target: PathBuf,
+        /// Output prefix; the result will be saved as OUTPUT.m8
+        output: PathBuf,
+        /// Temp directory
         tmp: PathBuf,
-        /// Delete tmp directory
-        #[arg(short, long, default_value="true")]
-        delete_tmp: bool,
-        /// Arguments for foldseek options in string i.e. -s "-c 0.8"
+        /// Keep intermediate Foldseek alignment database
+        #[arg(short, long, default_value="false")]
+        keep_aln_db: bool,
+        /// Arguments for foldseek options in string e.g. -s "-c 0.8"
         #[arg(short, long, default_value="-c 0.8")]
         search_options: String,
     },

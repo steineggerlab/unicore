@@ -5,26 +5,25 @@ use crate::util::command as cmd;
 // Run foldseek search and convertalis
 pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(), Box<dyn std::error::Error>> {
     // Retrieve arguments
-    let input_db = match &args.command {
-        Some(Search { input_db, .. }) => input_db.clone().to_string_lossy().into_owned(),
-        _ => { err::error(err::ERR_ARGPARSE, Some("search - input_db".to_string())); }
+    let input = match &args.command {
+        Some(Search { input, .. }) => input.clone().to_string_lossy().into_owned(),
+        _ => { err::error(err::ERR_ARGPARSE, Some("search - input".to_string())); }
     };
-    let target_db = match &args.command {
-        Some(Search { target_db, .. }) => target_db.clone().to_string_lossy().into_owned(),
-        _ => { err::error(err::ERR_ARGPARSE, Some("search - target_db".to_string())); }
+    let target = match &args.command {
+        Some(Search { target, .. }) => target.clone().to_string_lossy().into_owned(),
+        _ => { err::error(err::ERR_ARGPARSE, Some("search - target".to_string())); }
     };
-    let output_db = match &args.command {
-        Some(Search { output_db, .. }) => output_db.clone().to_string_lossy().into_owned(),
-        _ => { err::error(err::ERR_ARGPARSE, Some("search - output_db".to_string())); }
+    let output = match &args.command {
+        Some(Search { output, .. }) => output.clone().to_string_lossy().into_owned(),
+        _ => { err::error(err::ERR_ARGPARSE, Some("search - output".to_string())); }
     };
-    let output_db_m8 = format!("{}.m8", output_db);
     let tmp = match &args.command {
         Some(Search { tmp, .. }) => tmp.clone().to_string_lossy().into_owned(),
         _ => { err::error(err::ERR_ARGPARSE, Some("search - tmp".to_string())); }
     };
-    let delete_tmp = match &args.command {
-        Some(Search { delete_tmp, .. }) => delete_tmp.clone(),
-        _ => { err::error(err::ERR_ARGPARSE, Some("search - delete_tmp".to_string())); }
+    let keep_aln_db = match &args.command {
+        Some(Search { keep_aln_db, .. }) => keep_aln_db.clone(),
+        _ => { err::error(err::ERR_ARGPARSE, Some("search - keep_aln_db".to_string())); }
     };
     let search_options = match &args.command {
         Some(Search { search_options, .. }) => search_options.clone(),
@@ -40,8 +39,10 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
         None => { err::error(err::ERR_BINARY_NOT_FOUND, Some("foldseek".to_string())); }
     };
 
+    let output_aln_db = format!("{}_aln", output);
+    let output_m8 = format!("{}.m8", output);
     let mut foldseek_flag = vec![
-        "search", &input_db, &target_db, &output_db, &tmp,
+        "search", &input, &target, &output_aln_db, &tmp,
     ];
     // Include foldseek_args into foldseek_flag
     foldseek_flag.extend(foldseek_args.iter());
@@ -51,19 +52,27 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
     let mut cmd = cmd.args(&foldseek_flag);
     cmd::run(&mut cmd);
 
-    // If delete_tmp is true, remove tmp directory
-    if delete_tmp {
-        std::fs::remove_dir_all(&tmp)?;
-    }
-
     // Run foldseek convertalis
     let mut cmd = std::process::Command::new(foldseek_path);
-    let mut foldseek_flag = vec![
+    let foldseek_flag = vec![
         "convertalis",
-        &input_db, &target_db, &output_db, &output_db_m8,
+        &input, &target, &output_aln_db, &output_m8,
     ];
     let mut cmd = cmd.args(&foldseek_flag);
     cmd::run(&mut cmd);
+
+    // Delete intermediate database
+    if !keep_aln_db {
+        let mut cmd = std::process::Command::new(foldseek_path);
+        let foldseek_flag = vec![
+            "rmdb",
+            &output_aln_db,
+        ];
+        let mut cmd = cmd.args(&foldseek_flag);
+        cmd::run(&mut cmd);
+    }
+
+    // TODO: implement detection and removal of foldseek search temporary results
 
     Ok(())
 }
