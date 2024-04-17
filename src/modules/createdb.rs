@@ -64,7 +64,9 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
     if !Path::new(&parent).exists() {
         std::fs::create_dir_all(&parent)?;
     }
-    let mapping_file = format!("{}{}prot2spe.tsv", parent, SEP);
+
+    // Generate gene origin mapping file
+    let mapping_file = format!("{}.map", output);
     let mut mapping_writer = BufWriter::new(std::fs::File::create(&mapping_file)?);
     let mut fasta_data = HashMap::new();
     for file in fasta_files {
@@ -114,7 +116,7 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
 
     // Delete intermediate files
     if !*keep {
-        std::fs::remove_file(mapping_file)?;
+        // std::fs::remove_file(mapping_file)?;
         std::fs::remove_file(combined_aa)?;
         std::fs::remove_file(input_3di)?;
         std::fs::remove_file(inter_prob)?;

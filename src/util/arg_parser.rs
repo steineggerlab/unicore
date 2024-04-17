@@ -68,16 +68,16 @@ pub enum Commands {
     /// Create core structures from Foldseek database
     #[clap(arg_required_else_help = true)]
     Profile {
-        /// Input m8 file
-        input: PathBuf,
-        /// Gene to Species mapping tsv file
-        mapping: PathBuf,
+        /// Input database (createdb output)
+        input_db: PathBuf,
+        /// Input m8 file (search output)
+        input_m8: PathBuf,
         /// Output directory
         output: PathBuf,
-        /// Coverage threshold for core structures. Ranging from 0 to 1
+        /// Coverage threshold for core structures. [0.0 - 1.0] (default: 0.8)
         #[arg(short, long, default_value="0.8", value_parser = threshold_in_range)]
         threshold: f32,
-        /// Output copiness tsv
+        /// Generate tsv with copy number statistics
         #[arg(short, long, default_value="true")]
         print_copiness: bool,
     },
