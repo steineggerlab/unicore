@@ -38,6 +38,9 @@ pub enum Commands {
         /// Force overwrite output database
         #[arg(short, long, default_value="false")]
         overwrite: bool,
+        /// Set maximum sequence length threshold
+        #[arg(long)]
+        max_len: Option<usize>,
 /* TODO: Implement optional arguments
         /// Custom foldseek binary
         #[arg(long)]

@@ -23,12 +23,16 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
         _ => { err::error(err::ERR_ARGPARSE, Some("createdb - model".to_string())); }
     };
     let keep = match &args.command {
-        Some(Createdb { keep, .. }) => keep,
+        Some(Createdb { keep, .. }) => *keep,
         _ => { err::error(err::ERR_ARGPARSE, Some("createdb - keep".to_string())); }
     };
     let overwrite = match &args.command {
-        Some(Createdb { overwrite, .. }) => overwrite,
+        Some(Createdb { overwrite, .. }) => *overwrite,
         _ => { err::error(err::ERR_ARGPARSE, Some("createdb - overwrite".to_string())); }
+    };
+    let max_len = match &args.command {
+        Some(Createdb { max_len, .. }) => max_len.clone(),
+        _ => { err::error(err::ERR_ARGPARSE, Some("createdb - max_len".to_string())); }
     };
 
     // Get all the fasta files in input directory
@@ -48,7 +52,7 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
     }
 
     // Check if output file already exists
-    if Path::new(&output).exists() && !*overwrite {
+    if Path::new(&output).exists() && !overwrite {
         err::error(err::ERR_OUTPUT_EXISTS, Some(output.clone()));
     }
 
@@ -73,6 +77,9 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
         let species = Path::new(&file).file_stem().unwrap().to_str().unwrap();
         let each_fasta = fasta::read_fasta(&file);
         for (key, value) in each_fasta {
+            if let Some(max_len) = max_len {
+                if value.len() > max_len { continue; }
+            }
             fasta_data.insert(key.clone(), value);
             writeln!(mapping_writer, "{}\t{}", key, species)?;
         }
@@ -115,7 +122,7 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
     cmd::run(&mut cmd);
 
     // Delete intermediate files
-    if !*keep {
+    if !keep {
         // std::fs::remove_file(mapping_file)?;
         std::fs::remove_file(combined_aa)?;
         std::fs::remove_file(input_3di)?;
