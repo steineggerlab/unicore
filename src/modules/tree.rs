@@ -112,7 +112,7 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
     let msa_list = gene_list.iter()
         .map(|gene| {
             let gene_name = gene.file_stem().and_then(|name| name.to_str()).unwrap();
-            input_path.join(gene_name).join(format!("{}.fa", gene_name)).display().to_string()
+            input_path.join(gene_name).join(format!("{}.fa.filtered", gene_name)).display().to_string()
         })
         .collect::<Vec<_>>();
 
