@@ -1,10 +1,13 @@
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::collections::HashMap;
+use std::io::{Write, BufRead};
 use crate::util::arg_parser::{Args, Commands::Tree};
 use crate::envs::error_handler as err;
 use crate::util::command as cmd;
 use crate::util::create_gene_specific_fasta as gsf;
 use crate::util::combine_fasta as cf;
+use crate::util::fasta_io as fasta;
 
 pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(), Box<dyn std::error::Error>> {
     // Retrieve arguments
@@ -35,6 +38,10 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
     let tree_options = match &args.command {
         Some(Tree { tree_options, .. }) => tree_options.clone(),
         _ => { crate::envs::error_handler::error(crate::envs::error_handler::ERR_ARGPARSE, Some("tree - tree_options".to_string())); }
+    };
+    let threshold = match &args.command {
+        Some(Tree { threshold, .. }) => threshold.clone(),
+        _ => { crate::envs::error_handler::error(crate::envs::error_handler::ERR_ARGPARSE, Some("tree - threshold".to_string())); }
     };
 
     // If there is no output directory, make one
@@ -94,9 +101,9 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
     };
     // Iterate through the gene_list and generate alignment
     if aligner == "mafft" {
-        run_mafft(&aligner_path, input_path, &gene_list, &aligner_options)?;
+        run_mafft(&aligner_path, input_path, &gene_list, &aligner_options, &threshold)?;
     } else if aligner == "foldmason" {
-        run_foldmason(&aligner_path, input_path, &gene_list, &aligner_options)?;
+        run_foldmason(&aligner_path, input_path, &gene_list, &aligner_options, &threshold)?;
     } else {
         err::error(err::ERR_MODULE_NOT_IMPLEMENTED, Some("Need implementation".to_string()))
     }
@@ -128,7 +135,7 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
     Ok(())
 }
 
-fn run_mafft(mafft_path: &String, parent: &Path, gene_list: &Vec<PathBuf>, mafft_options: &String) -> Result<(), Box<dyn std::error::Error>> {
+fn run_mafft(mafft_path: &String, parent: &Path, gene_list: &Vec<PathBuf>, mafft_options: &String, threshold: &f32) -> Result<(), Box<dyn std::error::Error>> {
     for gene in gene_list.iter() {
         if let Some(gene_name) = gene.file_stem().and_then(|name| name.to_str()) {
             let gene_dir = parent.join(gene_name);
@@ -143,12 +150,15 @@ fn run_mafft(mafft_path: &String, parent: &Path, gene_list: &Vec<PathBuf>, mafft
             cmd_args.push(msa_fasta.to_str().unwrap());
             let mut cmd = cmd.args(cmd_args);
             cmd::run(&mut cmd);
+            // output_msa is msa_fasta + ".filtered"
+            let output_msa = gene_dir.join(format!("{}.fa.filtered", gene_name)).display().to_string();
+            filter_msa(&msa_fasta.display().to_string(), &output_msa, threshold)?;
         }
     }
     Ok(())
 }
 
-fn run_foldmason(foldmason_path: &String, parent: &Path, gene_list: &Vec<PathBuf>, foldmason_options: &String) -> Result<(), Box<dyn std::error::Error>> {
+fn run_foldmason(foldmason_path: &String, parent: &Path, gene_list: &Vec<PathBuf>, foldmason_options: &String, threshold: &f32) -> Result<(), Box<dyn std::error::Error>> {
     for gene in gene_list.iter() {
         if let Some(gene_name) = gene.file_stem().and_then(|name| name.to_str()) {
             let gene_dir = parent.join(gene_name);
@@ -181,6 +191,9 @@ fn run_foldmason(foldmason_path: &String, parent: &Path, gene_list: &Vec<PathBuf
             cmd_args.append(&mut cmd_options);
             let mut cmd = cmd.args(cmd_args);
             cmd::run(&mut cmd);
+            // output_msa is msa_fasta + ".filtered"
+            let output_msa = gene_dir.join(format!("{}.fa.filtered", gene_name)).display().to_string();
+            filter_msa(&msa_fasta.display().to_string(), &output_msa, threshold)?;
         }
     }
     Ok(())
@@ -200,5 +213,39 @@ fn run_iqtree(iqtree_path: &String, output_dir: &String, msa_fasta: &String, iqt
     cmd_args.append(&mut cmd_options);
     let mut cmd = cmd.args(cmd_args);
     cmd::run(&mut cmd);
+    Ok(())
+}
+
+// Only write columns that have >=threshold coverage
+fn filter_msa(input_msa: &String, output_msa: &String, threshold: &f32) -> Result<(), Box<dyn std::error::Error>> {
+    // Read in fasta file
+    let MSA: HashMap<String, String> = fasta::read_fasta(input_msa);
+    let seq_num = MSA.len();
+    // Round up
+    let threshold_int: i32 = (seq_num as f32 * threshold).ceil() as i32;
+    let mut non_gap_cnt: Vec<i32> = vec![0; MSA.values().next().unwrap().len()];
+    // Iterate through the sequences and fill non_gap_cnt
+    for seq in MSA.values() {
+        for (i, c) in seq.chars().enumerate() {
+            if c != '-' {
+                non_gap_cnt[i] += 1;
+            }
+        }
+    }
+    // Indices of non_gap_cnt >= threshold_int
+    let indices: Vec<usize> = non_gap_cnt.iter().enumerate()
+        .filter(|(_, &x)| x >= threshold_int)
+        .map(|(i, _)| i)
+        .collect();
+    // Write the filtered MSA
+    let mut file = std::fs::File::create(output_msa)?;
+    let mut file_writer = std::io::BufWriter::new(file);
+    for (header, sequence) in MSA.iter() {
+        writeln!(file_writer, ">{}", header)?;
+        for i in indices.iter() {
+            write!(file_writer, "{}", sequence.chars().nth(*i).unwrap())?;
+        }
+        writeln!(file_writer, "")?;
+    }
     Ok(())
 }
