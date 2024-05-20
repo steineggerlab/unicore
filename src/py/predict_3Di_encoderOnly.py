@@ -294,7 +294,7 @@ def get_embeddings(seq_path, out_path, model_dir, split_char, id_field, half_pre
                 if len(predictions) == 1:
                     print(
                         f"Example: predicted for protein {identifier} with length {s_len}: {predictions[identifier]}")
-            print(f"Batch complete - total {count}")
+            # print(f"Batch complete - total {count}")
 
 
     end = time.time()
