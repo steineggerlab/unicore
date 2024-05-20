@@ -77,9 +77,9 @@ pub enum Commands {
         input_m8: PathBuf,
         /// Output directory
         output: PathBuf,
-        /// Coverage threshold for core structures. [0.0 - 1.0] (default: 0.8)
-        #[arg(short, long, default_value="0.8", value_parser = threshold_in_range)]
-        threshold: f32,
+        /// Coverage threshold for core structures. [0 - 100]
+        #[arg(short, long, default_value="80", value_parser = threshold_in_range)]
+        threshold: usize,
         /// Generate tsv with copy number statistics
         #[arg(short, long, default_value="true")]
         print_copiness: bool,

@@ -223,6 +223,7 @@ def get_embeddings(seq_path, out_path, model_dir, split_char, id_field, half_pre
     batch = list()
     standard_aa = "ACDEFGHIKLMNPQRSTVWY"
     standard_aa_dict = {aa: aa for aa in standard_aa}
+    count = 0
     for seq_idx, (pdb_id, seq) in enumerate(seq_dict, 1):
         # replace the non-standard amino acids with 'X'
         seq = ''.join([standard_aa_dict.get(aa, 'X') for aa in seq])
@@ -233,7 +234,9 @@ def get_embeddings(seq_path, out_path, model_dir, split_char, id_field, half_pre
         # count residues in current batch and add the last sequence length to
         # avoid that batches with (n_res_batch > max_residues) get processed
         n_res_batch = sum([s_len for _, _, s_len in batch]) + seq_len
+
         if len(batch) >= max_batch or n_res_batch >= max_residues or seq_idx == len(seq_dict) or seq_len > max_seq_len:
+            count += len(batch)
             pdb_ids, seqs, seq_lens = zip(*batch)
             batch = list()
 
@@ -291,6 +294,8 @@ def get_embeddings(seq_path, out_path, model_dir, split_char, id_field, half_pre
                 if len(predictions) == 1:
                     print(
                         f"Example: predicted for protein {identifier} with length {s_len}: {predictions[identifier]}")
+            print(f"Batch complete - total {count}")
+
 
     end = time.time()
     print('\n############# STATS #############')
