@@ -12,10 +12,10 @@ pub struct Args {
 }
 
 // Check if the threshold is in range
-fn threshold_in_range(s: &str) -> Result<f32, String> {
-    let threshold: f32 = s.parse().map_err(|_| format!("Threshold `{}` is weird, please check", s))?;
-    if threshold < 0.0 || threshold > 1.0 {
-        Err(format!("Threshold `{}` is not in range 0 to 1", s))
+fn threshold_in_range(s: &str) -> Result<i32, String> {
+    let threshold: i32 = s.parse().map_err(|_| "Not a number".to_string())?;
+    if threshold < 0 || threshold > 100 {
+        Err(format!("Threshold `{}` is not in range 0 to 100", s))
     } else {
         Ok(threshold)
     }
