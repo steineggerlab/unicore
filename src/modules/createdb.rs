@@ -80,6 +80,9 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
             if let Some(max_len) = max_len {
                 if value.len() > max_len { continue; }
             }
+            // replace all whitespace characters with underscore
+            let key = key.replace(|c: char| c.is_whitespace(), "_");
+            let key = format!("unicore_{}", key);
             fasta_data.insert(key.clone(), value);
             writeln!(mapping_writer, "{}\t{}", key, species)?;
         }
