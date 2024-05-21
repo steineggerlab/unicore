@@ -54,7 +54,7 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
     let output_aln_db = format!("{}_aln", output);
     let output_m8 = format!("{}.m8", output);
     let mut foldseek_flag = vec![
-        "search", &input, &target, &output_aln_db, &tmp,
+        "search", &target, &input, &output_aln_db, &tmp,
     ];
     // Include foldseek_args into foldseek_flag
     foldseek_flag.extend(foldseek_args.iter());
@@ -67,8 +67,7 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
     // Run foldseek convertalis
     let mut cmd = std::process::Command::new(foldseek_path);
     let foldseek_flag = vec![
-        "convertalis",
-        &input, &target, &output_aln_db, &output_m8,
+        "convertalis", &target, &input, &output_aln_db, &output_m8,
     ];
     let mut cmd = cmd.args(&foldseek_flag);
     cmd::run(&mut cmd);
