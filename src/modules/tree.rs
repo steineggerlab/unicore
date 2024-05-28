@@ -12,8 +12,8 @@ use crate::util::fasta_io as fasta;
 
 pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(), Box<dyn std::error::Error>> {
     // Retrieve arguments
-    let proteome_db = match &args.command {
-        Some(Tree { proteome_db, .. }) => proteome_db.clone().to_string_lossy().into_owned(),
+    let db = match &args.command {
+        Some(Tree {db, .. }) => db.clone().to_string_lossy().into_owned(),
         _ => { crate::envs::error_handler::error(crate::envs::error_handler::ERR_ARGPARSE, Some("tree - proteome_db".to_string())); }
     };
     let input = match &args.command {
@@ -28,9 +28,9 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
         Some(Tree { aligner, .. }) => aligner.clone(),
         _ => { crate::envs::error_handler::error(crate::envs::error_handler::ERR_ARGPARSE, Some("tree - aligner".to_string())); }
     };
-    let tree_method = match &args.command {
-        Some(Tree { tree_method, .. }) => tree_method.clone(),
-        _ => { crate::envs::error_handler::error(crate::envs::error_handler::ERR_ARGPARSE, Some("tree - tree_method".to_string())); }
+    let tree_builder = match &args.command {
+        Some(Tree { tree_builder, .. }) => tree_builder.clone(),
+        _ => { crate::envs::error_handler::error(crate::envs::error_handler::ERR_ARGPARSE, Some("tree - tree_builder".to_string())); }
     };
     let aligner_options = match &args.command {
         Some(Tree { aligner_options, .. }) => aligner_options.clone(),
@@ -43,6 +43,18 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
     let threshold = match &args.command {
         Some(Tree { threshold, .. }) => threshold.clone(),
         _ => { crate::envs::error_handler::error(crate::envs::error_handler::ERR_ARGPARSE, Some("tree - threshold".to_string())); }
+    };
+
+    // Check aligner binary
+    let aligner_path = match &bin.get(&aligner) {
+        Some(bin) => &bin.path,
+        None => { err::error(err::ERR_BINARY_NOT_FOUND, Some(aligner.clone())); }
+    };
+
+    // Check tree builder
+    let tree_builder_path = match &bin.get(&tree_builder) {
+        Some(bin) => &bin.path,
+        None => { err::error(err::ERR_BINARY_NOT_FOUND, Some(tree_builder.clone())); }
     };
 
     // If there is no output directory, make one
@@ -59,7 +71,7 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
         .filter(|path| path.is_file() && path.extension().map_or(false, |ext| ext == "txt"))
         .collect::<Vec<_>>();
     // Create gene specific fasta
-    gsf::create_gene_specific_fasta(&proteome_db, &input, &gene_list)?;
+    gsf::create_gene_specific_fasta(&db, &input, &gene_list)?;
 
     // Build foldseek db
     let foldseek_path = match &bin.get("foldseek") {
@@ -97,13 +109,8 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
         }
     }
 
-    // Generate alignment
-    let aligner_path = match &bin.get(&aligner) {
-        Some(bin) => &bin.path,
-        None => { err::error(err::ERR_BINARY_NOT_FOUND, Some(aligner.clone())); }
-    };
     // Iterate through the gene_list and generate alignment
-    if aligner == "mafft" {
+    if aligner == "mafft" || aligner == "mafft-linsi" {
         run_mafft(&aligner_path, input_path, &gene_list, &aligner_options, &threshold)?;
     } else if aligner == "foldmason" {
         run_foldmason(&aligner_path, input_path, &gene_list, &aligner_options, &threshold)?;
@@ -124,12 +131,8 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
     cf::combine_fasta(&msa_list, &combined_fasta)?;
 
     // Build tree
-    if tree_method == "iqtree" {
-        let iqtree_path = match &bin.get("iqtree") {
-            Some(bin) => &bin.path,
-            None => { err::error(err::ERR_BINARY_NOT_FOUND, Some("iqtree".to_string())); }
-        };
-        run_iqtree(&iqtree_path, &output, &combined_fasta.display().to_string(), &tree_options)?;
+    if tree_builder == "iqtree" {
+        run_iqtree(&tree_builder_path, &output, &combined_fasta.display().to_string(), &tree_options)?;
     } else {
         // TODO: Implement other tree building methods
         err::error(err::ERR_MODULE_NOT_IMPLEMENTED, Some("Need implementation".to_string()))

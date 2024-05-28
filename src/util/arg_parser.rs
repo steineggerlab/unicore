@@ -95,25 +95,25 @@ pub enum Commands {
     /// Infer phylogenetic tree from core structures
     #[clap(arg_required_else_help = true, allow_hyphen_values = true)]
     Tree {
-        /// Proteome database
-        proteome_db: PathBuf,
-        /// Input directory containing core structures
+        /// Input database (createdb output)
+        db: PathBuf,
+        /// Input directory containing core structures (profile output)
         input: PathBuf,
         /// Output directory
         output: PathBuf,
-        /// Alignment method [foldmason, mafft, mafft-linsi]
+        /// Multiple sequence aligner [foldmason, mafft-linsi, mafft]
         #[arg(short, long, default_value="foldmason")]
         aligner: String,
-        /// Tree method
+        /// Phylogenetic tree builder [iqtree, fasttree (under development), raxml (under development)]
         #[arg(short, long, default_value="iqtree")]
-        tree_method: String,
-        /// Options for aligner
+        tree_builder: String,
+        /// Options for sequence aligner
         #[arg(short='o', long)]
         aligner_options: Option<String>,
-        /// Options for tree method
+        /// Options for tree builder; please adjust if using different tree method
         #[arg(short='p', long, default_value="-m JTT+F+I+G -B 1000")]
         tree_options: String,
-        /// Threshold for MSA filtering
+        /// Gap threshold for multiple sequence alignment [0.0 - 1.0]
         #[arg(short='d', long, default_value="0.5", value_parser = threshold_in_range_f64)]
         threshold: f64,
     },
