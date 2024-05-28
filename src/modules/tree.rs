@@ -50,6 +50,8 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
         fs::create_dir_all(&output)?;
     }
 
+    let aligner_options = aligner_options.unwrap_or_else(|| "".to_string());
+
     // Get the gene_list
     let gene_list = fs::read_dir(&input)?
         .filter_map(|entry| entry.ok())
@@ -136,7 +138,7 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
     Ok(())
 }
 
-fn run_mafft(mafft_path: &String, parent: &Path, gene_list: &Vec<PathBuf>, mafft_options: &String, threshold: &f32) -> Result<(), Box<dyn std::error::Error>> {
+fn run_mafft(mafft_path: &String, parent: &Path, gene_list: &Vec<PathBuf>, mafft_options: &String, threshold: &f64) -> Result<(), Box<dyn std::error::Error>> {
     for gene in gene_list.iter() {
         if let Some(gene_name) = gene.file_stem().and_then(|name| name.to_str()) {
             let gene_dir = parent.join(gene_name);
@@ -159,7 +161,7 @@ fn run_mafft(mafft_path: &String, parent: &Path, gene_list: &Vec<PathBuf>, mafft
     Ok(())
 }
 
-fn run_foldmason(foldmason_path: &String, parent: &Path, gene_list: &Vec<PathBuf>, foldmason_options: &String, threshold: &f32) -> Result<(), Box<dyn std::error::Error>> {
+fn run_foldmason(foldmason_path: &String, parent: &Path, gene_list: &Vec<PathBuf>, foldmason_options: &String, threshold: &f64) -> Result<(), Box<dyn std::error::Error>> {
     for gene in gene_list.iter() {
         if let Some(gene_name) = gene.file_stem().and_then(|name| name.to_str()) {
             let gene_dir = parent.join(gene_name);
@@ -218,12 +220,12 @@ fn run_iqtree(iqtree_path: &String, output_dir: &String, msa_fasta: &String, iqt
 }
 
 // Only write columns that have >=threshold coverage
-fn filter_msa(input_msa: &String, output_msa: &String, threshold: &f32) -> Result<(), Box<dyn std::error::Error>> {
+fn filter_msa(input_msa: &String, output_msa: &String, threshold: &f64) -> Result<(), Box<dyn std::error::Error>> {
     // Read in fasta file
     let msa: HashMap<String, String> = fasta::read_fasta(input_msa);
     let seq_num = msa.len();
     // Round up
-    let threshold_int: i32 = (seq_num as f32 * threshold).ceil() as i32;
+    let threshold_int: i32 = (seq_num as f64 * threshold).ceil() as i32;
     let mut non_gap_cnt: Vec<i32> = vec![0; msa.values().next().unwrap().len()];
     // Iterate through the sequences and fill non_gap_cnt
     for seq in msa.values() {

@@ -101,20 +101,20 @@ pub enum Commands {
         input: PathBuf,
         /// Output directory
         output: PathBuf,
-        /// Alignment method
+        /// Alignment method [foldmason, mafft, mafft-linsi]
         #[arg(short, long, default_value="foldmason")]
         aligner: String,
         /// Tree method
         #[arg(short, long, default_value="iqtree")]
         tree_method: String,
         /// Options for aligner
-        #[arg(short='o', long, default_value="")]
-        aligner_options: String,
+        #[arg(short='o', long)]
+        aligner_options: Option<String>,
         /// Options for tree method
         #[arg(short='p', long, default_value="-m JTT+F+I+G -B 1000")]
         tree_options: String,
         /// Threshold for MSA filtering
         #[arg(short='d', long, default_value="0.5", value_parser = threshold_in_range_f64)]
-        threshold: f32,
+        threshold: f64,
     },
 }
