@@ -22,6 +22,7 @@ fn build_message(code: i32, passed_object: Option<String>) -> String {
 }
 
 // warning: prints message to stderr
+#[allow(unused)]
 pub fn warning(code: i32, passed_object: Option<String>) {
     eprintln!("{}", build_message(code, passed_object));
 }

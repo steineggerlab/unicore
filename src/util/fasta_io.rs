@@ -26,7 +26,7 @@ pub fn read_fasta(file: &str) -> HashMap<String, String> {
 
 pub fn write_fasta(file: &str, mapping: &HashMap<String, String>) -> io::Result<()> {
     // Open the file
-    let mut file = File::create(file)?;
+    let file = File::create(file)?;
     let mut file_writer = io::BufWriter::new(file);
 
     // Write the sequences to the file

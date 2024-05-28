@@ -1,7 +1,8 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::collections::HashMap;
-use std::io::{Write, BufRead};
+use std::io::Write;
+
 use crate::util::arg_parser::{Args, Commands::Tree};
 use crate::envs::error_handler as err;
 use crate::util::command as cmd;
@@ -207,7 +208,7 @@ fn run_iqtree(iqtree_path: &String, output_dir: &String, msa_fasta: &String, iqt
     let output_file = Path::new(output_dir).join("iqtree").display().to_string();
     if !cmd_options.contains(&"--prefix"){
         cmd_args.push("--prefix");
-        cmd_args.push(output_file.as_str().clone());
+        cmd_args.push(output_file.as_str());
     }
     // parse iqtree_options into vector
     cmd_args.append(&mut cmd_options);
@@ -219,13 +220,13 @@ fn run_iqtree(iqtree_path: &String, output_dir: &String, msa_fasta: &String, iqt
 // Only write columns that have >=threshold coverage
 fn filter_msa(input_msa: &String, output_msa: &String, threshold: &f32) -> Result<(), Box<dyn std::error::Error>> {
     // Read in fasta file
-    let MSA: HashMap<String, String> = fasta::read_fasta(input_msa);
-    let seq_num = MSA.len();
+    let msa: HashMap<String, String> = fasta::read_fasta(input_msa);
+    let seq_num = msa.len();
     // Round up
     let threshold_int: i32 = (seq_num as f32 * threshold).ceil() as i32;
-    let mut non_gap_cnt: Vec<i32> = vec![0; MSA.values().next().unwrap().len()];
+    let mut non_gap_cnt: Vec<i32> = vec![0; msa.values().next().unwrap().len()];
     // Iterate through the sequences and fill non_gap_cnt
-    for seq in MSA.values() {
+    for seq in msa.values() {
         for (i, c) in seq.chars().enumerate() {
             if c != '-' {
                 non_gap_cnt[i] += 1;
@@ -238,9 +239,9 @@ fn filter_msa(input_msa: &String, output_msa: &String, threshold: &f32) -> Resul
         .map(|(i, _)| i)
         .collect();
     // Write the filtered MSA
-    let mut file = std::fs::File::create(output_msa)?;
+    let file = std::fs::File::create(output_msa)?;
     let mut file_writer = std::io::BufWriter::new(file);
-    for (header, sequence) in MSA.iter() {
+    for (header, sequence) in msa.iter() {
         writeln!(file_writer, ">{}", header)?;
         for i in indices.iter() {
             write!(file_writer, "{}", sequence.chars().nth(*i).unwrap())?;

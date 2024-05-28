@@ -2,15 +2,34 @@ use std::collections::HashMap;
 use std::fs::{self, File};
 use std::io::{BufWriter, BufRead, BufReader, Write};
 use std::path::{Path, PathBuf};
-use crate::util::read_db;
+
 use crate::envs::error_handler as err;
+
+// Read in one file
+fn read_db(filename: &String) -> Vec<String> {
+    let mut db: Vec<String> = Vec::new();
+    // Open the file
+    let reader = BufReader::new(File::open(filename).unwrap());
+    // If the first character's ascii value is 0, erase it
+    for line in reader.lines() {
+        let mut line = line.unwrap_or_else(|_| "Unable to read db".to_string());
+        if line.chars().next().unwrap() as u8 == 0 {
+            line.remove(0);
+        }
+        // Push if the length is greater than 0
+        if line.len() > 0 {
+            db.push(line);
+        }
+    }
+    db
+}
 
 pub fn create_gene_specific_fasta(input_db: &str, gene_dir: &str, gene_list: &Vec<PathBuf>) -> Result<(), Box<dyn std::error::Error>> {
 
     // Read names, amino acid and 3di sequences
-    let names = read_db::read_db(&format!("{}_h", input_db));
-    let aa_seqs = read_db::read_db(&input_db.to_string());
-    let di_seqs = read_db::read_db(&format!("{}_ss", input_db));
+    let names = read_db(&format!("{}_h", input_db));
+    let aa_seqs = read_db(&input_db.to_string());
+    let di_seqs = read_db(&format!("{}_ss", input_db));
 
     // Check the lengths are all same
     if names.len() != aa_seqs.len() || names.len() != di_seqs.len() {

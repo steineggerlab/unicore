@@ -14,7 +14,7 @@ pub struct Args {
 // Check if the threshold is in range
 fn threshold_in_range_usize(s: &str) -> Result<usize, String> {
     let threshold: usize = s.parse().map_err(|_| "Not a number".to_string())?;
-    if threshold < 0 || threshold > 100 {
+    if threshold > 100 {
         Err(format!("Threshold `{}` is not in range 0 to 100", s))
     } else {
         Ok(threshold)

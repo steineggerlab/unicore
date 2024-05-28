@@ -1,4 +1,3 @@
-use std::env;
 use std::fs::File;
 use std::path::PathBuf;
 use std::io::{self, BufRead, BufReader, BufWriter, Write};
@@ -40,7 +39,7 @@ pub fn combine_fasta(fasta_files: &Vec<String>, output_file: &PathBuf) -> Result
         match reader.read_line(&mut line) {
             Ok(0) => continue,
             Ok(_) => (),
-            Err(e) => err::error(err::ERR_GENERAL, Some("Problem in reading fasta file".to_string())),
+            Err(_) => err::error(err::ERR_GENERAL, Some("Problem in reading fasta file".to_string())),
         }
 
         let mut eof = false;
@@ -75,7 +74,7 @@ pub fn combine_fasta(fasta_files: &Vec<String>, output_file: &PathBuf) -> Result
                 match reader.read_line(&mut line) {
                     Ok(0) => break,
                     Ok(_) => (),
-                    Err(e) => err::error(err::ERR_GENERAL, Some("Problem in reading fasta file".to_string()))
+                    Err(_) => err::error(err::ERR_GENERAL, Some("Problem in reading fasta file".to_string()))
                 }
             }
         }
