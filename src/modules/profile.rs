@@ -2,6 +2,7 @@ use crate::envs::variables as var;
 use crate::util::arg_parser::{Args, Commands::Profile};
 
 use std::collections::{HashMap, HashSet};
+use std::fs;
 use std::fs::File;
 use std::io::{self, BufRead, BufReader, BufWriter, Write};
 use std::path::Path;
@@ -127,6 +128,11 @@ pub fn run(args: &Args, _: &var::BinaryPaths) -> Result<(), Box<dyn std::error::
         Some(Profile { print_copiness, .. }) => *print_copiness,
         _ => { crate::envs::error_handler::error(crate::envs::error_handler::ERR_ARGPARSE, Some("profile - print_copiness".to_string())); }
     };
+
+    // If there is no output directory, make one
+    if !Path::new(&output).exists() {
+        fs::create_dir_all(&output)?;
+    }
 
     let mapping = format!("{}.map", input_db);
     profile(&input_m8, &mapping, &output, threshold, print_copiness)?;
