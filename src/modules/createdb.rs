@@ -69,13 +69,6 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
         std::fs::create_dir_all(&parent)?;
     }
 
-    // If the parent directory is absolute, get the last part of the path
-    let parent = if parent.starts_with(SEP) {
-        parent.split(SEP).last().unwrap().to_string()
-    } else {
-        parent
-    };
-
     // Generate gene origin mapping file
     let mapping_file = format!("{}.map", output);
     let mut mapping_writer = BufWriter::new(std::fs::File::create(&mapping_file)?);
@@ -96,7 +89,16 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
     }
 
     // Write out the combined amino acid fasta file into output directory
-    let curr_dir = var::current_dir();
+    // If 'parent' is absolute path, make curr_dir to the parent directory of the 'parent'
+    let curr_dir = if Path::new(&parent).is_absolute() {
+        if let Some(p) = Path::new(&parent).parent() {
+            p.to_string_lossy().into_owned()
+        } else {
+            err::error(err::ERR_GENERAL, Some("Could not obtain parent directory of the parent".to_string()))
+        }
+    } else {
+        var::current_dir()
+    };
     let combined_aa = format!("{}{}{}{}combined_aa.fasta", curr_dir, SEP, parent, SEP);
     fasta::write_fasta(&combined_aa, &fasta_data)?;
 
