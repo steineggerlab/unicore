@@ -26,6 +26,14 @@ pub fn parent_dir() -> String {
         .to_string()
 }
 
+pub fn current_dir() -> String {
+    std::env::current_dir()
+        .unwrap_or_else(|_| err::error(err::ERR_GENERAL, Some("Could not get current directory".to_string())))
+        .to_str()
+        .unwrap_or_else(|| err::error(err::ERR_GENERAL, Some("Could not convert path to string".to_string())))
+        .to_string()
+}
+
 // binary paths
 const VALID_BINARY: [&str; 7] = [
     "mmseqs", "foldseek", "mafft", "mafft-linsi", "foldmason", "iqtree", "fasttree",
