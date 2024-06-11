@@ -69,6 +69,13 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
         std::fs::create_dir_all(&parent)?;
     }
 
+    // If the parent directory is absolute, get the last part of the path
+    let parent = if parent.starts_with(SEP) {
+        parent.split(SEP).last().unwrap().to_string()
+    } else {
+        parent
+    };
+
     // Generate gene origin mapping file
     let mapping_file = format!("{}.map", output);
     let mut mapping_writer = BufWriter::new(std::fs::File::create(&mapping_file)?);
