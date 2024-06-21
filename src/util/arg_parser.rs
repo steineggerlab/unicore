@@ -116,5 +116,8 @@ pub enum Commands {
         /// Threshold for MSA filtering
         #[arg(short='d', long, default_value="0.5", value_parser = threshold_in_range_f64)]
         threshold: f64,
+        /// Number of threads to use
+        #[arg(short='c', long, default_value="0")]
+        threads: usize,
     },
 }

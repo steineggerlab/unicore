@@ -2,6 +2,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::collections::HashMap;
 use std::io::Write;
+use std::process::Command;
 
 use crate::util::arg_parser::{Args, Commands::Tree};
 use crate::envs::error_handler as err;
@@ -44,6 +45,33 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
         Some(Tree { threshold, .. }) => threshold.clone(),
         _ => { crate::envs::error_handler::error(crate::envs::error_handler::ERR_ARGPARSE, Some("tree - threshold".to_string())); }
     };
+    let mut threads = match &args.command {
+        Some(Tree { threads, .. }) => threads.clone(),
+        _ => { crate::envs::error_handler::error(crate::envs::error_handler::ERR_ARGPARSE, Some("tree - threads".to_string())); }
+    };
+
+    // Get maximum thread number if threads == -1
+    if threads == 0 {
+        // if the os is linux
+        threads = if cfg!(target_os = "linux") {
+            let output = Command::new("sh")
+                .arg("-c")
+                .arg("grep -c ^processor /proc/cpuinfo")
+                .output()
+                .expect("Failed to get the number of processors");
+            std::str::from_utf8(&output.stdout).unwrap().trim().parse::<usize>().unwrap()
+        } else {
+            let output = Command::new("sysctl")
+                .arg("-n")
+                .arg("hw.ncpu")
+                .output()
+                .expect("Failed to get the number of processors");
+            std::str::from_utf8(&output.stdout).unwrap().trim().parse::<usize>().unwrap()
+        };
+    };
+
+    // print out threads
+    println!("Using {} threads", threads);
 
     // If there is no output directory, make one
     if !Path::new(&output).exists() {
