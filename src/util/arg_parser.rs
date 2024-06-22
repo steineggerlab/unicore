@@ -114,7 +114,7 @@ pub enum Commands {
         #[arg(short='p', long, default_value="-m JTT+F+I+G -B 1000")]
         tree_options: String,
         /// Threshold for MSA filtering
-        #[arg(short='d', long, default_value="f64", value_parser = threshold_in_range_f64)]
+        #[arg(short='d', long, default_value="0.5", value_parser = threshold_in_range_f64)]
         threshold: f64,
         /// Number of threads to use
         #[arg(short='c', long, default_value="0")]
