@@ -1,26 +1,46 @@
 # Unicore
-Fast and accurate universal core gene phylogeny with Foldseek and ProstT5
-## Requirements
-* ProstT5 weight
-* foldseek
-* foldmason or mafft
-* IQ-Tree or Fasttree
-* (Optional) Clustered SwissProt (`https://~~`)
+Unicore is a method for scalable and accurate phylogenetic reconstruction with structural core genes, universally applicable to any given set of taxa.
 
-Currently you need the weight of the ProstT5 to run the `createdb`. Please download the model from `https://~~~`.
-
-Unicore also requires `foldseek` to be installed. Please go to `https://~~~` and install `foldseek`.
-
-Unicore uses `foldmason` and `IQ-Tree` as a default. Please specify MSA tool and phylogeny inference tool if you want to use different tools. Please refer to the `Modules` for more detail.
 ## Installation
-If you don't have Rust, please download the language from `https://~~`.\
-To download the Unicore, please follow the following:
+### Quick Start with Conda
+We will provide a Conda package soon. Please wait for the release.
+
+### Manual Installation
+#### Minimum requirements
+* [Cargo](https://www.rust-lang.org/tools/install) (Rust)
+* [Foldseek](https://foldseek.com)
+* [ProstT5 model weight](https://huggingface.co/Rostlab/ProstT5)
+* [MAFFT](https://mafft.cbrc.jp/alignment/software/)
+* [IQ-TREE](http://www.iqtree.org/)
+
+#### Optional requirements
+* AFDB/Swiss-Prot database
+  * For now, please use `foldseek databases` to download
+* [Foldmason](https://foldmason.foldseek.com)
+* [Fasttree](http://www.microbesonline.org/fasttree/)
+
+#### Guide
+> Note: We will provide an easier way to download these as a `download` module soon.
+> Until then, please follow the following steps.
+
+Please install the latest version of Rust from [here](https://www.rust-lang.org/tools/install).
+
+To run `createdb` module, you have to pre-download the model weight of the ProstT5.
+Please download the model from [here](https://huggingface.co/Rostlab/ProstT5).
+
+Foldseek can be installed from [here](https://foldseek.com).
+
+Default tool for MSA is `MAFFT` and for phylogeny inference is `IQ-Tree`.
+You can download `MAFFT` from [here](https://mafft.cbrc.jp/alignment/software/) and `IQ-Tree` from [here](http://www.iqtree.org/).
+
+With these tools installed, you can install and run `unicore` by:
 ```
-git clone <current github>
+git clone https://github.com/steineggerlab/unicore.git
 cd unicore
 cargo build --release
+target/release/unicore help
 ```
-You can find binary from `unicore/target/release`.
+
 ## Modules
 Unicore has four modules:
 * createdb
