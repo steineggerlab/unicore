@@ -89,12 +89,22 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
     }
 
     // Write out the combined amino acid fasta file into output directory
-    let combined_aa = format!("{}{}combined_aa.fasta", parent, SEP);
+    // If 'parent' is absolute path, make curr_dir to the parent directory of the 'parent'
+    let curr_dir = if Path::new(&parent).is_absolute() {
+        if let Some(p) = Path::new(&parent).parent() {
+            p.to_string_lossy().into_owned()
+        } else {
+            err::error(err::ERR_GENERAL, Some("Could not obtain parent directory of the parent".to_string()))
+        }
+    } else {
+        var::current_dir()
+    };
+    let combined_aa = format!("{}{}{}{}combined_aa.fasta", curr_dir, SEP, parent, SEP);
     fasta::write_fasta(&combined_aa, &fasta_data)?;
 
-    let input_3di = format!("{}{}combined_3di.fasta", parent, SEP);
-    let inter_prob = format!("{}{}output_probabilities.csv", parent, SEP);
-    let output_3di = format!("{}_ss", output);
+    let input_3di = format!("{}{}{}{}combined_3di.fasta", curr_dir, SEP, parent, SEP);
+    let inter_prob = format!("{}{}{}{}output_probabilities.csv", curr_dir, SEP, parent, SEP);
+    let output_3di = format!("{}{}{}_ss", curr_dir, SEP, output);
 
     // Run python script
     let mut cmd = std::process::Command::new("python");

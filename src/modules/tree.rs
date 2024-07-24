@@ -2,6 +2,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::collections::HashMap;
 use std::io::Write;
+use std::process::Command;
 
 use crate::util::arg_parser::{Args, Commands::Tree};
 use crate::envs::error_handler as err;
@@ -44,6 +45,33 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
         Some(Tree { threshold, .. }) => threshold.clone(),
         _ => { crate::envs::error_handler::error(crate::envs::error_handler::ERR_ARGPARSE, Some("tree - threshold".to_string())); }
     };
+    let mut threads = match &args.command {
+        Some(Tree { threads, .. }) => threads.clone(),
+        _ => { crate::envs::error_handler::error(crate::envs::error_handler::ERR_ARGPARSE, Some("tree - threads".to_string())); }
+    };
+
+    // Get maximum thread number if threads == -1
+    if threads == 0 {
+        // if the os is linux
+        threads = if cfg!(target_os = "linux") {
+            let output = Command::new("sh")
+                .arg("-c")
+                .arg("grep -c ^processor /proc/cpuinfo")
+                .output()
+                .expect("Failed to get the number of processors");
+            std::str::from_utf8(&output.stdout).unwrap().trim().parse::<usize>().unwrap()
+        } else {
+            let output = Command::new("sysctl")
+                .arg("-n")
+                .arg("hw.ncpu")
+                .output()
+                .expect("Failed to get the number of processors");
+            std::str::from_utf8(&output.stdout).unwrap().trim().parse::<usize>().unwrap()
+        };
+    };
+
+    // print out threads
+    println!("Using {} threads", threads);
 
     // Check aligner binary
     let aligner_path = match &bin.get(&aligner) {
@@ -110,10 +138,10 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
     }
 
     // Iterate through the gene_list and generate alignment
-    if aligner == "mafft" || aligner == "mafft-linsi" {
-        run_mafft(&aligner_path, input_path, &gene_list, &aligner_options, &threshold)?;
+    if aligner == "mafft" {
+        run_mafft(&aligner_path, input_path, &gene_list, &aligner_options, &threshold, &threads)?;
     } else if aligner == "foldmason" {
-        run_foldmason(&aligner_path, input_path, &gene_list, &aligner_options, &threshold)?;
+        run_foldmason(&aligner_path, input_path, &gene_list, &aligner_options, &threshold, &threads)?;
     } else {
         err::error(err::ERR_MODULE_NOT_IMPLEMENTED, Some("Need implementation".to_string()))
     }
@@ -132,7 +160,11 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
 
     // Build tree
     if tree_builder == "iqtree" {
-        run_iqtree(&tree_builder_path, &output, &combined_fasta.display().to_string(), &tree_options)?;
+        let iqtree_path = match &bin.get("iqtree") {
+            Some(bin) => &bin.path,
+            None => { err::error(err::ERR_BINARY_NOT_FOUND, Some("iqtree".to_string())); }
+        };
+        run_iqtree(&iqtree_path, &output, &combined_fasta.display().to_string(), &tree_options, &threads)?;
     } else {
         // TODO: Implement other tree building methods
         err::error(err::ERR_MODULE_NOT_IMPLEMENTED, Some("Need implementation".to_string()))
@@ -141,13 +173,19 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
     Ok(())
 }
 
-fn run_mafft(mafft_path: &String, parent: &Path, gene_list: &Vec<PathBuf>, mafft_options: &String, threshold: &f64) -> Result<(), Box<dyn std::error::Error>> {
+fn run_mafft(mafft_path: &String, parent: &Path, gene_list: &Vec<PathBuf>, mafft_options: &String, threshold: &f64, threads: &usize) -> Result<(), Box<dyn std::error::Error>> {
     for gene in gene_list.iter() {
         if let Some(gene_name) = gene.file_stem().and_then(|name| name.to_str()) {
             let gene_dir = parent.join(gene_name);
             let mut cmd = std::process::Command::new(mafft_path);
             // parse mafft_options into vector
             let mut cmd_args = mafft_options.split_whitespace().collect::<Vec<&str>>();
+            // Include threads option
+            let threads_copy = threads.clone().to_string();
+            if !cmd_args.contains(&"--thread") {
+                cmd_args.push("--thread");
+                cmd_args.push(threads_copy.as_str());
+            }
             // add input and output
             let aa_fasta = gene_dir.join("aa.fasta");
             let msa_fasta = gene_dir.join(format!("{}.fa", gene_name));
@@ -164,7 +202,7 @@ fn run_mafft(mafft_path: &String, parent: &Path, gene_list: &Vec<PathBuf>, mafft
     Ok(())
 }
 
-fn run_foldmason(foldmason_path: &String, parent: &Path, gene_list: &Vec<PathBuf>, foldmason_options: &String, threshold: &f64) -> Result<(), Box<dyn std::error::Error>> {
+fn run_foldmason(foldmason_path: &String, parent: &Path, gene_list: &Vec<PathBuf>, foldmason_options: &String, threshold: &f64, threads: &usize) -> Result<(), Box<dyn std::error::Error>> {
     for gene in gene_list.iter() {
         if let Some(gene_name) = gene.file_stem().and_then(|name| name.to_str()) {
             let gene_dir = parent.join(gene_name);
@@ -195,17 +233,22 @@ fn run_foldmason(foldmason_path: &String, parent: &Path, gene_list: &Vec<PathBuf
                 }
             }
             cmd_args.append(&mut cmd_options);
+            let threads_copy = threads.clone().to_string();
+            if !cmd_options.contains(&"--threads") {
+                cmd_args.push("--threads");
+                cmd_args.push(threads_copy.as_str());
+            }
             let mut cmd = cmd.args(cmd_args);
             cmd::run(&mut cmd);
             // output_msa is msa_fasta + ".filtered"
             let output_msa = gene_dir.join(format!("{}.fa.filtered", gene_name)).display().to_string();
-            filter_msa(&msa_fasta.display().to_string(), &output_msa, threshold)?;
+            filter_msa(&(msa_fasta.display().to_string() + ".fa"), &output_msa, threshold)?;
         }
     }
     Ok(())
 }
 
-fn run_iqtree(iqtree_path: &String, output_dir: &String, msa_fasta: &String, iqtree_options: &String) -> Result<(), Box<dyn std::error::Error>> {
+fn run_iqtree(iqtree_path: &String, output_dir: &String, msa_fasta: &String, iqtree_options: &String, threads: &usize) -> Result<(), Box<dyn std::error::Error>> {
     let mut cmd = std::process::Command::new(iqtree_path);
     let mut cmd_options = iqtree_options.split_whitespace().collect::<Vec<&str>>();
     // If there is "--prefix" in the option
@@ -214,6 +257,12 @@ fn run_iqtree(iqtree_path: &String, output_dir: &String, msa_fasta: &String, iqt
     if !cmd_options.contains(&"--prefix"){
         cmd_args.push("--prefix");
         cmd_args.push(output_file.as_str());
+    }
+    // Include threads option
+    let threads_copy = threads.clone().to_string();
+    if !cmd_options.contains(&"-T"){
+        cmd_args.push("-T");
+        cmd_args.push(threads_copy.as_str());
     }
     // parse iqtree_options into vector
     cmd_args.append(&mut cmd_options);

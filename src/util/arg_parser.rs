@@ -116,5 +116,8 @@ pub enum Commands {
         /// Gap threshold for multiple sequence alignment [0.0 - 1.0]
         #[arg(short='d', long, default_value="0.5", value_parser = threshold_in_range_f64)]
         threshold: f64,
+        /// Number of threads to use
+        #[arg(short='c', long, default_value="0")]
+        threads: usize,
     },
 }

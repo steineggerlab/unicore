@@ -380,8 +380,6 @@ def main():
     id_field = args.id
 
     half_precision = False if int(args.half) == 0 else True
-    print(half_precision, device)
-    print(half_precision and device == torch.device("cpu"))
     assert not (half_precision and device == torch.device("cpu")), print(
         "Running fp16 on CPU is not supported, yet")
     
