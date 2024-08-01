@@ -139,9 +139,9 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
 
     // Iterate through the gene_list and generate alignment
     if aligner == "mafft" {
-        run_mafft(&aligner_path, input_path, &gene_list, &aligner_options, &threshold, &threads)?;
+        run_mafft(&aligner_path, input_path, &gene_list, &aligner_options, threshold, threads)?;
     } else if aligner == "foldmason" {
-        run_foldmason(&aligner_path, input_path, &gene_list, &aligner_options, &threshold, &threads)?;
+        run_foldmason(&aligner_path, input_path, &gene_list, &aligner_options, threshold, threads)?;
     } else {
         err::error(err::ERR_MODULE_NOT_IMPLEMENTED, Some("Need implementation".to_string()))
     }
@@ -160,7 +160,7 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
 
     // Build tree
     if tree_builder == "iqtree" {
-        run_iqtree(&tree_builder_path, &output, &combined_fasta.display().to_string(), &tree_options, &threads)?;
+        run_iqtree(&tree_builder_path, &output, &combined_fasta.display().to_string(), &tree_options, threads)?;
     } else {
         // TODO: Implement other tree building methods
         err::error(err::ERR_MODULE_NOT_IMPLEMENTED, Some("Need implementation".to_string()))
@@ -169,7 +169,7 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
     Ok(())
 }
 
-fn run_mafft(mafft_path: &String, parent: &Path, gene_list: &Vec<PathBuf>, mafft_options: &String, threshold: &f64, threads: &usize) -> Result<(), Box<dyn std::error::Error>> {
+fn run_mafft(mafft_path: &String, parent: &Path, gene_list: &Vec<PathBuf>, mafft_options: &String, threshold: usize, threads: usize) -> Result<(), Box<dyn std::error::Error>> {
     for gene in gene_list.iter() {
         if let Some(gene_name) = gene.file_stem().and_then(|name| name.to_str()) {
             let gene_dir = parent.join(gene_name);
@@ -177,7 +177,7 @@ fn run_mafft(mafft_path: &String, parent: &Path, gene_list: &Vec<PathBuf>, mafft
             // parse mafft_options into vector
             let mut cmd_args = mafft_options.split_whitespace().collect::<Vec<&str>>();
             // Include threads option
-            let threads_copy = threads.clone().to_string();
+            let threads_copy = threads.to_string();
             if !cmd_args.contains(&"--thread") {
                 cmd_args.push("--thread");
                 cmd_args.push(threads_copy.as_str());
@@ -198,7 +198,7 @@ fn run_mafft(mafft_path: &String, parent: &Path, gene_list: &Vec<PathBuf>, mafft
     Ok(())
 }
 
-fn run_foldmason(foldmason_path: &String, parent: &Path, gene_list: &Vec<PathBuf>, foldmason_options: &String, threshold: &f64, threads: &usize) -> Result<(), Box<dyn std::error::Error>> {
+fn run_foldmason(foldmason_path: &String, parent: &Path, gene_list: &Vec<PathBuf>, foldmason_options: &String, threshold: usize, threads: usize) -> Result<(), Box<dyn std::error::Error>> {
     for gene in gene_list.iter() {
         if let Some(gene_name) = gene.file_stem().and_then(|name| name.to_str()) {
             let gene_dir = parent.join(gene_name);
@@ -229,7 +229,7 @@ fn run_foldmason(foldmason_path: &String, parent: &Path, gene_list: &Vec<PathBuf
                 }
             }
             cmd_args.append(&mut cmd_options);
-            let threads_copy = threads.clone().to_string();
+            let threads_copy = threads.to_string();
             if !cmd_options.contains(&"--threads") {
                 cmd_args.push("--threads");
                 cmd_args.push(threads_copy.as_str());
@@ -244,7 +244,7 @@ fn run_foldmason(foldmason_path: &String, parent: &Path, gene_list: &Vec<PathBuf
     Ok(())
 }
 
-fn run_iqtree(iqtree_path: &String, output_dir: &String, msa_fasta: &String, iqtree_options: &String, threads: &usize) -> Result<(), Box<dyn std::error::Error>> {
+fn run_iqtree(iqtree_path: &String, output_dir: &String, msa_fasta: &String, iqtree_options: &String, threads: usize) -> Result<(), Box<dyn std::error::Error>> {
     let mut cmd = std::process::Command::new(iqtree_path);
     let mut cmd_options = iqtree_options.split_whitespace().collect::<Vec<&str>>();
     // If there is "--prefix" in the option
@@ -255,7 +255,7 @@ fn run_iqtree(iqtree_path: &String, output_dir: &String, msa_fasta: &String, iqt
         cmd_args.push(output_file.as_str());
     }
     // Include threads option
-    let threads_copy = threads.clone().to_string();
+    let threads_copy = threads.to_string();
     if !cmd_options.contains(&"-T"){
         cmd_args.push("-T");
         cmd_args.push(threads_copy.as_str());
@@ -268,14 +268,13 @@ fn run_iqtree(iqtree_path: &String, output_dir: &String, msa_fasta: &String, iqt
 }
 
 // Only write columns that have >=threshold coverage
-fn filter_msa(input_msa: &String, output_msa: &String, threshold: &f64) -> Result<(), Box<dyn std::error::Error>> {
+fn filter_msa(input_msa: &String, output_msa: &String, threshold: usize) -> Result<(), Box<dyn std::error::Error>> {
     // Read in fasta file
     let msa: HashMap<String, String> = fasta::read_fasta(input_msa);
     let seq_num = msa.len();
-    // Round up
-    let threshold_int: i32 = (seq_num as f64 * threshold).ceil() as i32;
-    let mut non_gap_cnt: Vec<i32> = vec![0; msa.values().next().unwrap().len()];
+
     // Iterate through the sequences and fill non_gap_cnt
+    let mut non_gap_cnt: Vec<usize> = vec![0; msa.values().next().unwrap().len()];
     for seq in msa.values() {
         for (i, c) in seq.chars().enumerate() {
             if c != '-' {
@@ -283,9 +282,10 @@ fn filter_msa(input_msa: &String, output_msa: &String, threshold: &f64) -> Resul
             }
         }
     }
-    // Indices of non_gap_cnt >= threshold_int
+
+    // Indices of non_gap_cnt >= threshold
     let indices: Vec<usize> = non_gap_cnt.iter().enumerate()
-        .filter(|(_, &x)| x >= threshold_int)
+        .filter(|(_, &x)| x * 100 >= threshold * seq_num)
         .map(|(i, _)| i)
         .collect();
     // Write the filtered MSA

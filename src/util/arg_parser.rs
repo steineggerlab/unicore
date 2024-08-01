@@ -12,7 +12,7 @@ pub struct Args {
 }
 
 // Check if the threshold is in range
-fn threshold_in_range_usize(s: &str) -> Result<usize, String> {
+fn threshold_in_range(s: &str) -> Result<usize, String> {
     let threshold: usize = s.parse().map_err(|_| "Not a number".to_string())?;
     if threshold > 100 {
         Err(format!("Threshold `{}` is not in range 0 to 100", s))
@@ -20,7 +20,7 @@ fn threshold_in_range_usize(s: &str) -> Result<usize, String> {
         Ok(threshold)
     }
 }
-fn threshold_in_range_f64(s: &str) -> Result<f64, String> {
+fn _threshold_in_range_f64(s: &str) -> Result<f64, String> {
     let threshold: f64 = s.parse().map_err(|_| "Not a number".to_string())?;
     if threshold < 0.0 || threshold > 1.0 {
         Err(format!("Threshold `{}` is not in range 0.0 to 1.0", s))
@@ -86,7 +86,7 @@ pub enum Commands {
         /// Output directory
         output: PathBuf,
         /// Coverage threshold for core structures. [0 - 100]
-        #[arg(short, long, default_value="80", value_parser = threshold_in_range_usize)]
+        #[arg(short, long, default_value="80", value_parser = threshold_in_range)]
         threshold: usize,
         /// Generate tsv with copy number statistics
         #[arg(short, long, default_value="true")]
@@ -113,9 +113,9 @@ pub enum Commands {
         /// Options for tree builder; please adjust if using different tree method
         #[arg(short='p', long, default_value="-m JTT+F+I+G -B 1000")]
         tree_options: String,
-        /// Gap threshold for multiple sequence alignment [0.0 - 1.0]
-        #[arg(short='d', long, default_value="0.5", value_parser = threshold_in_range_f64)]
-        threshold: f64,
+        /// Gap threshold for multiple sequence alignment [0 - 100]
+        #[arg(short='d', long, default_value="50", value_parser = threshold_in_range)]
+        threshold: usize,
         /// Number of threads to use
         #[arg(short='c', long, default_value="0")]
         threads: usize,
