@@ -160,11 +160,7 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
 
     // Build tree
     if tree_builder == "iqtree" {
-        let iqtree_path = match &bin.get("iqtree") {
-            Some(bin) => &bin.path,
-            None => { err::error(err::ERR_BINARY_NOT_FOUND, Some("iqtree".to_string())); }
-        };
-        run_iqtree(&iqtree_path, &output, &combined_fasta.display().to_string(), &tree_options, &threads)?;
+        run_iqtree(&tree_builder_path, &output, &combined_fasta.display().to_string(), &tree_options, &threads)?;
     } else {
         // TODO: Implement other tree building methods
         err::error(err::ERR_MODULE_NOT_IMPLEMENTED, Some("Need implementation".to_string()))
