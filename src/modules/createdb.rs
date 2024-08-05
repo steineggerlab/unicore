@@ -1,4 +1,4 @@
-use crate::util::arg_parser::{Args, Commands::Createdb};
+use crate::util::arg_parser::Args;
 use crate::util::fasta_io as fasta;
 use crate::envs::variables as var;
 use crate::envs::error_handler as err;
@@ -10,30 +10,12 @@ use std::path::{Path, MAIN_SEPARATOR as SEP};
 
 pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error::Error>> {
     // Retrieve mandatory arguments
-    let input = match &args.command {
-        Some(Createdb { input, .. }) => input.clone().to_string_lossy().into_owned(),
-        _ => { err::error(err::ERR_ARGPARSE, Some("createdb - input".to_string())); }
-    };
-    let output = match &args.command {
-        Some(Createdb { output, .. }) => output.clone().to_string_lossy().into_owned(),
-        _ => { err::error(err::ERR_ARGPARSE, Some("createdb - output".to_string())); }
-    };
-    let model = match &args.command {
-        Some(Createdb { model, .. }) => model.clone().to_string_lossy().into_owned(),
-        _ => { err::error(err::ERR_ARGPARSE, Some("createdb - model".to_string())); }
-    };
-    let keep = match &args.command {
-        Some(Createdb { keep, .. }) => *keep,
-        _ => { err::error(err::ERR_ARGPARSE, Some("createdb - keep".to_string())); }
-    };
-    let overwrite = match &args.command {
-        Some(Createdb { overwrite, .. }) => *overwrite,
-        _ => { err::error(err::ERR_ARGPARSE, Some("createdb - overwrite".to_string())); }
-    };
-    let max_len = match &args.command {
-        Some(Createdb { max_len, .. }) => max_len.clone(),
-        _ => { err::error(err::ERR_ARGPARSE, Some("createdb - max_len".to_string())); }
-    };
+    let input = args.createdb_input.clone().unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("createdb - input".to_string())); });
+    let output = args.createdb_output.clone().unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("createdb - output".to_string())); });
+    let model = args.createdb_model.clone().unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("createdb - model".to_string())); });
+    let keep = args.createdb_keep.unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("createdb - keep".to_string())); });
+    let overwrite = args.createdb_overwrite.unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("createdb - overwrite".to_string())); });
+    let max_len = args.createdb_max_len.unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("createdb - max_len".to_string())); });
 
     // Get all the fasta files in input directory
     let mut fasta_files = Vec::new();

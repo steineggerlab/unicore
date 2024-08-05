@@ -1,35 +1,17 @@
 use std::path::Path;
-use crate::util::arg_parser::{Args, Commands::Search};
+use crate::util::arg_parser::Args;
 use crate::envs::error_handler as err;
 use crate::util::command as cmd;
 
 // Run foldseek search and convertalis
 pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(), Box<dyn std::error::Error>> {
     // Retrieve arguments
-    let input = match &args.command {
-        Some(Search { input, .. }) => input.clone().to_string_lossy().into_owned(),
-        _ => { err::error(err::ERR_ARGPARSE, Some("search - input".to_string())); }
-    };
-    let target = match &args.command {
-        Some(Search { target, .. }) => target.clone().to_string_lossy().into_owned(),
-        _ => { err::error(err::ERR_ARGPARSE, Some("search - target".to_string())); }
-    };
-    let output = match &args.command {
-        Some(Search { output, .. }) => output.clone().to_string_lossy().into_owned(),
-        _ => { err::error(err::ERR_ARGPARSE, Some("search - output".to_string())); }
-    };
-    let tmp = match &args.command {
-        Some(Search { tmp, .. }) => tmp.clone().to_string_lossy().into_owned(),
-        _ => { err::error(err::ERR_ARGPARSE, Some("search - tmp".to_string())); }
-    };
-    let keep_aln_db = match &args.command {
-        Some(Search { keep_aln_db, .. }) => keep_aln_db.clone(),
-        _ => { err::error(err::ERR_ARGPARSE, Some("search - keep_aln_db".to_string())); }
-    };
-    let search_options = match &args.command {
-        Some(Search { search_options, .. }) => search_options.clone(),
-        _ => { err::error(err::ERR_ARGPARSE, Some("search - foldseek_args".to_string())); }
-    };
+    let input = args.search_input.clone().unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("search - input".to_string())); });
+    let target = args.search_target.clone().unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("search - target".to_string())); });
+    let output = args.search_output.clone().unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("search - output".to_string())); });
+    let tmp = args.search_tmp.clone().unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("search - tmp".to_string())); });
+    let keep_aln_db = args.search_keep_aln_db.unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("search - keep_aln_db".to_string())); });
+    let search_options = args.search_search_options.clone().unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("search - foldseek_args".to_string())); });
 
     // Try to obtain the parent directory of the output
     let parent = if let Some(p) = Path::new(&output).parent() {

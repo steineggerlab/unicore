@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use std::io::Write;
 use std::process::Command;
 
-use crate::util::arg_parser::{Args, Commands::Tree};
+use crate::util::arg_parser::Args;
 use crate::envs::error_handler as err;
 use crate::util::command as cmd;
 use crate::util::create_gene_specific_fasta as gsf;
@@ -13,42 +13,15 @@ use crate::util::fasta_io as fasta;
 
 pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(), Box<dyn std::error::Error>> {
     // Retrieve arguments
-    let db = match &args.command {
-        Some(Tree {db, .. }) => db.clone().to_string_lossy().into_owned(),
-        _ => { crate::envs::error_handler::error(crate::envs::error_handler::ERR_ARGPARSE, Some("tree - proteome_db".to_string())); }
-    };
-    let input = match &args.command {
-        Some(Tree { input, .. }) => input.clone().to_string_lossy().into_owned(),
-        _ => { crate::envs::error_handler::error(crate::envs::error_handler::ERR_ARGPARSE, Some("tree - input".to_string())); }
-    };
-    let output = match &args.command {
-        Some(Tree { output, .. }) => output.clone().to_string_lossy().into_owned(),
-        _ => { crate::envs::error_handler::error(crate::envs::error_handler::ERR_ARGPARSE, Some("tree - output".to_string())); }
-    };
-    let aligner = match &args.command {
-        Some(Tree { aligner, .. }) => aligner.clone(),
-        _ => { crate::envs::error_handler::error(crate::envs::error_handler::ERR_ARGPARSE, Some("tree - aligner".to_string())); }
-    };
-    let tree_builder = match &args.command {
-        Some(Tree { tree_builder, .. }) => tree_builder.clone(),
-        _ => { crate::envs::error_handler::error(crate::envs::error_handler::ERR_ARGPARSE, Some("tree - tree_builder".to_string())); }
-    };
-    let aligner_options = match &args.command {
-        Some(Tree { aligner_options, .. }) => aligner_options.clone(),
-        _ => { crate::envs::error_handler::error(crate::envs::error_handler::ERR_ARGPARSE, Some("tree - aligner_options".to_string())); }
-    };
-    let tree_options = match &args.command {
-        Some(Tree { tree_options, .. }) => tree_options.clone(),
-        _ => { crate::envs::error_handler::error(crate::envs::error_handler::ERR_ARGPARSE, Some("tree - tree_options".to_string())); }
-    };
-    let threshold = match &args.command {
-        Some(Tree { threshold, .. }) => threshold.clone(),
-        _ => { crate::envs::error_handler::error(crate::envs::error_handler::ERR_ARGPARSE, Some("tree - threshold".to_string())); }
-    };
-    let mut threads = match &args.command {
-        Some(Tree { threads, .. }) => threads.clone(),
-        _ => { crate::envs::error_handler::error(crate::envs::error_handler::ERR_ARGPARSE, Some("tree - threads".to_string())); }
-    };
+    let db = args.tree_db.clone().unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("tree - proteome_db".to_string())); });
+    let input = args.tree_input.clone().unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("tree - input".to_string())); });
+    let output = args.tree_output.clone().unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("tree - output".to_string())); });
+    let aligner = args.tree_aligner.clone().unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("tree - aligner".to_string())); });
+    let tree_builder = args.tree_tree_builder.clone().unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("tree - tree_builder".to_string())); });
+    let aligner_options = args.tree_aligner_options.clone().unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("tree - aligner_options".to_string())); });
+    let tree_options = args.tree_tree_options.clone().unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("tree - tree_options".to_string())); });
+    let threshold = args.tree_threshold.clone().unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("tree - threshold".to_string())); });
+    let mut threads = args.tree_threads.clone().unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("tree - threads".to_string())); });
 
     // Get maximum thread number if threads == -1
     if threads == 0 {

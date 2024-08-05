@@ -1,9 +1,10 @@
 use std::path::PathBuf;
 use clap::{Parser, Subcommand};
+use crate::util::arg_parser::Commands::*;
 
 #[derive(Parser)]
 #[clap(disable_version_flag = true, arg_required_else_help = true)]
-pub struct Args {
+pub struct ClapArgs {
     #[command(subcommand)]
     pub command: Option<Commands>,
     /// Print version and information
@@ -120,4 +121,135 @@ pub enum Commands {
         #[arg(short='c', long, default_value="0")]
         threads: usize,
     },
+}
+
+pub struct Args {
+    pub command: Option<Commands>,
+    pub version: bool,
+
+    pub createdb_input: Option<String>,
+    pub createdb_output: Option<String>,
+    pub createdb_model: Option<String>,
+    pub createdb_keep: Option<bool>,
+    pub createdb_overwrite: Option<bool>,
+    pub createdb_max_len: Option<Option<usize>>,
+
+    pub profile_input_db: Option<String>,
+    pub profile_input_m8: Option<String>,
+    pub profile_output: Option<String>,
+    pub profile_threshold: Option<usize>,
+    pub profile_print_copiness: Option<bool>,
+
+    pub search_input: Option<String>,
+    pub search_target: Option<String>,
+    pub search_output: Option<String>,
+    pub search_tmp: Option<String>,
+    pub search_keep_aln_db: Option<bool>,
+    pub search_search_options: Option<String>,
+
+    pub tree_db: Option<String>,
+    pub tree_input: Option<String>,
+    pub tree_output: Option<String>,
+    pub tree_aligner: Option<String>,
+    pub tree_tree_builder: Option<String>,
+    pub tree_aligner_options: Option<Option<String>>,
+    pub tree_tree_options: Option<String>,
+    pub tree_threshold: Option<usize>,
+    pub tree_threads: Option<usize>,
+}
+fn own(path: &PathBuf) -> String { path.clone().to_string_lossy().into_owned() }
+impl Args {
+    pub fn parse() -> Self {
+        let args = ClapArgs::parse();
+
+        let createdb_input = match &args.command {
+            Some(Createdb { input, .. }) => Some(own(input)), _ => None,
+        };
+        let createdb_output = match &args.command {
+            Some(Createdb { output, .. }) => Some(own(output)), _ => None,
+        };
+        let createdb_model = match &args.command {
+            Some(Createdb { model, .. }) => Some(own(model)), _ => None,
+        };
+        let createdb_keep = match &args.command {
+            Some(Createdb { keep, .. }) => Some(*keep), _ => None,
+        };
+        let createdb_overwrite = match &args.command {
+            Some(Createdb { overwrite, .. }) => Some(*overwrite), _ => None,
+        };
+        let createdb_max_len = match &args.command {
+            Some(Createdb { max_len, .. }) => Some(max_len.clone()), _ => None,
+        };
+
+        let profile_input_db = match &args.command {
+            Some(Profile { input_db, .. }) => Some(own(input_db)), _ => None,
+        };
+        let profile_input_m8 = match &args.command {
+            Some(Profile { input_m8, .. }) => Some(own(input_m8)), _ => None,
+        };
+        let profile_output = match &args.command {
+            Some(Profile { output, .. }) => Some(own(output)), _ => None,
+        };
+        let profile_threshold = match &args.command {
+            Some(Profile { threshold, .. }) => Some(*threshold), _ => None,
+        };
+        let profile_print_copiness = match &args.command {
+            Some(Profile { print_copiness, .. }) => Some(*print_copiness), _ => None,
+        };
+
+        let search_input = match &args.command {
+            Some(Search { input, .. }) => Some(own(input)), _ => None,
+        };
+        let search_target = match &args.command {
+            Some(Search { target, .. }) => Some(own(target)), _ => None,
+        };
+        let search_output = match &args.command {
+            Some(Search { output, .. }) => Some(own(output)), _ => None,
+        };
+        let search_tmp = match &args.command {
+            Some(Search { tmp, .. }) => Some(own(tmp)), _ => None,
+        };
+        let search_keep_aln_db = match &args.command {
+            Some(Search { keep_aln_db, .. }) => Some(*keep_aln_db), _ => None,
+        };
+        let search_search_options = match &args.command {
+            Some(Search { search_options, .. }) => Some(search_options.clone()), _ => None,
+        };
+
+        let tree_db = match &args.command {
+            Some(Tree { db, .. }) => Some(own(db)), _ => None,
+        };
+        let tree_input = match &args.command {
+            Some(Tree { input, .. }) => Some(own(input)), _ => None,
+        };
+        let tree_output = match &args.command {
+            Some(Tree { output, .. }) => Some(own(output)), _ => None,
+        };
+        let tree_aligner = match &args.command {
+            Some(Tree { aligner, .. }) => Some(aligner.clone()), _ => None,
+        };
+        let tree_tree_builder = match &args.command {
+            Some(Tree { tree_builder, .. }) => Some(tree_builder.clone()), _ => None,
+        };
+        let tree_aligner_options = match &args.command {
+            Some(Tree { aligner_options, .. }) => Some(aligner_options.clone()), _ => None,
+        };
+        let tree_tree_options = match &args.command {
+            Some(Tree { tree_options, .. }) => Some(tree_options.clone()), _ => None,
+        };
+        let tree_threshold = match &args.command {
+            Some(Tree { threshold, .. }) => Some(*threshold), _ => None,
+        };
+        let tree_threads = match &args.command {
+            Some(Tree { threads, .. }) => Some(*threads), _ => None,
+        };
+
+        Args {
+            command: args.command, version: args.version,
+            createdb_input, createdb_output, createdb_model, createdb_keep, createdb_overwrite, createdb_max_len,
+            profile_input_db, profile_input_m8, profile_output, profile_threshold, profile_print_copiness,
+            search_input, search_target, search_output, search_tmp, search_keep_aln_db, search_search_options,
+            tree_db, tree_input, tree_output, tree_aligner, tree_tree_builder, tree_aligner_options, tree_tree_options, tree_threshold, tree_threads,
+        }
+    }
 }

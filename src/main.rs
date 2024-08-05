@@ -4,7 +4,6 @@ mod util;
 use envs::error_handler as err;
 use envs::variables as var;
 use util::arg_parser as parser;
-use clap::Parser;
 
 // load path config
 fn load_config(bin: &mut var::BinaryPaths) {
