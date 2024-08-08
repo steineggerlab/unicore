@@ -24,7 +24,7 @@ fn read_db(filename: &String) -> Vec<String> {
     db
 }
 
-pub fn create_gene_specific_fasta(input_db: &str, gene_dir: &str, gene_list: &Vec<PathBuf>) -> Result<(), Box<dyn std::error::Error>> {
+pub fn create_gene_specific_fasta(input_db: &str, gene_dir: &PathBuf, gene_list: &Vec<PathBuf>) -> Result<(), Box<dyn std::error::Error>> {
 
     // Read names, amino acid and 3di sequences
     let names = read_db(&format!("{}_h", input_db));
@@ -77,10 +77,10 @@ pub fn create_gene_specific_fasta(input_db: &str, gene_dir: &str, gene_list: &Ve
             }
 
             cnt += 1;
-            print!("\rCreated gene specific fasta files for {}/{}: {}/{}", gene_dir, gene_name, cnt, gene_list.len());
+            print!("\rCreating gene specific fasta files {}/{}...", cnt, gene_list.len());
         }
     }
-    println!("{} done!", gene_dir);
+    println!(" Done\nGene specific fasta files prepared in: {}", gene_dir.display());
 
     Ok(())
 }

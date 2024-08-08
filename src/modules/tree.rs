@@ -51,6 +51,7 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
         Some(bin) => &bin.path,
         None => { err::error(err::ERR_BINARY_NOT_FOUND, Some(aligner.clone())); }
     };
+    let aligner_options = aligner_options.unwrap_or_else(|| "".to_string());
 
     // Check tree builder
     let tree_builder_path = match &bin.get(&tree_builder) {
@@ -63,7 +64,9 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
         fs::create_dir_all(&output)?;
     }
 
-    let aligner_options = aligner_options.unwrap_or_else(|| "".to_string());
+    // Prepare gene specific fasta directory
+    let gene_fasta_dir = Path::new(&output).join("fasta");
+    fs::create_dir_all(&gene_fasta_dir)?;
 
     // Get the gene_list
     let gene_list = fs::read_dir(&input)?
@@ -72,7 +75,7 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
         .filter(|path| path.is_file() && path.extension().map_or(false, |ext| ext == "txt"))
         .collect::<Vec<_>>();
     // Create gene specific fasta
-    gsf::create_gene_specific_fasta(&db, &input, &gene_list)?;
+    gsf::create_gene_specific_fasta(&db, &gene_fasta_dir, &gene_list)?;
 
     // Build foldseek db
     let foldseek_path = match &bin.get("foldseek") {
@@ -80,12 +83,11 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
         None => { err::error(err::ERR_BINARY_NOT_FOUND, Some("foldseek".to_string())); }
     };
     // Iterate through the gene_list and build foldseek db
-    let input_path = Path::new(&input);
     // Only need to build foldseek db when the aligner is foldmason
     if aligner == "foldmason" {
         for gene in gene_list.iter() {
             if let Some(gene_name) = gene.file_stem().and_then(|name| name.to_str()) {
-                let gene_dir = input_path.join(gene_name);
+                let gene_dir = gene_fasta_dir.join(gene_name);
                 // amino acid db
                 let mut cmd = Command::new(foldseek_path);
                 let aa_fasta = gene_dir.join("aa.fasta");
@@ -112,9 +114,9 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
 
     // Iterate through the gene_list and generate alignment
     if aligner == "mafft" || aligner == "mafft-linsi" {
-        run_mafft(&aligner_path, input_path, &gene_list, &aligner_options, threshold, threads)?;
+        run_mafft(&aligner_path, &gene_fasta_dir, &gene_list, &aligner_options, threshold, threads)?;
     } else if aligner == "foldmason" {
-        run_foldmason(&aligner_path, input_path, &gene_list, &aligner_options, threshold, threads)?;
+        run_foldmason(&aligner_path, &gene_fasta_dir, &gene_list, &aligner_options, threshold, threads)?;
     } else {
         err::error(err::ERR_MODULE_NOT_IMPLEMENTED, Some("Need implementation".to_string()))
     }
@@ -123,7 +125,7 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
     let msa_list = gene_list.iter()
         .map(|gene| {
             let gene_name = gene.file_stem().and_then(|name| name.to_str()).unwrap();
-            input_path.join(gene_name).join(format!("{}.fa.filtered", gene_name)).display().to_string()
+            gene_fasta_dir.join(gene_name).join(format!("{}.fa.filtered", gene_name)).display().to_string()
         })
         .collect::<Vec<_>>();
 
