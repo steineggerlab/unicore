@@ -87,7 +87,7 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
             if let Some(gene_name) = gene.file_stem().and_then(|name| name.to_str()) {
                 let gene_dir = input_path.join(gene_name);
                 // amino acid db
-                let mut cmd = std::process::Command::new(foldseek_path);
+                let mut cmd = Command::new(foldseek_path);
                 let aa_fasta = gene_dir.join("aa.fasta");
                 let aa_db = gene_dir.join(format!("{}_db", gene_name).as_str());
                 let cmd_args = vec!["base:createdb",
@@ -97,7 +97,7 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
                 let mut cmd = cmd.args(cmd_args);
                 cmd::run(&mut cmd);
                 // 3Di db
-                let mut cmd = std::process::Command::new(foldseek_path);
+                let mut cmd = Command::new(foldseek_path);
                 let di_fasta = gene_dir.join("3di.fasta");
                 let di_db = gene_dir.join(format!("{}_db_ss", gene_name).as_str());
                 let cmd_args = vec!["base:createdb",
@@ -111,7 +111,7 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
     }
 
     // Iterate through the gene_list and generate alignment
-    if aligner == "mafft" {
+    if aligner == "mafft" || aligner == "mafft-linsi" {
         run_mafft(&aligner_path, input_path, &gene_list, &aligner_options, threshold, threads)?;
     } else if aligner == "foldmason" {
         run_foldmason(&aligner_path, input_path, &gene_list, &aligner_options, threshold, threads)?;
@@ -146,7 +146,7 @@ fn run_mafft(mafft_path: &String, parent: &Path, gene_list: &Vec<PathBuf>, mafft
     for gene in gene_list.iter() {
         if let Some(gene_name) = gene.file_stem().and_then(|name| name.to_str()) {
             let gene_dir = parent.join(gene_name);
-            let mut cmd = std::process::Command::new(mafft_path);
+            let mut cmd = Command::new(mafft_path);
             // parse mafft_options into vector
             let mut cmd_args = mafft_options.split_whitespace().collect::<Vec<&str>>();
             // Include threads option
@@ -162,7 +162,7 @@ fn run_mafft(mafft_path: &String, parent: &Path, gene_list: &Vec<PathBuf>, mafft
             let aa_fasta = gene_dir.join("aa.fasta");
             cmd_args.push(aa_fasta.to_str().unwrap());
             let msa_fasta = gene_dir.join(format!("{}.fa", gene_name));
-            let msa_file = std::fs::File::create(&msa_fasta)?;
+            let msa_file = fs::File::create(&msa_fasta)?;
             let mut cmd = cmd.args(cmd_args).stdout(msa_file);
 
             cmd::run(&mut cmd);
