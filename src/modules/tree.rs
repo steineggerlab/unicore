@@ -155,14 +155,18 @@ fn run_mafft(mafft_path: &String, parent: &Path, gene_list: &Vec<PathBuf>, mafft
                 cmd_args.push("--thread");
                 cmd_args.push(threads_copy.as_str());
             }
+            cmd_args.push("--anysymbol");
+            cmd_args.push("--quiet"); // TODO: verbose option should disable this
+
             // add input and output
             let aa_fasta = gene_dir.join("aa.fasta");
-            let msa_fasta = gene_dir.join(format!("{}.fa", gene_name));
             cmd_args.push(aa_fasta.to_str().unwrap());
-            cmd_args.push(">");
-            cmd_args.push(msa_fasta.to_str().unwrap());
-            let mut cmd = cmd.args(cmd_args);
+            let msa_fasta = gene_dir.join(format!("{}.fa", gene_name));
+            let msa_file = std::fs::File::create(&msa_fasta)?;
+            let mut cmd = cmd.args(cmd_args).stdout(msa_file);
+
             cmd::run(&mut cmd);
+
             // output_msa is msa_fasta + ".filtered"
             let output_msa = gene_dir.join(format!("{}.fa.filtered", gene_name)).display().to_string();
             filter_msa(&msa_fasta.display().to_string(), &output_msa, threshold)?;
