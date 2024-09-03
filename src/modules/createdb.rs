@@ -84,6 +84,40 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
     let combined_aa = format!("{}{}{}{}combined_aa.fasta", curr_dir, SEP, parent, SEP);
     fasta::write_fasta(&combined_aa, &fasta_data)?;
 
+    let foldseek_path = match &bin.get("foldseek") {
+        Some(bin) => &bin.path,
+        None => { err::error(err::ERR_BINARY_NOT_FOUND, Some("foldseek".to_string())); }
+    };
+
+    // Check if weights exist
+    let model = if Path::new(&model).join("model.bin").exists() {
+        model
+    } else if Path::new(&model).join(format!("model{}model.bin", SEP)).exists() {
+        format!("{}{}model", model, SEP)
+    } else {
+        // Download the model
+        std::fs::create_dir_all(format!("{}{}tmp", model, SEP))?;
+        let mut cmd = std::process::Command::new(foldseek_path);
+        let mut cmd = cmd
+            .arg("databases").arg("ProstT5").arg(&model).arg(format!("{}{}tmp", model, SEP));
+        cmd::run(&mut cmd);
+        format!("{}{}model", model, SEP)
+    };
+
+    // Run foldseek createdb
+    let mut cmd = std::process::Command::new(foldseek_path);
+    let mut cmd = cmd
+        .arg("createdb").arg(&combined_aa).arg(&output)
+        .arg("--prostt5-model").arg(&model);
+    cmd::run(&mut cmd);
+
+    // Delete intermediate files
+    if !keep {
+        std::fs::remove_file(combined_aa)?;
+    }
+
+    Ok(())
+/* TODO Delete this block if foldseek createdb works
     let input_3di = format!("{}{}{}{}combined_3di.fasta", curr_dir, SEP, parent, SEP);
     let inter_prob = format!("{}{}{}{}output_probabilities.csv", curr_dir, SEP, parent, SEP);
     let output_3di = format!("{}{}{}_ss", curr_dir, SEP, output);
@@ -123,6 +157,5 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
         std::fs::remove_file(input_3di)?;
         std::fs::remove_file(inter_prob)?;
     }
-
-    Ok(())
+*/
 }
