@@ -85,7 +85,7 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
     // Iterate through the gene_list and build foldseek db
     // Only need to build foldseek db when the aligner is foldmason
     if aligner == "foldmason" {
-        for gene in gene_list.iter() {
+        for (i, gene) in gene_list.iter().enumerate() {
             if let Some(gene_name) = gene.file_stem().and_then(|name| name.to_str()) {
                 let gene_dir = gene_fasta_dir.join(gene_name);
                 // amino acid db
@@ -102,14 +102,19 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
                 let mut cmd = Command::new(foldseek_path);
                 let di_fasta = gene_dir.join("3di.fasta");
                 let di_db = gene_dir.join(format!("{}_db_ss", gene_name).as_str());
-                let cmd_args = vec!["base:createdb",
-                                    di_fasta.to_str().unwrap(),
-                                    di_db.to_str().unwrap(),
-                                    "--shuffle", "0"];
+                let cmd_args = vec![
+                    "base:createdb",
+                    di_fasta.to_str().unwrap(),
+                    di_db.to_str().unwrap(),
+                    "--shuffle", "0",
+                    "-v", "0" // TODO: verbose option should modify this
+                ];
                 let mut cmd = cmd.args(cmd_args);
                 cmd::run(&mut cmd);
             }
+            print!("\rBuilding foldseek databases {}/{}...", i + 1, gene_list.len());
         }
+        println!(" Done");
     }
 
     // Iterate through the gene_list and generate alignment
@@ -145,7 +150,7 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
 }
 
 fn run_mafft(mafft_path: &String, parent: &Path, gene_list: &Vec<PathBuf>, mafft_options: &String, threshold: usize, threads: usize) -> Result<(), Box<dyn std::error::Error>> {
-    for gene in gene_list.iter() {
+    for (i, gene) in gene_list.iter().enumerate() {
         if let Some(gene_name) = gene.file_stem().and_then(|name| name.to_str()) {
             let gene_dir = parent.join(gene_name);
             let mut cmd = Command::new(mafft_path);
@@ -173,12 +178,14 @@ fn run_mafft(mafft_path: &String, parent: &Path, gene_list: &Vec<PathBuf>, mafft
             let output_msa = gene_dir.join(format!("{}.fa.filtered", gene_name)).display().to_string();
             filter_msa(&msa_fasta.display().to_string(), &output_msa, threshold)?;
         }
+        print!("\rAligning genes {}/{}...", i + 1, gene_list.len());
     }
+    println!(" Done");
     Ok(())
 }
 
 fn run_foldmason(foldmason_path: &String, parent: &Path, gene_list: &Vec<PathBuf>, foldmason_options: &String, threshold: usize, threads: usize) -> Result<(), Box<dyn std::error::Error>> {
-    for gene in gene_list.iter() {
+    for (i, gene) in gene_list.iter().enumerate() {
         if let Some(gene_name) = gene.file_stem().and_then(|name| name.to_str()) {
             let gene_dir = parent.join(gene_name);
             let mut cmd = std::process::Command::new(foldmason_path);
@@ -219,7 +226,9 @@ fn run_foldmason(foldmason_path: &String, parent: &Path, gene_list: &Vec<PathBuf
             let output_msa = gene_dir.join(format!("{}.fa.filtered", gene_name)).display().to_string();
             filter_msa(&(msa_fasta.display().to_string() + ".fa"), &output_msa, threshold)?;
         }
+        print!("\rAligning genes {}/{}...", i + 1, gene_list.len());
     }
+    println!(" Done");
     Ok(())
 }
 
@@ -239,6 +248,9 @@ fn run_iqtree(iqtree_path: &String, output_dir: &String, msa_fasta: &String, iqt
         cmd_args.push("-T");
         cmd_args.push(threads_copy.as_str());
     }
+
+    cmd_args.push("--quiet"); // TODO: verbose option should disable this
+
     // parse iqtree_options into vector
     cmd_args.append(&mut cmd_options);
     let mut cmd = cmd.args(cmd_args);
