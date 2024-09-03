@@ -98,7 +98,7 @@ pub enum Commands {
     Profile {
         /// Input database (createdb output)
         input_db: PathBuf,
-        /// Input m8 file (search output)
+        /// Input m8 file (cluster or search output)
         input_m8: PathBuf,
         /// Output directory
         output: PathBuf,

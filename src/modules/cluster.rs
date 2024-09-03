@@ -57,7 +57,8 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
     if !keep_cluster_db {
         let mut cmd = std::process::Command::new(foldseek_path);
         let foldseek_flag = vec![
-            "delete", &output_cluster_db,
+            "rmdb", 
+            &output_cluster_db,
         ];
         let mut cmd = cmd.args(&foldseek_flag);
         cmd::run(&mut cmd);
