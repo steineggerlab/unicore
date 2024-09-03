@@ -108,7 +108,9 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
     let mut cmd = std::process::Command::new(foldseek_path);
     let mut cmd = cmd
         .arg("createdb").arg(&combined_aa).arg(&output)
-        .arg("--prostt5-model").arg(&model);
+        .arg("--prostt5-model").arg(&model)
+        .arg("--gpu").arg("1")
+        .arg("--shuffle").arg("0");
     cmd::run(&mut cmd);
 
     // Delete intermediate files
