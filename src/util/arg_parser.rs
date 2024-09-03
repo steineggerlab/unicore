@@ -59,6 +59,22 @@ pub enum Commands {
         foldseek_options: Option<String>,
  */
     },
+    /// Cluster Foldseek database
+    #[clap(arg_required_else_help = true, allow_hyphen_values = true)]
+    Cluster {
+        /// Input database (createdb output)
+        input: PathBuf,
+        /// Output prefix; the result will be saved as OUTPUT.tsv
+        output: PathBuf,
+        /// Temp directory
+        tmp: PathBuf,
+        /// Keep intermediate Foldseek cluster database
+        #[arg(short, long, default_value="false")]
+        keep_cluster_db: bool,
+        /// Coverage threshold for core structures. [0 - 100]
+        #[arg(short, long, default_value="-c 0.8")]
+        cluster_options: String,
+    },
     /// Search Foldseek database against reference database
     #[clap(arg_required_else_help = true, allow_hyphen_values = true)]
     Search {
@@ -147,6 +163,12 @@ pub struct Args {
     pub search_keep_aln_db: Option<bool>,
     pub search_search_options: Option<String>,
 
+    pub cluster_input: Option<String>,
+    pub cluster_output: Option<String>,
+    pub cluster_tmp: Option<String>,
+    pub cluster_keep_cluster_db: Option<bool>,
+    pub cluster_cluster_options: Option<String>,
+
     pub tree_db: Option<String>,
     pub tree_input: Option<String>,
     pub tree_output: Option<String>,
@@ -216,6 +238,22 @@ impl Args {
             Some(Search { search_options, .. }) => Some(search_options.clone()), _ => None,
         };
 
+        let cluster_input = match &args.command {
+            Some(Cluster { input, .. }) => Some(own(input)), _ => None,
+        };
+        let cluster_output = match &args.command {
+            Some(Cluster { output, .. }) => Some(own(output)), _ => None,
+        };
+        let cluster_tmp = match &args.command {
+            Some(Cluster { tmp, .. }) => Some(own(tmp)), _ => None,
+        };
+        let cluster_keep_cluster_db = match &args.command {
+            Some(Cluster { keep_cluster_db, .. }) => Some(*keep_cluster_db), _ => None,
+        };
+        let cluster_cluster_options = match &args.command {
+            Some(Cluster { cluster_options, .. }) => Some(cluster_options.clone()), _ => None,
+        };
+
         let tree_db = match &args.command {
             Some(Tree { db, .. }) => Some(own(db)), _ => None,
         };
@@ -249,6 +287,7 @@ impl Args {
             createdb_input, createdb_output, createdb_model, createdb_keep, createdb_overwrite, createdb_max_len,
             profile_input_db, profile_input_m8, profile_output, profile_threshold, profile_print_copiness,
             search_input, search_target, search_output, search_tmp, search_keep_aln_db, search_search_options,
+            cluster_input, cluster_output, cluster_tmp, cluster_keep_cluster_db, cluster_cluster_options,
             tree_db, tree_input, tree_output, tree_aligner, tree_tree_builder, tree_aligner_options, tree_tree_options, tree_threshold, tree_threads,
         }
     }
