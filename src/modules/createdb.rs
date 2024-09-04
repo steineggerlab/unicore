@@ -16,6 +16,7 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
     let keep = args.createdb_keep.unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("createdb - keep".to_string())); });
     let overwrite = args.createdb_overwrite.unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("createdb - overwrite".to_string())); });
     let max_len = args.createdb_max_len.unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("createdb - max_len".to_string())); });
+    let gpu = args.createdb_gpu.unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("createdb - gpu".to_string())); });
     let use_python = args.createdb_use_python.unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("createdb - use_python".to_string())); });
 
     // Get all the fasta files in input directory
@@ -113,8 +114,10 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
     let mut cmd = std::process::Command::new(foldseek_path);
     let mut cmd = cmd
         .arg("createdb").arg(&combined_aa).arg(&output)
-        .arg("--prostt5-model").arg(&model)
-        .arg("--gpu").arg("1");
+        .arg("--prostt5-model").arg(&model);
+    let mut cmd = if gpu {
+        cmd.arg("--gpu").arg("1")
+    } else { cmd };
     cmd::run(&mut cmd);
 
     // Delete intermediate files
@@ -138,7 +141,7 @@ fn _run_python(combined_aa: &String, curr_dir: &str, parent: &str, output: &str,
         .arg("-o").arg(&input_3di)
         .arg("--model").arg(&model)
         .arg("--half").arg("0");
-    cmd::_run_at(&mut cmd, &Path::new(&var::parent_dir()));
+    cmd::run_at(&mut cmd, &Path::new(&var::parent_dir()));
 
     // Build foldseek db
     let foldseek_path = match &bin.get("foldseek") {

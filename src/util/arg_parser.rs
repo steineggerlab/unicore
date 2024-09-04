@@ -50,7 +50,10 @@ pub enum Commands {
         /// Set maximum sequence length threshold
         #[arg(long)]
         max_len: Option<usize>,
-        // Use python script instead. hidden option
+        /// Use GPU for foldseek createdb
+        #[arg(short, long, default_value="false")]
+        gpu: bool,
+        /// Use python script instead. hidden option
         #[arg(long, default_value="false", hide = true)]
         use_python: bool,
 /* TODO: Implement optional arguments
@@ -152,6 +155,7 @@ pub struct Args {
     pub createdb_keep: Option<bool>,
     pub createdb_overwrite: Option<bool>,
     pub createdb_max_len: Option<Option<usize>>,
+    pub createdb_gpu: Option<bool>,
     pub createdb_use_python: Option<bool>,
 
     pub profile_input_db: Option<String>,
@@ -205,6 +209,9 @@ impl Args {
         };
         let createdb_max_len = match &args.command {
             Some(Createdb { max_len, .. }) => Some(max_len.clone()), _ => None,
+        };
+        let createdb_gpu = match &args.command {
+            Some(Createdb { gpu, .. }) => Some(*gpu), _ => None,
         };
         let createdb_use_python = match &args.command {
             Some(Createdb { use_python, .. }) => Some(*use_python), _ => None,
@@ -291,7 +298,7 @@ impl Args {
 
         Args {
             command: args.command, version: args.version,
-            createdb_input, createdb_output, createdb_model, createdb_keep, createdb_overwrite, createdb_max_len, createdb_use_python,
+            createdb_input, createdb_output, createdb_model, createdb_keep, createdb_overwrite, createdb_max_len, createdb_gpu, createdb_use_python,
             profile_input_db, profile_input_m8, profile_output, profile_threshold, profile_print_copiness,
             search_input, search_target, search_output, search_tmp, search_keep_aln_db, search_search_options,
             cluster_input, cluster_output, cluster_tmp, cluster_keep_cluster_db, cluster_cluster_options,
