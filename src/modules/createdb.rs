@@ -16,6 +16,7 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
     let keep = args.createdb_keep.unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("createdb - keep".to_string())); });
     let overwrite = args.createdb_overwrite.unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("createdb - overwrite".to_string())); });
     let max_len = args.createdb_max_len.unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("createdb - max_len".to_string())); });
+    let use_python = args.createdb_use_python.unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("createdb - use_python".to_string())); });
 
     // Get all the fasta files in input directory
     let mut fasta_files = Vec::new();
@@ -84,6 +85,10 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
     let combined_aa = format!("{}{}{}{}combined_aa.fasta", curr_dir, SEP, parent, SEP);
     fasta::write_fasta(&combined_aa, &fasta_data)?;
 
+    if use_python {
+        return _run_python(&combined_aa, &curr_dir, &parent, &output, &model, keep, bin);
+    }
+
     let foldseek_path = match &bin.get("foldseek") {
         Some(bin) => &bin.path,
         None => { err::error(err::ERR_BINARY_NOT_FOUND, Some("foldseek".to_string())); }
@@ -109,8 +114,7 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
     let mut cmd = cmd
         .arg("createdb").arg(&combined_aa).arg(&output)
         .arg("--prostt5-model").arg(&model)
-        .arg("--gpu").arg("1")
-        .arg("--shuffle").arg("0");
+        .arg("--gpu").arg("1");
     cmd::run(&mut cmd);
 
     // Delete intermediate files
@@ -119,7 +123,9 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
     }
 
     Ok(())
-/* TODO Delete this block if foldseek createdb works
+}
+
+fn _run_python(combined_aa: &String, curr_dir: &str, parent: &str, output: &str, model: &str, keep: bool, bin: &crate::envs::variables::BinaryPaths) -> Result<(), Box<dyn std::error::Error>> {
     let input_3di = format!("{}{}{}{}combined_3di.fasta", curr_dir, SEP, parent, SEP);
     let inter_prob = format!("{}{}{}{}output_probabilities.csv", curr_dir, SEP, parent, SEP);
     let output_3di = format!("{}{}{}_ss", curr_dir, SEP, output);
@@ -132,7 +138,7 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
         .arg("-o").arg(&input_3di)
         .arg("--model").arg(&model)
         .arg("--half").arg("0");
-    cmd::run_at(&mut cmd, &Path::new(&var::parent_dir()));
+    cmd::_run_at(&mut cmd, &Path::new(&var::parent_dir()));
 
     // Build foldseek db
     let foldseek_path = match &bin.get("foldseek") {
@@ -159,5 +165,6 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
         std::fs::remove_file(input_3di)?;
         std::fs::remove_file(inter_prob)?;
     }
-*/
+
+    Ok(())
 }
