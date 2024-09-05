@@ -112,7 +112,7 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
 
     // Run foldseek createdb
     let mut cmd = std::process::Command::new(foldseek_path);
-    let mut cmd = cmd
+    let cmd = cmd
         .arg("createdb").arg(&combined_aa).arg(&output)
         .arg("--prostt5-model").arg(&model);
     let mut cmd = if gpu {

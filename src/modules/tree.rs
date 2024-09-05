@@ -195,26 +195,26 @@ fn run_foldmason(foldmason_path: &String, parent: &Path, gene_list: &Vec<PathBuf
                             db.to_str().unwrap(),
                             msa_fasta.to_str().unwrap()];
             // parse foldmason_options into vector
-            let mut cmd_options = foldmason_options.split_whitespace().collect::<Vec<&str>>();
+            let cmd_options = foldmason_options.split_whitespace().collect::<Vec<&str>>();
             // Check "--comp-bias-corr" is in the option
-            if !cmd_options.contains(&"--comp-bias-corr") {
-                cmd_args.push("--comp-bias-corr");
-                cmd_args.push("0");
-            } else {
-                // make sure "0" comes right after "--comp-bias-corr"
-                // If not, replace the value
-                let index = cmd_options.iter().position(|&x| x == "--comp-bias-corr").unwrap();
-                if index + 1 == cmd_options.len() {
-                    cmd_options.push("0");
-                } else {
-                    // replace the position to "0"
-                    if cmd_options[index + 1] != "0" {
-                        println!("--comp-bias-corr should be 0. Replacing the value to 0.");
-                        cmd_options[index + 1] = "0";
-                    }
-                }
-            }
-            cmd_args.append(&mut cmd_options);
+            // if !cmd_options.contains(&"--comp-bias-corr") {
+            //     cmd_args.push("--comp-bias-corr");
+            //     cmd_args.push("0");
+            // } else {
+            //     // make sure "0" comes right after "--comp-bias-corr"
+            //     // If not, replace the value
+            //     let index = cmd_options.iter().position(|&x| x == "--comp-bias-corr").unwrap();
+            //     if index + 1 == cmd_options.len() {
+            //         cmd_options.push("0");
+            //     } else {
+            //         // replace the position to "0"
+            //         if cmd_options[index + 1] != "0" {
+            //             println!("--comp-bias-corr should be 0. Replacing the value to 0.");
+            //             cmd_options[index + 1] = "0";
+            //         }
+            //     }
+            // }
+            // cmd_args.append(&mut cmd_options);
             let threads_copy = threads.to_string();
             if !cmd_options.contains(&"--threads") {
                 cmd_args.push("--threads");
@@ -224,7 +224,7 @@ fn run_foldmason(foldmason_path: &String, parent: &Path, gene_list: &Vec<PathBuf
             cmd::run(&mut cmd);
             // output_msa is msa_fasta + ".filtered"
             let output_msa = gene_dir.join(format!("{}.fa.filtered", gene_name)).display().to_string();
-            filter_msa(&(msa_fasta.display().to_string() + ".fa"), &output_msa, threshold)?;
+            filter_msa(&(msa_fasta.display().to_string() + "_aa.fa"), &output_msa, threshold)?;
         }
         print!("\rAligning genes {}/{}...", i + 1, gene_list.len());
     }
