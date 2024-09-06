@@ -77,7 +77,7 @@ pub enum Commands {
         /// Keep intermediate Foldseek cluster database
         #[arg(short, long, default_value="false")]
         keep_cluster_db: bool,
-        /// Coverage threshold for core structures. [0 - 100]
+        /// Arguments for foldseek options in string e.g. -c "-c 0.8"
         #[arg(short, long, default_value="-c 0.8")]
         cluster_options: String,
     },
