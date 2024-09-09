@@ -1,6 +1,7 @@
 use crate::envs::error_handler as err;
 use crate::seq::fasta_io::write_fasta;
-use crate::util::message::print;
+use crate::util::message::print_message as mprint;
+use crate::util::message::println_message as mprintln;
 
 use std::collections::HashMap;
 use std::io::prelude::*;
@@ -27,7 +28,7 @@ pub fn run(fasta_data: &HashMap<String, String>, afdb_local: &Option<String>, co
     let mut combined_data: HashMap<String, String> = HashMap::new();
 
     let mut fasta_split = vec![HashMap::<String, String>::new(); 400];
-    print(&"Splitting sequences by first two amino acids...".to_string(), 4);
+    // print(&"Splitting sequences by first two amino acids...".to_string(), 4);
     for (h, seq) in fasta_data {
         if seq.len() < 3 { err::warning(err::WRN_GENERAL, Some(format!("Skipping short sequence {} (length: {}). Skipping", h, seq.len()))); continue; }
         let idx = aa_map(seq.chars().skip(1).next().unwrap()) * 20 + aa_map(seq.chars().skip(2).next().unwrap());
@@ -35,9 +36,10 @@ pub fn run(fasta_data: &HashMap<String, String>, afdb_local: &Option<String>, co
     }
 
     for i in 0..400 {
+        mprint(&format!("\rLooking up AFDB tables... [{}/400]", i), 3);
         let aa = format!("{}{}", AA[i / 20], AA[i % 20]);
         if fasta_split[i].is_empty() {
-            print(&format!("No sequences starting with *{}. Skipping...", aa), 4);
+            mprintln(&format!("No sequences starting with *{}. Skipping...", aa), 4);
             continue;
         }
         let table = match afdb_local {
@@ -46,7 +48,7 @@ pub fn run(fasta_data: &HashMap<String, String>, afdb_local: &Option<String>, co
         };
 
         // load table to memory
-        print(&format!("Loading table for *{}...", aa), 4);
+        mprintln(&format!("Loading table for *{}...", aa), 4);
         let mut table_map: HashMap<String, String> = HashMap::new();
         let table_file = std::fs::File::open(table)?;
         let table_reader = std::io::BufReader::new(table_file);
@@ -58,7 +60,7 @@ pub fn run(fasta_data: &HashMap<String, String>, afdb_local: &Option<String>, co
         }
 
         // convert sequences
-        print(&format!("Converting sequences starting with *{}...", aa), 4);
+        mprintln(&format!("Converting sequences starting with *{}...", aa), 4);
         for (h, seq) in &fasta_split[i] {
             match table_map.get(seq) {
                 Some(converted_seq) => {
@@ -71,6 +73,7 @@ pub fn run(fasta_data: &HashMap<String, String>, afdb_local: &Option<String>, co
             }
         }
     }
+    mprintln(&"\rLooking up AFDB tables... [400/400] Done".to_string(), 3);
 
     write_fasta(&converted_aa, &converted_aa_data)?;
     write_fasta(&converted_ss, &converted_ss_data)?;
