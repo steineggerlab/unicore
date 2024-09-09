@@ -1,5 +1,6 @@
 use crate::envs::error_handler as err;
 use crate::seq::fasta_io::write_fasta;
+use crate::util::message::print;
 
 use std::collections::HashMap;
 use std::io::prelude::*;
@@ -26,21 +27,26 @@ pub fn run(fasta_data: &HashMap<String, String>, afdb_local: &Option<String>, co
     let mut combined_data: HashMap<String, String> = HashMap::new();
 
     let mut fasta_split = vec![HashMap::<String, String>::new(); 400];
+    print(&"Splitting sequences by first two amino acids...".to_string(), 4);
     for (h, seq) in fasta_data {
-        if seq.len() < 3 { err::warning(err::WRN_GENERAL, Some(format!("Sequence {} is too short (length: {}). Skipping", h, seq.len()))); continue; }
+        if seq.len() < 3 { err::warning(err::WRN_GENERAL, Some(format!("Skipping short sequence {} (length: {}). Skipping", h, seq.len()))); continue; }
         let idx = aa_map(seq.chars().skip(1).next().unwrap()) * 20 + aa_map(seq.chars().skip(2).next().unwrap());
         fasta_split[idx].insert(h.clone(), seq.clone());
     }
 
     for i in 0..400 {
-        if fasta_split[i].is_empty() { continue; }
         let aa = format!("{}{}", AA[i / 20], AA[i % 20]);
+        if fasta_split[i].is_empty() {
+            print(&format!("No sequences starting with *{}. Skipping...", aa), 4);
+            continue;
+        }
         let table = match afdb_local {
             Some(path) => format!("{}{}{}.tsv", path, SEP, aa),
             None => download_table(&aa)?,
         };
 
         // load table to memory
+        print(&format!("Loading table for *{}...", aa), 4);
         let mut table_map: HashMap<String, String> = HashMap::new();
         let table_file = std::fs::File::open(table)?;
         let table_reader = std::io::BufReader::new(table_file);
@@ -52,6 +58,7 @@ pub fn run(fasta_data: &HashMap<String, String>, afdb_local: &Option<String>, co
         }
 
         // convert sequences
+        print(&format!("Converting sequences starting with *{}...", aa), 4);
         for (h, seq) in &fasta_split[i] {
             match table_map.get(seq) {
                 Some(converted_seq) => {
