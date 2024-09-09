@@ -1,6 +1,7 @@
 // Basic error handling for the environment
 // Recieves error code and message, and prints the message to stderr
 
+pub const WRN_GENERAL: i32 = 0x00;
 pub const ERR_GENERAL: i32 = 0x01;
 pub const ERR_FILE_NOT_FOUND: i32 = 0x02;
 pub const ERR_MODULE_NOT_IMPLEMENTED: i32 = 0x03;
@@ -11,6 +12,7 @@ pub const ERR_OUTPUT_EXISTS: i32 = 0x06;
 fn build_message(code: i32, passed_object: Option<String>) -> String {
     let object = passed_object.unwrap_or_else(|| "".to_string());
     match code {
+        WRN_GENERAL => format!("Warning: {}", object),
         ERR_GENERAL => format!("Error: {}", object),
         ERR_FILE_NOT_FOUND => format!("File not found: {}", object),
         ERR_MODULE_NOT_IMPLEMENTED => format!("Module not implemented: {}", object),
