@@ -133,7 +133,9 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
 
     if afdb_lookup {
         let converted_aa_db = format!("{}{}{}{}converted", curr_dir, SEP, parent, SEP);
+        let converted_h_db = format!("{}{}{}{}converted_h", curr_dir, SEP, parent, SEP);
         let converted_ss_db = format!("{}{}{}{}converted_ss", curr_dir, SEP, parent, SEP);
+        let converted_ss_h_db = format!("{}{}{}{}converted_ss_h", curr_dir, SEP, parent, SEP);
         cmd::run(Cmd::new(foldseek_path).arg("base:createdb").arg(&converted_aa).arg(&converted_aa_db).arg("--shuffle").arg("0"));
         cmd::run(Cmd::new(foldseek_path).arg("base:createdb").arg(&converted_ss).arg(&converted_ss_db).arg("--shuffle").arg("0"));
 
@@ -145,7 +147,7 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
         let concat_h_db = format!("{}{}{}{}concat_h", curr_dir, SEP, parent, SEP);
         cmd::run(Cmd::new(foldseek_path).arg("base:concatdbs").arg(&output).arg(&converted_aa_db).arg(&concat_aa_db));
         cmd::run(Cmd::new(foldseek_path).arg("base:concatdbs").arg(&output_ss).arg(&converted_ss_db).arg(&concat_ss_db));
-        cmd::run(Cmd::new(foldseek_path).arg("base:concatdbs").arg(&output_h).arg(&converted_ss_db).arg(&concat_h_db));
+        cmd::run(Cmd::new(foldseek_path).arg("base:concatdbs").arg(&output_h).arg(&converted_h_db).arg(&concat_h_db));
 
         // Rename databases
         cmd::run(Cmd::new(foldseek_path).arg("base:mvdb").arg(&concat_aa_db).arg(&output));
@@ -156,8 +158,11 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
         if !keep {
             std::fs::remove_file(converted_aa)?;
             std::fs::remove_file(converted_ss)?;
+            std::fs::remove_file(format!("{}.source", concat_aa_db)).or_else(|_| Ok::<(), Box<dyn std::error::Error>>(()))?;
             cmd::run(Cmd::new(foldseek_path).arg("base:rmdb").arg(&converted_aa_db));
+            cmd::run(Cmd::new(foldseek_path).arg("base:rmdb").arg(&converted_h_db));
             cmd::run(Cmd::new(foldseek_path).arg("base:rmdb").arg(&converted_ss_db));
+            cmd::run(Cmd::new(foldseek_path).arg("base:rmdb").arg(&converted_ss_h_db));
         }
     }
 

@@ -14,7 +14,7 @@ fn aa_map(aa: char) -> usize {
         'G' => 5, 'H' => 6, 'I' => 7, 'K' => 8, 'L' => 9,
         'M' => 10, 'N' => 11, 'P' => 12, 'Q' => 13, 'R' => 14,
         'S' => 15, 'T' => 16, 'V' => 17, 'W' => 18, 'Y' => 19,
-        _ => err::error(err::ERR_GENERAL, Some(format!("Invalid amino acid detected: {}", aa))),
+        _ => 999 + aa as usize,
     }
 }
 
@@ -30,7 +30,19 @@ pub fn run(fasta_data: &HashMap<String, String>, afdb_local: &Option<String>, co
     let mut fasta_split = vec![HashMap::<String, String>::new(); 400];
     // print(&"Splitting sequences by first two amino acids...".to_string(), 4);
     for (h, seq) in fasta_data {
-        if seq.len() < 3 { err::warning(err::WRN_GENERAL, Some(format!("Skipping short sequence {} (length: {}). Skipping", h, seq.len()))); continue; }
+        if seq.len() < 3 {
+            err::warning(err::WRN_GENERAL, Some(format!("Short sequence detected: {} (length: {}).", h, seq.len())));
+            combined_data.insert(h.clone(), seq.clone());
+            continue;
+        }
+
+        let (i, j) = (aa_map(seq.chars().nth(1).unwrap()), aa_map(seq.chars().nth(2).unwrap()));
+        if i > 999 || j > 999 {
+            let invc = if i > 999 { i - 999 } else { j - 999 } as u8 as char;
+            err::warning(err::WRN_GENERAL, Some(format!("Invalid amino acid {} detected from {}.", invc, h)));
+            combined_data.insert(h.clone(), seq.clone());
+            continue;
+        }
         let idx = aa_map(seq.chars().skip(1).next().unwrap()) * 20 + aa_map(seq.chars().skip(2).next().unwrap());
         fasta_split[idx].insert(h.clone(), seq.clone());
     }
