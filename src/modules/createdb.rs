@@ -89,10 +89,10 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
 
     let combined_aa = format!("{}{}{}{}combined_aa.fasta", curr_dir, SEP, parent, SEP);
     let converted_aa = format!("{}{}{}{}converted_aa.fasta", curr_dir, SEP, parent, SEP);
-    let mut converted_3di = String::new();
+    let converted_ss = format!("{}{}{}{}converted_ss.fasta", curr_dir, SEP, parent, SEP);
     if afdb_lookup {
         // this will split data into converted and combined fasta files
-        converted_3di = crate::seq::afdb_lookup::run(&fasta_data, &afdb_local, &converted_aa, &combined_aa)?;
+        crate::seq::afdb_lookup::run(&fasta_data, &afdb_local, &converted_aa, &converted_ss, &combined_aa)?;
     } else {
         fasta::write_fasta(&combined_aa, &fasta_data)?;
     }
@@ -135,7 +135,7 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
         let converted_aa_db = format!("{}{}{}{}converted", curr_dir, SEP, parent, SEP);
         let converted_ss_db = format!("{}{}{}{}converted_ss", curr_dir, SEP, parent, SEP);
         cmd::run(Cmd::new(foldseek_path).arg("base:createdb").arg(&converted_aa).arg(&converted_aa_db).arg("--shuffle").arg("0"));
-        cmd::run(Cmd::new(foldseek_path).arg("base:createdb").arg(&converted_3di).arg(&converted_ss_db).arg("--shuffle").arg("0"));
+        cmd::run(Cmd::new(foldseek_path).arg("base:createdb").arg(&converted_ss).arg(&converted_ss_db).arg("--shuffle").arg("0"));
 
         // Concatenate the two databases
         let output_ss = format!("{}_ss", output);
@@ -155,7 +155,7 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
         // Delete intermediate files
         if !keep {
             std::fs::remove_file(converted_aa)?;
-            std::fs::remove_file(converted_3di)?;
+            std::fs::remove_file(converted_ss)?;
             cmd::run(Cmd::new(foldseek_path).arg("base:rmdb").arg(&converted_aa_db));
             cmd::run(Cmd::new(foldseek_path).arg("base:rmdb").arg(&converted_ss_db));
         }
