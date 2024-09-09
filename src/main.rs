@@ -1,6 +1,8 @@
 mod envs;
 mod modules;
 mod util;
+mod seq;
+
 use envs::error_handler as err;
 use envs::variables as var;
 use util::arg_parser as parser;

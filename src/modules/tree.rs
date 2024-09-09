@@ -7,9 +7,9 @@ use std::process::Command;
 use crate::util::arg_parser::Args;
 use crate::envs::error_handler as err;
 use crate::util::command as cmd;
-use crate::util::create_gene_specific_fasta as gsf;
-use crate::util::combine_fasta as cf;
-use crate::util::fasta_io as fasta;
+use crate::seq::create_gene_specific_fasta as gsf;
+use crate::seq::combine_fasta as cf;
+use crate::seq::fasta_io as fasta;
 
 pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(), Box<dyn std::error::Error>> {
     // Retrieve arguments

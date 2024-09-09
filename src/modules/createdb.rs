@@ -1,5 +1,5 @@
 use crate::util::arg_parser::Args;
-use crate::util::fasta_io as fasta;
+use crate::seq::fasta_io as fasta;
 use crate::envs::variables as var;
 use crate::envs::error_handler as err;
 use crate::util::command as cmd;
