@@ -35,7 +35,7 @@ fn run(args: &parser::Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::e
         /* Some(_) => {
             err::error(err::ERR_MODULE_NOT_IMPLEMENTED, std::env::args().nth(1));
         } */
-        _ => err::error(err::ERR_GENERAL, Some("Unreachable".to_string())),
+        _ => err::error(err::ERR_GENERAL, Some("No module name given. Run 'unicore help' for more information".to_string())),
     }
     Ok(())
 }

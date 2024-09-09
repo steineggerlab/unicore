@@ -8,11 +8,8 @@ pub struct ClapArgs {
     #[command(subcommand)]
     pub command: Option<Commands>,
     /// Print version and information
-    #[arg(short='V', long)]
+    #[arg(short, long)]
     pub version: bool,
-    /// Verbosity (0: quiet, 1: +errors, 2: +warnings, 3: +info, 4: +debug)
-    #[arg(short='v', long, default_value="3")]
-    pub verbosity: u8,
 }
 
 // Check if the threshold is in range
@@ -65,6 +62,9 @@ pub enum Commands {
         /// Local path to the directory with AFDB lookup tables. hidden option
         #[arg(long, hide = true)]
         afdb_local: Option<PathBuf>,
+        /// Verbosity (0: quiet, 1: +errors, 2: +warnings, 3: +info, 4: +debug)
+        #[arg(short='v', long, default_value="3")]
+        verbosity: u8,
 /* TODO: Implement optional arguments
         /// Custom foldseek binary
         #[arg(long)]
@@ -89,6 +89,9 @@ pub enum Commands {
         /// Arguments for foldseek options in string e.g. -c "-c 0.8"
         #[arg(short, long, default_value="-c 0.8")]
         cluster_options: String,
+        /// Verbosity (0: quiet, 1: +errors, 2: +warnings, 3: +info, 4: +debug)
+        #[arg(short='v', long, default_value="3")]
+        verbosity: u8,
     },
     /// Search Foldseek database against reference database
     #[clap(arg_required_else_help = true, allow_hyphen_values = true)]
@@ -107,6 +110,9 @@ pub enum Commands {
         /// Arguments for foldseek options in string e.g. -s "-c 0.8"
         #[arg(short, long, default_value="-c 0.8")]
         search_options: String,
+        /// Verbosity (0: quiet, 1: +errors, 2: +warnings, 3: +info, 4: +debug)
+        #[arg(short='v', long, default_value="3")]
+        verbosity: u8,
     },
     /// Create core structures from Foldseek database
     #[clap(arg_required_else_help = true)]
@@ -123,6 +129,9 @@ pub enum Commands {
         /// Generate tsv with copy number statistics
         #[arg(short, long, default_value="true")]
         print_copiness: bool,
+        /// Verbosity (0: quiet, 1: +errors, 2: +warnings, 3: +info, 4: +debug)
+        #[arg(short='v', long, default_value="3")]
+        verbosity: u8,
     },
     /// Infer phylogenetic tree from core structures
     #[clap(arg_required_else_help = true, allow_hyphen_values = true)]
@@ -151,6 +160,9 @@ pub enum Commands {
         /// Number of threads to use
         #[arg(short='c', long, default_value="0")]
         threads: usize,
+        /// Verbosity (0: quiet, 1: +errors, 2: +warnings, 3: +info, 4: +debug)
+        #[arg(short='v', long, default_value="3")]
+        verbosity: u8,
     },
 }
 
@@ -203,6 +215,14 @@ fn own(path: &PathBuf) -> String { path.clone().to_string_lossy().into_owned() }
 impl Args {
     pub fn parse() -> Self {
         let args = ClapArgs::parse();
+        let verbosity = match &args.command {
+            Some(Createdb { verbosity, .. }) => *verbosity,
+            Some(Profile { verbosity, .. }) => *verbosity,
+            Some(Search { verbosity, .. }) => *verbosity,
+            Some(Cluster { verbosity, .. }) => *verbosity,
+            Some(Tree { verbosity, .. }) => *verbosity,
+            _ => 3,
+        };
 
         let createdb_input = match &args.command {
             Some(Createdb { input, .. }) => Some(own(input)), _ => None,
@@ -315,7 +335,7 @@ impl Args {
         };
 
         Args {
-            command: args.command, version: args.version, verbosity: args.verbosity,
+            command: args.command, version: args.version, verbosity,
             createdb_input, createdb_output, createdb_model, createdb_keep, createdb_overwrite, createdb_max_len, createdb_gpu, createdb_use_python, createdb_afdb_lookup, createdb_afdb_local,
             profile_input_db, profile_input_m8, profile_output, profile_threshold, profile_print_copiness,
             search_input, search_target, search_output, search_tmp, search_keep_aln_db, search_search_options,
