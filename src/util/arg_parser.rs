@@ -56,6 +56,12 @@ pub enum Commands {
         /// Use python script instead. hidden option
         #[arg(long, default_value="false", hide = true)]
         use_python: bool,
+        /// Use AFDB lookup for foldseek createdb. Useful for large databases
+        #[arg(long, default_value="false")]
+        afdb_lookup: bool,
+        /// Local path to the directory with AFDB lookup tables. hidden option
+        #[arg(long, hide = true)]
+        afdb_local: Option<PathBuf>,
 /* TODO: Implement optional arguments
         /// Custom foldseek binary
         #[arg(long)]
@@ -157,6 +163,8 @@ pub struct Args {
     pub createdb_max_len: Option<Option<usize>>,
     pub createdb_gpu: Option<bool>,
     pub createdb_use_python: Option<bool>,
+    pub createdb_afdb_lookup: Option<bool>,
+    pub createdb_afdb_local: Option<Option<String>>,
 
     pub profile_input_db: Option<String>,
     pub profile_input_m8: Option<String>,
@@ -215,6 +223,12 @@ impl Args {
         };
         let createdb_use_python = match &args.command {
             Some(Createdb { use_python, .. }) => Some(*use_python), _ => None,
+        };
+        let createdb_afdb_lookup = match &args.command {
+            Some(Createdb { afdb_lookup, .. }) => Some(*afdb_lookup), _ => None,
+        };
+        let createdb_afdb_local = match &args.command {
+            Some(Createdb { afdb_local, .. }) => match afdb_local { Some(p) => Some(Some(own(p))), None => Some(None) }, _ => None,
         };
 
         let profile_input_db = match &args.command {
@@ -298,7 +312,7 @@ impl Args {
 
         Args {
             command: args.command, version: args.version,
-            createdb_input, createdb_output, createdb_model, createdb_keep, createdb_overwrite, createdb_max_len, createdb_gpu, createdb_use_python,
+            createdb_input, createdb_output, createdb_model, createdb_keep, createdb_overwrite, createdb_max_len, createdb_gpu, createdb_use_python, createdb_afdb_lookup, createdb_afdb_local,
             profile_input_db, profile_input_m8, profile_output, profile_threshold, profile_print_copiness,
             search_input, search_target, search_output, search_tmp, search_keep_aln_db, search_search_options,
             cluster_input, cluster_output, cluster_tmp, cluster_keep_cluster_db, cluster_cluster_options,

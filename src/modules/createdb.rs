@@ -7,6 +7,7 @@ use crate::util::command as cmd;
 use std::io::{BufWriter, Write};
 use std::collections::HashMap;
 use std::path::{Path, MAIN_SEPARATOR as SEP};
+use std::process::Command as Cmd;
 
 pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error::Error>> {
     // Retrieve mandatory arguments
@@ -18,6 +19,8 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
     let max_len = args.createdb_max_len.unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("createdb - max_len".to_string())); });
     let gpu = args.createdb_gpu.unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("createdb - gpu".to_string())); });
     let use_python = args.createdb_use_python.unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("createdb - use_python".to_string())); });
+    let afdb_lookup = args.createdb_afdb_lookup.unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("createdb - afdb_lookup".to_string())); });
+    let afdb_local = args.createdb_afdb_local.clone().unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("createdb - afdb_local".to_string())); });
 
     // Get all the fasta files in input directory
     let mut fasta_files = Vec::new();
@@ -83,8 +86,16 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
     } else {
         var::current_dir()
     };
+
     let combined_aa = format!("{}{}{}{}combined_aa.fasta", curr_dir, SEP, parent, SEP);
-    fasta::write_fasta(&combined_aa, &fasta_data)?;
+    let converted_aa = format!("{}{}{}{}converted_aa.fasta", curr_dir, SEP, parent, SEP);
+    let mut converted_3di = String::new();
+    if afdb_lookup {
+        // this will split data into converted and combined fasta files
+        converted_3di = crate::seq::afdb_lookup::run(&fasta_data, &afdb_local, &converted_aa, &combined_aa)?;
+    } else {
+        fasta::write_fasta(&combined_aa, &fasta_data)?;
+    }
 
     if use_python {
         return _run_python(&combined_aa, &curr_dir, &parent, &output, &model, keep, bin);
@@ -119,6 +130,36 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
         cmd.arg("--gpu").arg("1")
     } else { cmd };
     cmd::run(&mut cmd);
+
+    if afdb_lookup {
+        let converted_aa_db = format!("{}{}{}{}converted", curr_dir, SEP, parent, SEP);
+        let converted_ss_db = format!("{}{}{}{}converted_ss", curr_dir, SEP, parent, SEP);
+        cmd::run(Cmd::new(foldseek_path).arg("base:createdb").arg(&converted_aa).arg(&converted_aa_db).arg("--shuffle").arg("0"));
+        cmd::run(Cmd::new(foldseek_path).arg("base:createdb").arg(&converted_3di).arg(&converted_ss_db).arg("--shuffle").arg("0"));
+
+        // Concatenate the two databases
+        let output_ss = format!("{}_ss", output);
+        let output_h = format!("{}_h", output);
+        let concat_aa_db = format!("{}{}{}{}concat_aa", curr_dir, SEP, parent, SEP);
+        let concat_ss_db = format!("{}{}{}{}concat_ss", curr_dir, SEP, parent, SEP);
+        let concat_h_db = format!("{}{}{}{}concat_h", curr_dir, SEP, parent, SEP);
+        cmd::run(Cmd::new(foldseek_path).arg("base:concatdbs").arg(&output).arg(&converted_aa_db).arg(&concat_aa_db));
+        cmd::run(Cmd::new(foldseek_path).arg("base:concatdbs").arg(&output_ss).arg(&converted_ss_db).arg(&concat_ss_db));
+        cmd::run(Cmd::new(foldseek_path).arg("base:concatdbs").arg(&output_h).arg(&converted_ss_db).arg(&concat_h_db));
+
+        // Rename databases
+        cmd::run(Cmd::new(foldseek_path).arg("base:mvdb").arg(&concat_aa_db).arg(&output));
+        cmd::run(Cmd::new(foldseek_path).arg("base:mvdb").arg(&concat_ss_db).arg(&output_ss));
+        cmd::run(Cmd::new(foldseek_path).arg("base:mvdb").arg(&concat_h_db).arg(&output_h));
+
+        // Delete intermediate files
+        if !keep {
+            std::fs::remove_file(converted_aa)?;
+            std::fs::remove_file(converted_3di)?;
+            cmd::run(Cmd::new(foldseek_path).arg("base:rmdb").arg(&converted_aa_db));
+            cmd::run(Cmd::new(foldseek_path).arg("base:rmdb").arg(&converted_ss_db));
+        }
+    }
 
     // Delete intermediate files
     if !keep {
