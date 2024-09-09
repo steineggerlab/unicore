@@ -9,3 +9,8 @@ pub fn println_message(msg: &String, verbosity: u8) {
         println!("{}", msg);
     }
 }
+pub fn eprintln_message(msg: &String, verbosity: u8) {
+    if verbosity <= system_verbosity() {
+        eprintln!("{}", msg);
+    }
+}

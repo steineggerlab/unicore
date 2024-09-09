@@ -1,5 +1,6 @@
 // Basic error handling for the environment
 // Recieves error code and message, and prints the message to stderr
+use crate::util::message;
 
 pub const WRN_GENERAL: i32 = 0x00;
 pub const ERR_GENERAL: i32 = 0x01;
@@ -26,11 +27,11 @@ fn build_message(code: i32, passed_object: Option<String>) -> String {
 // warning: prints message to stderr
 #[allow(unused)]
 pub fn warning(code: i32, passed_object: Option<String>) {
-    eprintln!("{}", build_message(code, passed_object));
+    message::eprintln_message(&build_message(code, passed_object), 2);
 }
 
 // error: prints message to stderr and exits with code
 pub fn error(code: i32, passed_object: Option<String>) -> ! {
-    eprintln!("{}", build_message(code, passed_object));
+    message::eprintln_message(&build_message(code, passed_object), 1);
     std::process::exit(code);
 }
