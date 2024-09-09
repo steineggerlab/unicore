@@ -97,3 +97,11 @@ impl BinaryPaths {
         self.get(name).map(|bin| bin.test(args)).unwrap_or(false)
     }
 }
+
+pub static mut VERBOSITY: u8 = 3;
+pub fn set_verbosity(verbosity: u8) {
+    unsafe { VERBOSITY = verbosity; }
+}
+pub fn verbosity() -> u8 {
+    unsafe { VERBOSITY }
+}

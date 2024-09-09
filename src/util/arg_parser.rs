@@ -8,8 +8,11 @@ pub struct ClapArgs {
     #[command(subcommand)]
     pub command: Option<Commands>,
     /// Print version and information
-    #[arg(short, long)]
+    #[arg(short='V', long)]
     pub version: bool,
+    /// Verbosity (0: quiet, 1: +errors, 2: +warnings, 3: +info, 4: +debug)
+    #[arg(short='v', long, default_value="3")]
+    pub verbosity: u8,
 }
 
 // Check if the threshold is in range
@@ -154,6 +157,7 @@ pub enum Commands {
 pub struct Args {
     pub command: Option<Commands>,
     pub version: bool,
+    pub verbosity: u8,
 
     pub createdb_input: Option<String>,
     pub createdb_output: Option<String>,
@@ -311,7 +315,7 @@ impl Args {
         };
 
         Args {
-            command: args.command, version: args.version,
+            command: args.command, version: args.version, verbosity: args.verbosity,
             createdb_input, createdb_output, createdb_model, createdb_keep, createdb_overwrite, createdb_max_len, createdb_gpu, createdb_use_python, createdb_afdb_lookup, createdb_afdb_local,
             profile_input_db, profile_input_m8, profile_output, profile_threshold, profile_print_copiness,
             search_input, search_target, search_output, search_tmp, search_keep_aln_db, search_search_options,
