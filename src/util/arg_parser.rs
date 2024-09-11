@@ -335,7 +335,7 @@ impl Args {
         };
         let profile_input_m8 = match &args.command {
             Some(Profile { input_m8, .. }) => Some(own(input_m8)),
-            Some(EasyCluster { output, .. }) => Some(format!("{}/cluster/clust", own(output))), _ => None,
+            Some(EasyCluster { output, .. }) => Some(format!("{}/cluster/clust.tsv", own(output))), _ => None,
         };
         let profile_output = match &args.command {
             Some(Profile { output, .. }) => Some(own(output)),

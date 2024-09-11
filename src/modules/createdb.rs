@@ -9,6 +9,12 @@ use std::collections::HashMap;
 use std::path::{Path, MAIN_SEPARATOR as SEP};
 use std::process::Command as Cmd;
 
+// Function of checking if the character is part of the specified set
+fn need_replacement(c: char) -> bool {
+    // Check if the character is in whitespace or ';', ':', ',', '=', '/', '(' or ')'
+    c.is_whitespace() || c == ';' || c == ':' || c == ',' || c == '=' || c == '/' || c == '(' || c == ')'
+}
+
 pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error::Error>> {
     // Retrieve mandatory arguments
     let input = args.createdb_input.clone().unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("createdb - input".to_string())); });
@@ -68,7 +74,8 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
                 if value.len() > max_len { continue; }
             }
             // replace all whitespace characters with underscore
-            let key = key.replace(|c: char| c.is_whitespace(), "_");
+            // let key = key.replace(|c: char| c.is_whitespace(), "_");
+            let key = key.replace(|c: char| need_replacement(c), "_");
             let key = format!("unicore_{}", key);
             fasta_data.insert(key.clone(), value);
             writeln!(mapping_writer, "{}\t{}", key, species)?;
