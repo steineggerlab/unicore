@@ -1,5 +1,6 @@
 use crate::util::arg_parser::Args;
 use crate::util::message::println_message as mprintln;
+use crate::util::checkpoint::read_checkpoint as read_chkpnt;
 use crate::envs::variables as var;
 use crate::envs::error_handler as err;
 
@@ -8,16 +9,33 @@ use crate::modules::cluster::run as cluster;
 use crate::modules::profile::run as profile;
 use crate::modules::tree::run as tree;
 
+use std::path::Path;
+
 pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error::Error>> {
     // Run the createdb module
     // If there already is a database, we don't need to create it again
-    // Check if {input} file exists
+    // Check if the checkpoint file exists
     let output = args.createdb_output.clone().unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("createdb - output".to_string())); });
-    if !std::path::Path::new(&output).exists() {
+    let overwrite = args.createdb_overwrite.unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("createdb - overwrite".to_string())); });
+    // Try to obtain the parent directory of the output
+    let parent = if let Some(p) = Path::new(&output).parent() {
+        p.to_string_lossy().into_owned()
+    } else {
+        err::error(err::ERR_GENERAL, Some("Could not obtain parent directory of the output".to_string()))
+    };
+
+    // Read in the checkpoint file and check if createdb has been run
+    if std::path::Path::new(&format!("{}/createdb.txt", parent)).exists() {
+        let content = read_chkpnt(&format!("{}/createdb.txt", parent))?;
+        if overwrite || content == "0" {
+            mprintln(&"Running createdb module".to_string(), 3);
+            createdb(args, bin)?;
+        } else {
+            mprintln(&"Database already exists, skipping createdb module".to_string(), 3);
+        }
+    } else {
         mprintln(&"Running createdb module".to_string(), 3);
         createdb(args, bin)?;
-    } else {
-        mprintln(&"Database already exists, skipping createdb module".to_string(), 3);
     }
 
     // Run the cluster module
