@@ -3,6 +3,7 @@ use crate::seq::fasta_io as fasta;
 use crate::envs::variables as var;
 use crate::envs::error_handler as err;
 use crate::util::command as cmd;
+use crate::util::checkpoint::write_checkpoint as write_cp;
 
 use std::io::{BufWriter, Write};
 use std::collections::HashMap;
@@ -27,7 +28,31 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
     let use_python = args.createdb_use_python.unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("createdb - use_python".to_string())); });
     let afdb_lookup = args.createdb_afdb_lookup.unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("createdb - afdb_lookup".to_string())); });
     let afdb_local = args.createdb_afdb_local.clone().unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("createdb - afdb_local".to_string())); });
+    
+    // Try to obtain the parent directory of the output
+    let parent = if let Some(p) = Path::new(&output).parent() {
+        p.to_string_lossy().into_owned()
+    } else {
+        err::error(err::ERR_GENERAL, Some("Could not obtain parent directory of the output".to_string()))
+    };
+    // If the parent directory of the output doesn't exist, make one
+    if !Path::new(&parent).exists() {
+        std::fs::create_dir_all(&parent)?;
+    }
 
+    // Check if the checkpoint file exists
+    let checkpoint_file = format!("{}/complete.txt", parent);
+    if Path::new(&checkpoint_file).exists() {
+        // Read the checkpoint file
+        let content = std::fs::read_to_string(&checkpoint_file)?;
+        if content == "1" && !overwrite {
+            err::error(err::ERR_GENERAL, Some("Database already exists, skipping createdb module".to_string()));
+        }
+    } else {
+        // Write the checkpoint file
+        write_cp(&parent, "0")?;
+    }
+    
     // Get all the fasta files in input directory
     let mut fasta_files = Vec::new();
     if Path::new(&input).is_dir() {
@@ -44,24 +69,8 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
         fasta_files.push(path.to_string_lossy().into_owned());
     }
 
-    // Check if output file already exists
-    if Path::new(&output).exists() && !overwrite {
-        err::error(err::ERR_OUTPUT_EXISTS, Some(output.clone()));
-    }
-
     // Read in the fasta files
     // In the same time, write out the mapping file from gene to species (file name)
-    // Try to obtain the parent directory of the output
-    let parent = if let Some(p) = Path::new(&output).parent() {
-        p.to_string_lossy().into_owned()
-    } else {
-        err::error(err::ERR_GENERAL, Some("Could not obtain parent directory of the output".to_string()))
-    };
-    // If the parent directory of the output doesn't exist, make one
-    if !Path::new(&parent).exists() {
-        std::fs::create_dir_all(&parent)?;
-    }
-
     // Generate gene origin mapping file
     let mapping_file = format!("{}.map", output);
     let mut mapping_writer = BufWriter::new(std::fs::File::create(&mapping_file)?);
@@ -178,6 +187,9 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
     if !keep {
         std::fs::remove_file(combined_aa)?;
     }
+
+    // Write the checkpoint file
+    write_cp(&parent, "1")?;
 
     Ok(())
 }
