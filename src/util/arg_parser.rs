@@ -325,8 +325,8 @@ impl Args {
             Some(EasyCluster { afdb_lookup, .. }) => Some(*afdb_lookup), _ => None,
         };
         let createdb_afdb_local = match &args.command {
-            Some(Createdb { afdb_local, .. }) => match afdb_local { Some(p) => Some(Some(own(p))), None => Some(None) },
-            Some(EasyCluster { afdb_local, .. }) => match afdb_local { Some(p) => Some(Some(own(p))), None => Some(None) }, _ => None,
+            Some(Createdb { afdb_local, .. }) => match afdb_local { Some(p) => Some(Some(own(p))), none => Some(none) },
+            Some(EasyCluster { afdb_local, .. }) => match afdb_local { Some(p) => Some(Some(own(p))), none => Some(None) }, _ => None,
         };
 
         let profile_input_db = match &args.command {
