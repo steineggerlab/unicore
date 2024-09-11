@@ -160,6 +160,9 @@ pub enum Commands {
         /// Number of threads to use
         #[arg(short='c', long, default_value="0")]
         threads: usize,
+        /// Verbosity (0: quiet, 1: +errors, 2: +warnings, 3: +info, 4: +debug)
+        #[arg(short='v', long, default_value="3")]
+        verbosity: u8,
     },
     /// Easy clustering workflow, from fasta files to phylogenetic tree
     #[clap(arg_required_else_help = true, allow_hyphen_values = true)]
@@ -220,12 +223,9 @@ pub enum Commands {
         /// Number of threads to use
         #[arg(long, default_value="0")]
         threads: usize,
-<<<<<<< Updated upstream
         /// Verbosity (0: quiet, 1: +errors, 2: +warnings, 3: +info, 4: +debug)
         #[arg(short='v', long, default_value="3")]
         verbosity: u8,
-=======
->>>>>>> Stashed changes
     },
 }
 
@@ -319,7 +319,6 @@ impl Args {
         let createdb_use_python = match &args.command {
             Some(Createdb { use_python, .. }) => Some(*use_python),
             Some(EasyCluster { use_python, .. }) => Some(*use_python), _ => None,
-<<<<<<< Updated upstream
         };
         let createdb_afdb_lookup = match &args.command {
             Some(Createdb { afdb_lookup, .. }) => Some(*afdb_lookup),
@@ -328,8 +327,6 @@ impl Args {
         let createdb_afdb_local = match &args.command {
             Some(Createdb { afdb_local, .. }) => match afdb_local { Some(p) => Some(Some(own(p))), None => Some(None) },
             Some(EasyCluster { afdb_local, .. }) => match afdb_local { Some(p) => Some(Some(own(p))), None => Some(None) }, _ => None,
-=======
->>>>>>> Stashed changes
         };
 
         let profile_input_db = match &args.command {
