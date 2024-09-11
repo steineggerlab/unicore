@@ -30,7 +30,7 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
     // Get foldseek
     let foldseek_path = match &bin.get("foldseek") {
         Some(bin) => &bin.path,
-        None => { err::error(err::ERR_BINARY_NOT_FOUND, Some("foldseek".to_string())); }
+        _none => { err::error(err::ERR_BINARY_NOT_FOUND, Some("foldseek".to_string())); }
     };
 
     let output_aln_db = format!("{}_aln", output);

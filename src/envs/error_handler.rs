@@ -33,5 +33,5 @@ pub fn warning(code: i32, passed_object: Option<String>) {
 // error: prints message to stderr and exits with code
 pub fn error(code: i32, passed_object: Option<String>) -> ! {
     message::eprintln_message(&build_message(code, passed_object), 1);
-    std::process::exit(code);
+    std::process::exit(code)
 }

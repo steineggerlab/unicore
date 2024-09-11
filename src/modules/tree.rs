@@ -49,14 +49,14 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
     // Check aligner binary
     let aligner_path = match &bin.get(&aligner) {
         Some(bin) => &bin.path,
-        None => { err::error(err::ERR_BINARY_NOT_FOUND, Some(aligner.clone())); }
+        _none => { err::error(err::ERR_BINARY_NOT_FOUND, Some(aligner.clone())); }
     };
     let aligner_options = aligner_options.unwrap_or_else(|| "".to_string());
 
     // Check tree builder
     let tree_builder_path = match &bin.get(&tree_builder) {
         Some(bin) => &bin.path,
-        None => { err::error(err::ERR_BINARY_NOT_FOUND, Some(tree_builder.clone())); }
+        _none => { err::error(err::ERR_BINARY_NOT_FOUND, Some(tree_builder.clone())); }
     };
 
     // If there is no output directory, make one
@@ -80,7 +80,7 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
     // Build foldseek db
     let foldseek_path = match &bin.get("foldseek") {
         Some(bin) => &bin.path,
-        None => { err::error(err::ERR_BINARY_NOT_FOUND, Some("foldseek".to_string())); }
+        _none => { err::error(err::ERR_BINARY_NOT_FOUND, Some("foldseek".to_string())); }
     };
     // Iterate through the gene_list and build foldseek db
     // Only need to build foldseek db when the aligner is foldmason

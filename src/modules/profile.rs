@@ -16,16 +16,10 @@ fn profile(m8_file: &str, mapping: &str, output_dir: &str, threshold: usize, pri
     let reader = BufReader::new(file);
     for line in reader.lines().filter_map(|l| l.ok()) {
         let parts: Vec<&str> = line.split_whitespace().collect();
-        let af_gene = parts[0];
+        let af_gene = parts[0].to_string();
         let spe = parts[1].to_string();
 
-        let gene = if af_gene.starts_with("AF-") {
-            af_gene.split('-').nth(1).unwrap_or(af_gene)
-        } else {
-            af_gene
-        }.to_string();
-
-        gene_to_spe.entry(gene).or_insert_with(HashSet::new).insert(spe.clone());
+        gene_to_spe.entry(af_gene).or_insert_with(HashSet::new).insert(spe.clone());
         species_set.insert(spe);
     }
 
@@ -48,12 +42,6 @@ fn profile(m8_file: &str, mapping: &str, output_dir: &str, threshold: usize, pri
         let query = parts[0].to_string();
         let target = parts[1];
 
-        let target_gene = if target.starts_with("AF-") {
-            target.split('-').nth(1).unwrap_or(target)
-        } else {
-            target
-        };
-
         if Some(&query) != curr_query.as_ref() {
             if let Some(q) = curr_query.take() {
                 output_statistics_and_genes(&mut output, &q, &spe_cnt, &gene2spe, species_count, threshold, output_dir)?;
@@ -63,10 +51,10 @@ fn profile(m8_file: &str, mapping: &str, output_dir: &str, threshold: usize, pri
             gene2spe.clear();
         }
 
-        if let Some(species) = gene_to_spe.get(target_gene) {
+        if let Some(species) = gene_to_spe.get(target) {
             for spe in species {
                 *spe_cnt.entry(spe.to_string()).or_insert(0) += 1;
-                gene2spe.entry(spe.to_string()).or_insert_with(HashSet::new).insert(target_gene.to_string());
+                gene2spe.entry(spe.to_string()).or_insert_with(HashSet::new).insert(target.to_string());
             }
         }
     }
