@@ -3,7 +3,7 @@ use crate::seq::fasta_io as fasta;
 use crate::envs::variables as var;
 use crate::envs::error_handler as err;
 use crate::util::command as cmd;
-use crate::util::checkpoint::write_checkpoint as write_cp;
+use crate::util::checkpoint as chkpnt;
 
 use std::io::{BufWriter, Write};
 use std::collections::HashMap;
@@ -41,16 +41,16 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
     }
 
     // Check if the checkpoint file exists
-    let checkpoint_file = format!("{}/complete.txt", parent);
+    let checkpoint_file = format!("{}/createdb.txt", parent);
     if Path::new(&checkpoint_file).exists() {
         // Read the checkpoint file
-        let content = std::fs::read_to_string(&checkpoint_file)?;
+        let content = chkpnt::read_checkpoint(&checkpoint_file)?;
         if content == "1" && !overwrite {
             err::error(err::ERR_GENERAL, Some("Database already exists, skipping createdb module".to_string()));
         }
     } else {
         // Write the checkpoint file
-        write_cp(&parent, "0")?;
+        chkpnt::write_checkpoint(&checkpoint_file, "0")?;
     }
     
     // Get all the fasta files in input directory
@@ -189,7 +189,7 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
     }
 
     // Write the checkpoint file
-    write_cp(&parent, "1")?;
+    chkpnt::write_checkpoint(&checkpoint_file, "1")?;
 
     Ok(())
 }
@@ -234,6 +234,9 @@ fn _run_python(combined_aa: &String, curr_dir: &str, parent: &str, output: &str,
         std::fs::remove_file(input_3di)?;
         std::fs::remove_file(inter_prob)?;
     }
+
+    // Write the checkpoint file
+    chkpnt::write_checkpoint(&format!("{}/createdb.txt", parent), "1")?;
 
     Ok(())
 }
