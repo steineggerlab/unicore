@@ -1,4 +1,5 @@
 use crate::util::arg_parser::Args;
+use crate::util::message::println_message as mprintln;
 use crate::envs::variables as var;
 use crate::envs::error_handler as err;
 
@@ -13,20 +14,20 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
     // Check if {input} file exists
     let output = args.createdb_output.clone().unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("createdb - output".to_string())); });
     if !std::path::Path::new(&output).exists() {
-        println!("Running createdb module");
+        mprintln(&"Running createdb module".to_string(), 3);
         createdb(args, bin)?;
     } else {
-        println!("Database already exists, skipping createdb module");
+        mprintln(&"Database already exists, skipping createdb module".to_string(), 3);
     }
 
     // Run the cluster module
     let output: String = args.cluster_output.clone().unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("cluster - output".to_string())); });
     // Check if {output}.tsv file exists
     if !std::path::Path::new(&format!("{}.tsv", output)).exists() {
-        println!("Running cluster module");
+        mprintln(&"Running cluster module".to_string(), 3);
         cluster(args, bin)?;
     } else {
-        println!("Clustered database already exists, skipping cluster module");
+        mprintln(&"Clustered database already exists, skipping cluster module".to_string(), 3);
     }
 
     // Run the profile module
@@ -34,10 +35,10 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
     let output = args.profile_output.clone().unwrap_or_else(|| { crate::envs::error_handler::error(crate::envs::error_handler::ERR_ARGPARSE, Some("profile - output".to_string())); });
     if !std::path::Path::new(&output).exists()
     || std::fs::read_dir(&output)?.count() > 0 {
-        println!("Running profile module");
+        mprintln(&"Running profile module".to_string(), 3);
         profile(args, bin)?;
     } else {
-        println!("Profiled database already exists, skipping profile module");
+        mprintln(&"Profiled database already exists, skipping profile module".to_string(), 3);
     }
 
     // Run the tree module
@@ -45,10 +46,10 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
     let output = args.tree_output.clone().unwrap_or_else(|| { crate::envs::error_handler::error(crate::envs::error_handler::ERR_ARGPARSE, Some("tree - output".to_string())); });
     if !std::path::Path::new(&output).exists()
     || std::fs::read_dir(&output)?.count() == 0 {
-        println!("Running tree module");
+        mprintln(&"Running tree module".to_string(), 3);
         tree(args, bin)?;
     } else {
-        println!("Tree output directory not empty, skipping tree module");
+        mprintln(&"Tree output directory not empty, skipping tree module".to_string(), 3);
     }
 
     Ok(())
