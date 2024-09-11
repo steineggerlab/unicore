@@ -187,15 +187,12 @@ pub enum Commands {
         /// Use python script instead. hidden option
         #[arg(long, default_value="false", hide = true)]
         use_python: bool,
-<<<<<<< Updated upstream
         /// Use AFDB lookup for foldseek createdb. Useful for large databases
         #[arg(long, default_value="false")]
         afdb_lookup: bool,
         /// Local path to the directory with AFDB lookup tables. hidden option
         #[arg(long, hide = true)]
         afdb_local: Option<PathBuf>,
-=======
->>>>>>> Stashed changes
         /// Arguments for foldseek options in string e.g. -c "-c 0.8"
         #[arg(short, long, default_value="-c 0.8")]
         cluster_options: String,
