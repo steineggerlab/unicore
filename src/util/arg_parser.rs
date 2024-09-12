@@ -232,10 +232,10 @@ pub enum Commands {
     EasySearch {
         /// Input directory with fasta files or a single fasta file
         input: PathBuf,
-        /// Output directory where all results will be saved
-        output: PathBuf,
         /// Target database to search against
         target: PathBuf,
+        /// Output directory where all results will be saved
+        output: PathBuf,
         /// ProstT5 model
         model: PathBuf,
         /// tmp directory
