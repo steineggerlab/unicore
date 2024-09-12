@@ -93,6 +93,7 @@ pub fn combine_fasta(fasta_files: &Vec<String>, output_file: &PathBuf) -> Result
     for (name, sequence) in names.iter().zip(sequences.iter()) {
         writeln!(output, ">{}\n{}", name, sequence)?;
     }
+    output.flush()?;
 
     Ok(())
 }

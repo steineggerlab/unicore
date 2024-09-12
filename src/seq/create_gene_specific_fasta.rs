@@ -75,6 +75,8 @@ pub fn create_gene_specific_fasta(input_db: &str, gene_dir: &PathBuf, gene_list:
                     err::error(err::ERR_GENERAL, Some(format!("Invalid line in gene mapping file: {}", line)));
                 }
             }
+            aa_file.flush()?;
+            di_file.flush()?;
 
             cnt += 1;
             print!("\rCreating gene specific fasta files {}/{}...", cnt, gene_list.len());

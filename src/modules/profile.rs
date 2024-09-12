@@ -90,6 +90,7 @@ fn output_statistics_and_genes<W: Write>(output: &mut Option<W>, query: &str, sp
                 writeln!(output_file, "{}\t{}", target, spe)?;
             }
         }
+        output_file.flush()?;
     }
 
     Ok(())

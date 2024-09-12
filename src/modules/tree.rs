@@ -278,5 +278,6 @@ fn filter_msa(input_msa: &String, output_msa: &String, threshold: usize) -> Resu
         }
         writeln!(file_writer, "")?;
     }
+    file_writer.flush()?;
     Ok(())
 }

@@ -33,6 +33,7 @@ pub fn write_fasta(file: &str, mapping: &HashMap<String, String>) -> io::Result<
     for (header, sequence) in mapping {
         writeln!(file_writer, ">{}\n{}", header, sequence)?;
     }
+    file_writer.flush()?;
 
     Ok(())
 }

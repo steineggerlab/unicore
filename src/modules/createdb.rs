@@ -91,6 +91,7 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
             writeln!(mapping_writer, "{}\t{}\t{}", hashed_name, species, key)?;
         }
     }
+    mapping_writer.flush()?;
 
     // Write out the combined amino acid fasta file into output directory
     // If 'parent' is absolute path, make curr_dir to the parent directory of the 'parent'
