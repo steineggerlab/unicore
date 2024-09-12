@@ -40,34 +40,56 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
 
     // Run the cluster module
     let output: String = args.cluster_output.clone().unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("cluster - output".to_string())); });
-    // Check if {output}.tsv file exists
-    if !std::path::Path::new(&format!("{}.tsv", output)).exists() {
+    // Try to obtain the parent directory of the output
+    let parent = if let Some(p) = Path::new(&output).parent() {
+        p.to_string_lossy().into_owned()
+    } else {
+        err::error(err::ERR_GENERAL, Some("Could not obtain parent directory of the output".to_string()))
+    };
+    // Check if the checkpoint file exists
+    if std::path::Path::new(&format!("{}/cluster.txt", parent)).exists() {
+        let content = read_chkpnt(&format!("{}/cluster.txt", parent))?;
+        if content == "1" {
+            mprintln(&"Clustered database already exists, skipping cluster module".to_string(), 3);
+        } else {
+            mprintln(&"Running cluster module".to_string(), 3);
+            cluster(args, bin)?;
+        }
+    } else {
         mprintln(&"Running cluster module".to_string(), 3);
         cluster(args, bin)?;
-    } else {
-        mprintln(&"Clustered database already exists, skipping cluster module".to_string(), 3);
     }
 
     // Run the profile module
-    // Check if {output} directory has files in it
+    // Check if {output} directory has a checkpoint file
     let output = args.profile_output.clone().unwrap_or_else(|| { crate::envs::error_handler::error(crate::envs::error_handler::ERR_ARGPARSE, Some("profile - output".to_string())); });
-    if !std::path::Path::new(&output).exists()
-    || std::fs::read_dir(&output)?.count() > 0 {
+    if std::path::Path::new(&format!("{}/profile.txt", output)).exists() {
+        let content = read_chkpnt(&format!("{}/profile.txt", output))?;
+        if content == "1" {
+            mprintln(&"Profiled database already exists, skipping profile module".to_string(), 3);
+        } else {
+            mprintln(&"Running profile module".to_string(), 3);
+            profile(args, bin)?;
+        }
+    } else {
         mprintln(&"Running profile module".to_string(), 3);
         profile(args, bin)?;
-    } else {
-        mprintln(&"Profiled database already exists, skipping profile module".to_string(), 3);
     }
 
     // Run the tree module
-    // Check if {output} directory has files in it
+    // Check if {output} directory has a checkpoint file
     let output = args.tree_output.clone().unwrap_or_else(|| { crate::envs::error_handler::error(crate::envs::error_handler::ERR_ARGPARSE, Some("tree - output".to_string())); });
-    if !std::path::Path::new(&output).exists()
-    || std::fs::read_dir(&output)?.count() == 0 {
+    if std::path::Path::new(&format!("{}/tree.txt", output)).exists() {
+        let content = read_chkpnt(&format!("{}/tree.txt", output))?;
+        if content == "1" {
+            mprintln(&"Tree output directory not empty, skipping tree module".to_string(), 3);
+        } else {
+            mprintln(&"Running tree module".to_string(), 3);
+            tree(args, bin)?;
+        }
+    } else {
         mprintln(&"Running tree module".to_string(), 3);
         tree(args, bin)?;
-    } else {
-        mprintln(&"Tree output directory not empty, skipping tree module".to_string(), 3);
     }
 
     Ok(())

@@ -2,6 +2,7 @@ use std::path::Path;
 use crate::util::arg_parser::Args;
 use crate::envs::error_handler as err;
 use crate::util::command as cmd;
+use crate::util::checkpoint as chkpnt;
 
 // Run foldseek search and convertalis
 pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(), Box<dyn std::error::Error>> {
@@ -23,6 +24,9 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
     if !Path::new(&parent).exists() {
         std::fs::create_dir_all(&parent)?;
     }
+
+    // Write the checkpoint file
+    chkpnt::write_checkpoint(&format!("{}/search.txt", parent), "0")?;
 
     // foldseek_arg into vector, parsing by space
     let foldseek_args: Vec<&str> = search_options.split_whitespace().collect();
@@ -66,6 +70,9 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
     }
 
     // TODO: implement detection and removal of foldseek search temporary results
+
+    // Write the checkpoint file
+    chkpnt::write_checkpoint(&format!("{}/search.txt", parent), "1")?;
 
     Ok(())
 }

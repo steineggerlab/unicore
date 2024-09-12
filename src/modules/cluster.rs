@@ -2,6 +2,7 @@ use std::path::Path;
 use crate::util::arg_parser::Args;
 use crate::envs::error_handler as err;
 use crate::util::command as cmd;
+use crate::util::checkpoint as chkpnt;
 
 // Run foldseek cluster and createtsv
 pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(), Box<dyn std::error::Error>> {
@@ -23,13 +24,16 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
         std::fs::create_dir_all(&parent)?;
     }
 
+    // Write the checkpoint file
+    chkpnt::write_checkpoint(&format!("{}/cluster.txt", parent), "0")?;
+
     // cluster_arg into vector, parsing by space
     let cluster_args: Vec<&str> = cluster_options.split_whitespace().collect();
 
     // Get foldseek
     let foldseek_path = match &bin.get("foldseek") {
         Some(bin) => &bin.path,
-        None => { err::error(err::ERR_BINARY_NOT_FOUND, Some("foldseek".to_string())); }
+        _none => { err::error(err::ERR_BINARY_NOT_FOUND, Some("foldseek".to_string())); }
     };
 
     let output_cluster_db = format!("{}_cluster", output);
@@ -65,6 +69,9 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
     }
 
     // TODO: Implement detection and removal of foldseek cluster temporary results
+
+    // Write the checkpoint file
+    chkpnt::write_checkpoint(&format!("{}/cluster.txt", parent), "1")?;
 
     Ok(())
 }

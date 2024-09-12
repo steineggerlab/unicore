@@ -7,6 +7,7 @@ use std::process::Command;
 use crate::util::arg_parser::Args;
 use crate::envs::error_handler as err;
 use crate::util::command as cmd;
+use crate::util::checkpoint as chkpnt;
 use crate::seq::create_gene_specific_fasta as gsf;
 use crate::seq::combine_fasta as cf;
 use crate::seq::fasta_io as fasta;
@@ -22,6 +23,14 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
     let tree_options = args.tree_tree_options.clone().unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("tree - tree_options".to_string())); });
     let threshold = args.tree_threshold.clone().unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("tree - threshold".to_string())); });
     let mut threads = args.tree_threads.clone().unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("tree - threads".to_string())); });
+    
+    // If there is no output directory, make one
+    if !Path::new(&output).exists() {
+        fs::create_dir_all(&output)?;
+    }
+
+    // Write the checkpoint file
+    chkpnt::write_checkpoint(&format!("{}/tree.txt", output), "0")?;
 
     // Get maximum thread number if threads == -1
     if threads == 0 {
@@ -58,11 +67,6 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
         Some(bin) => &bin.path,
         _none => { err::error(err::ERR_BINARY_NOT_FOUND, Some(tree_builder.clone())); }
     };
-
-    // If there is no output directory, make one
-    if !Path::new(&output).exists() {
-        fs::create_dir_all(&output)?;
-    }
 
     // Prepare gene specific fasta directory
     let gene_fasta_dir = Path::new(&output).join("fasta");
@@ -145,6 +149,9 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
         // TODO: Implement other tree building methods
         err::error(err::ERR_MODULE_NOT_IMPLEMENTED, Some("Need implementation".to_string()))
     }
+
+    // Write the checkpoint file
+    chkpnt::write_checkpoint(&format!("{}/tree.txt", output), "1")?;
 
     Ok(())
 }

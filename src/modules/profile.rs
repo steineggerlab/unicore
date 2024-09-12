@@ -1,5 +1,6 @@
 use crate::envs::variables as var;
 use crate::util::arg_parser::Args;
+use crate::util::checkpoint as chkpnt;
 
 use std::collections::{HashMap, HashSet};
 use std::fs;
@@ -107,8 +108,14 @@ pub fn run(args: &Args, _: &var::BinaryPaths) -> Result<(), Box<dyn std::error::
         fs::create_dir_all(&output)?;
     }
 
+    // Write the checkpoint file
+    chkpnt::write_checkpoint(&format!("{}/profile.txt", output), "0")?;
+
     let mapping = format!("{}.map", input_db);
     profile(&input_m8, &mapping, &output, threshold, print_copiness)?;
 
+    // Write the checkpoint file
+    chkpnt::write_checkpoint(&format!("{}/profile.txt", output), "1")?;
+    
     Ok(())
 }
