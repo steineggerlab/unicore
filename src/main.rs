@@ -36,6 +36,9 @@ fn run(args: &parser::Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::e
         Some(parser::Commands::EasyCluster { .. }) => {
             workflow::easy_cluster::run(args, bin).unwrap_or_else(|e| err::error(err::ERR_GENERAL, Some(e.to_string())));
         },
+        Some(parser::Commands::EasySearch { .. }) => {
+            workflow::easy_search::run(args, bin).unwrap_or_else(|e| err::error(err::ERR_GENERAL, Some(e.to_string())));
+        }
         /* Some(_) => {
             err::error(err::ERR_MODULE_NOT_IMPLEMENTED, std::env::args().nth(1));
         } */

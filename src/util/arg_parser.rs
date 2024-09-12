@@ -227,6 +227,71 @@ pub enum Commands {
         #[arg(short='v', long, default_value="3")]
         verbosity: u8,
     },
+    /// Easy search workflow, from fasta files to phylogenetic tree
+    #[clap(arg_required_else_help = true, allow_hyphen_values = true)]
+    EasySearch {
+        /// Input directory with fasta files or a single fasta file
+        input: PathBuf,
+        /// Output directory where all results will be saved
+        output: PathBuf,
+        /// Target database to search against
+        target: PathBuf,
+        /// ProstT5 model
+        model: PathBuf,
+        /// tmp directory
+        tmp: PathBuf,
+        /// Keep intermediate files
+        #[arg(short, long, default_value="false")]
+        keep: bool,
+        /// Force overwrite output database
+        #[arg(short='w', long, default_value="false")]
+        overwrite: bool,
+        /// Set maximum sequence length threshold
+        #[arg(long)]
+        max_len: Option<usize>,
+        /// Use GPU for foldseek createdb
+        #[arg(short, long, default_value="false")]
+        gpu: bool,
+        /// Use python script instead. hidden option
+        #[arg(long, default_value="false", hide = true)]
+        use_python: bool,
+        /// Use AFDB lookup for foldseek createdb. Useful for large databases
+        #[arg(long, default_value="false")]
+        afdb_lookup: bool,
+        /// Local path to the directory with AFDB lookup tables. hidden option
+        #[arg(long, hide = true)]
+        afdb_local: Option<PathBuf>,
+        /// Arguments for foldseek options in string e.g. -s "-c 0.8"
+        #[arg(short, long, default_value="-c 0.8")]
+        search_options: String,
+        /// Coverage threshold for core structures. [0 - 100]
+        #[arg(short='C', long, default_value="80", value_parser = threshold_in_range)]
+        core_threshold: usize,
+        /// Generate tsv with copy number statistics
+        #[arg(short, long, default_value="true")]
+        print_copiness: bool,
+        /// Multiple sequence aligner [foldmason, mafft-linsi, mafft]
+        #[arg(short='A', long, default_value="foldmason")]
+        aligner: String,
+        /// Phylogenetic tree builder [iqtree, fasttree (under development), raxml (under development)]
+        #[arg(short='T', long, default_value="iqtree")]
+        tree_builder: String,
+        /// Options for sequence aligner
+        #[arg(short, long)]
+        aligner_options: Option<String>,
+        /// Options for tree builder; please adjust if using different tree method
+        #[arg(short, long, default_value="-m JTT+F+I+G -B 1000")]
+        tree_options: String,
+        /// Gap threshold for multiple sequence alignment [0 - 100]
+        #[arg(short='G', long, default_value="50", value_parser = threshold_in_range)]
+        gap_threshold: usize,
+        /// Number of threads to use
+        #[arg(long, default_value="0")]
+        threads: usize,
+        /// Verbosity (0: quiet, 1: +errors, 2: +warnings, 3: +info, 4: +debug)
+        #[arg(short='v', long, default_value="3")]
+        verbosity: u8,
+    },
 }
 
 pub struct Args {
@@ -285,88 +350,110 @@ impl Args {
             Some(Cluster { verbosity, .. }) => *verbosity,
             Some(Tree { verbosity, .. }) => *verbosity,
             Some(EasyCluster { verbosity, .. }) => *verbosity,
+            Some(EasySearch { verbosity, .. }) => *verbosity,
             _ => 3,
         };
 
         let createdb_input = match &args.command {
             Some(Createdb { input, .. }) => Some(own(input)),
-            Some(EasyCluster { input, .. }) => Some(own(input)), _ => None,
+            Some(EasyCluster { input, .. }) => Some(own(input)),
+            Some(EasySearch { input, .. }) => Some(own(input)), _ => None,
         };
         let createdb_output = match &args.command {
             Some(Createdb { output, .. }) => Some(own(output)),
-            Some(EasyCluster { output, .. }) => Some(format!("{}/proteome/proteome_db", own(output))), _ => None,
+            Some(EasyCluster { output, .. }) => Some(format!("{}/proteome/proteome_db", own(output))),
+            Some(EasySearch { output, .. }) => Some(format!("{}/proteome/proteome_db", own(output))), _ => None,
         };
         let createdb_model = match &args.command {
             Some(Createdb { model, .. }) => Some(own(model)),
-            Some(EasyCluster { model, .. }) => Some(own(model)), _ => None,
+            Some(EasyCluster { model, .. }) => Some(own(model)),
+            Some(EasySearch { model, .. }) => Some(own(model)), _ => None,
         };
         let createdb_keep = match &args.command {
             Some(Createdb { keep, .. }) => Some(*keep),
-            Some(EasyCluster { keep, .. }) => Some(*keep), _ => None,
+            Some(EasyCluster { keep, .. }) => Some(*keep),
+            Some(EasySearch { keep, .. }) => Some(*keep), _ => None,
         };
         let createdb_overwrite = match &args.command {
             Some(Createdb { overwrite, .. }) => Some(*overwrite),
-            Some(EasyCluster { overwrite, .. }) => Some(*overwrite), _ => None,
+            Some(EasyCluster { overwrite, .. }) => Some(*overwrite),
+            Some(EasySearch { overwrite, .. }) => Some(*overwrite), _ => None,
         };
         let createdb_max_len = match &args.command {
             Some(Createdb { max_len, .. }) => Some(max_len.clone()),
-            Some(EasyCluster { max_len, .. }) => Some(max_len.clone()), _ => None,
+            Some(EasyCluster { max_len, .. }) => Some(max_len.clone()),
+            Some(EasySearch { max_len, .. }) => Some(max_len.clone()), _ => None,
         };
         let createdb_gpu = match &args.command {
             Some(Createdb { gpu, .. }) => Some(*gpu),
-            Some(EasyCluster { gpu, .. }) => Some(*gpu), _ => None,
+            Some(EasyCluster { gpu, .. }) => Some(*gpu),
+            Some(EasySearch { gpu, .. }) => Some(*gpu), _ => None,
         };
         let createdb_use_python = match &args.command {
             Some(Createdb { use_python, .. }) => Some(*use_python),
-            Some(EasyCluster { use_python, .. }) => Some(*use_python), _ => None,
+            Some(EasyCluster { use_python, .. }) => Some(*use_python),
+            Some(EasySearch { use_python, .. }) => Some(*use_python), _ => None,
         };
         let createdb_afdb_lookup = match &args.command {
             Some(Createdb { afdb_lookup, .. }) => Some(*afdb_lookup),
-            Some(EasyCluster { afdb_lookup, .. }) => Some(*afdb_lookup), _ => None,
+            Some(EasyCluster { afdb_lookup, .. }) => Some(*afdb_lookup),
+            Some(EasySearch { afdb_lookup, .. }) => Some(*afdb_lookup), _ => None,
         };
         let createdb_afdb_local = match &args.command {
             Some(Createdb { afdb_local, .. }) => match afdb_local { Some(p) => Some(Some(own(p))), _none => Some(None) },
-            Some(EasyCluster { afdb_local, .. }) => match afdb_local { Some(p) => Some(Some(own(p))), _none => Some(None) }, _ => None,
+            Some(EasyCluster { afdb_local, .. }) => match afdb_local { Some(p) => Some(Some(own(p))), _none => Some(None) },
+            Some(EasySearch { afdb_local, .. }) => match afdb_local { Some(p) => Some(Some(own(p))), _none => Some(None) }, _ => None,
         };
 
         let profile_input_db = match &args.command {
             Some(Profile { input_db, .. }) => Some(own(input_db)),
-            Some(EasyCluster { output, .. }) => Some(format!("{}/proteome/proteome_db", own(output))), _ => None,
+            Some(EasyCluster { output, .. }) => Some(format!("{}/proteome/proteome_db", own(output))),
+            Some(EasySearch { output, .. }) => Some(format!("{}/proteome/proteome_db", own(output))), _ => None,
         };
         let profile_input_m8 = match &args.command {
             Some(Profile { input_m8, .. }) => Some(own(input_m8)),
-            Some(EasyCluster { output, .. }) => Some(format!("{}/cluster/clust.tsv", own(output))), _ => None,
+            Some(EasyCluster { output, .. }) => Some(format!("{}/cluster/clust.tsv", own(output))),
+            Some(EasySearch { output, .. }) => Some(format!("{}/search/search.m8", own(output))), _ => None,
         };
         let profile_output = match &args.command {
             Some(Profile { output, .. }) => Some(own(output)),
-            Some(EasyCluster { output, .. }) => Some(format!("{}/profile", own(output))), _ => None,
+            Some(EasyCluster { output, .. }) => Some(format!("{}/profile", own(output))),
+            Some(EasySearch { output, .. }) => Some(format!("{}/profile", own(output))), _ => None,
         };
         let profile_threshold = match &args.command {
             Some(Profile { threshold, .. }) => Some(*threshold),
-            Some(EasyCluster { core_threshold, .. }) => Some(*core_threshold), _ => None,
+            Some(EasyCluster { core_threshold, .. }) => Some(*core_threshold),
+            Some(EasySearch { core_threshold, .. }) => Some(*core_threshold), _ => None,
         };
         let profile_print_copiness = match &args.command {
             Some(Profile { print_copiness, .. }) => Some(*print_copiness),
-            Some(EasyCluster { print_copiness, .. }) => Some(*print_copiness), _ => None,
+            Some(EasyCluster { print_copiness, .. }) => Some(*print_copiness),
+            Some(EasySearch { print_copiness, .. }) => Some(*print_copiness), _ => None,
         };
 
         let search_input = match &args.command {
-            Some(Search { input, .. }) => Some(own(input)), _ => None,
+            Some(Search { input, .. }) => Some(own(input)),
+            Some(EasySearch { output, .. }) => Some(format!("{}/proteome/proteome_db", own(output))), _ => None,
         };
         let search_target = match &args.command {
-            Some(Search { target, .. }) => Some(own(target)), _ => None,
+            Some(Search { target, .. }) => Some(own(target)),
+            Some(EasySearch { target, .. }) => Some(own(target)), _ => None,
         };
         let search_output = match &args.command {
-            Some(Search { output, .. }) => Some(own(output)), _ => None,
+            Some(Search { output, .. }) => Some(own(output)),
+            Some(EasySearch { output, .. }) => Some(format!("{}/search/search", own(output))), _ => None,
         };
         let search_tmp = match &args.command {
-            Some(Search { tmp, .. }) => Some(own(tmp)), _ => None,
+            Some(Search { tmp, .. }) => Some(own(tmp)),
+            Some(EasySearch { tmp, .. }) => Some(own(tmp)), _ => None,
         };
         let search_keep_aln_db = match &args.command {
-            Some(Search { keep_aln_db, .. }) => Some(*keep_aln_db), _ => None,
+            Some(Search { keep_aln_db, .. }) => Some(*keep_aln_db),
+            Some(EasySearch { keep, .. }) => Some(*keep), _ => None,
         };
         let search_search_options = match &args.command {
-            Some(Search { search_options, .. }) => Some(search_options.clone()), _ => None,
+            Some(Search { search_options, .. }) => Some(search_options.clone()),
+            Some(EasySearch { search_options, .. }) => Some(search_options.clone()), _ => None,
         };
 
         let cluster_input = match &args.command {
@@ -392,39 +479,48 @@ impl Args {
 
         let tree_db = match &args.command {
             Some(Tree { db, .. }) => Some(own(db)),
-            Some(EasyCluster { output, .. }) => Some(format!("{}/proteome/proteome_db", own(output))), _ => None,
+            Some(EasyCluster { output, .. }) => Some(format!("{}/proteome/proteome_db", own(output))),
+            Some(EasySearch { output, .. }) => Some(format!("{}/proteome/proteome_db", own(output))), _ => None,
         };
         let tree_input = match &args.command {
             Some(Tree { input, .. }) => Some(own(input)),
-            Some(EasyCluster { output, .. }) => Some(format!("{}/profile", own(output))), _ => None,
+            Some(EasyCluster { output, .. }) => Some(format!("{}/profile", own(output))),
+            Some(EasySearch { output, .. }) => Some(format!("{}/profile", own(output))), _ => None,
         };
         let tree_output = match &args.command {
             Some(Tree { output, .. }) => Some(own(output)),
-            Some(EasyCluster { output, .. }) => Some(format!("{}/tree", own(output))), _ => None,
+            Some(EasyCluster { output, .. }) => Some(format!("{}/tree", own(output))),
+            Some(EasySearch { output, .. }) => Some(format!("{}/tree", own(output))), _ => None,
         };
         let tree_aligner = match &args.command {
             Some(Tree { aligner, .. }) => Some(aligner.clone()),
-            Some(EasyCluster { aligner, .. }) => Some(aligner.clone()), _ => None,
+            Some(EasyCluster { aligner, .. }) => Some(aligner.clone()),
+            Some(EasySearch { aligner, .. }) => Some(aligner.clone()), _ => None,
         };
         let tree_tree_builder = match &args.command {
             Some(Tree { tree_builder, .. }) => Some(tree_builder.clone()),
-            Some(EasyCluster { tree_builder, .. }) => Some(tree_builder.clone()), _ => None,
+            Some(EasyCluster { tree_builder, .. }) => Some(tree_builder.clone()),
+            Some(EasySearch { tree_builder, .. }) => Some(tree_builder.clone()), _ => None,
         };
         let tree_aligner_options = match &args.command {
             Some(Tree { aligner_options, .. }) => Some(aligner_options.clone()),
-            Some(EasyCluster { aligner_options, .. }) => Some(aligner_options.clone()), _ => None,
+            Some(EasyCluster { aligner_options, .. }) => Some(aligner_options.clone()),
+            Some(EasySearch { aligner_options, .. }) => Some(aligner_options.clone()), _ => None,
         };
         let tree_tree_options = match &args.command {
             Some(Tree { tree_options, .. }) => Some(tree_options.clone()),
-            Some(EasyCluster { tree_options, .. }) => Some(tree_options.clone()), _ => None,
+            Some(EasyCluster { tree_options, .. }) => Some(tree_options.clone()),
+            Some(EasySearch { tree_options, .. }) => Some(tree_options.clone()), _ => None,
         };
         let tree_threshold = match &args.command {
             Some(Tree { threshold, .. }) => Some(*threshold),
-            Some(EasyCluster { gap_threshold, .. }) => Some(*gap_threshold), _ => None,
+            Some(EasyCluster { gap_threshold, .. }) => Some(*gap_threshold),
+            Some(EasySearch { gap_threshold, .. }) => Some(*gap_threshold), _ => None,
         };
         let tree_threads = match &args.command {
             Some(Tree { threads, .. }) => Some(*threads),
-            Some(EasyCluster { threads, .. }) => Some(*threads), _ => None,
+            Some(EasyCluster { threads, .. }) => Some(*threads),
+            Some(EasySearch { threads, .. }) => Some(*threads), _ => None,
         };
 
         Args {
