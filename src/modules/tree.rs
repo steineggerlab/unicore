@@ -30,7 +30,7 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
     }
 
     // Write the checkpoint file
-    chkpnt::write_checkpoint(&format!("{}/tree.txt", output), "0")?;
+    chkpnt::write_checkpoint(&format!("{}/tree.chk", output), "0")?;
 
     // Get maximum thread number if threads == -1
     if threads == 0 {
@@ -151,7 +151,7 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
     }
 
     // Write the checkpoint file
-    chkpnt::write_checkpoint(&format!("{}/tree.txt", output), "1")?;
+    chkpnt::write_checkpoint(&format!("{}/tree.chk", output), "1")?;
 
     Ok(())
 }

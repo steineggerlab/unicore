@@ -41,7 +41,7 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
     }
 
     // Check if the checkpoint file exists
-    let checkpoint_file = format!("{}/createdb.txt", parent);
+    let checkpoint_file = format!("{}/createdb.chk", parent);
     if Path::new(&checkpoint_file).exists() {
         // Read the checkpoint file
         let content = chkpnt::read_checkpoint(&checkpoint_file)?;
@@ -237,7 +237,7 @@ fn _run_python(combined_aa: &String, curr_dir: &str, parent: &str, output: &str,
     }
 
     // Write the checkpoint file
-    chkpnt::write_checkpoint(&format!("{}/createdb.txt", parent), "1")?;
+    chkpnt::write_checkpoint(&format!("{}/createdb.chk", parent), "1")?;
 
     Ok(())
 }

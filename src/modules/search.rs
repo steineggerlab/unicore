@@ -26,7 +26,7 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
     }
 
     // Write the checkpoint file
-    chkpnt::write_checkpoint(&format!("{}/search.txt", parent), "0")?;
+    chkpnt::write_checkpoint(&format!("{}/search.chk", parent), "0")?;
 
     // foldseek_arg into vector, parsing by space
     let foldseek_args: Vec<&str> = search_options.split_whitespace().collect();
@@ -72,7 +72,7 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
     // TODO: implement detection and removal of foldseek search temporary results
 
     // Write the checkpoint file
-    chkpnt::write_checkpoint(&format!("{}/search.txt", parent), "1")?;
+    chkpnt::write_checkpoint(&format!("{}/search.chk", parent), "1")?;
 
     Ok(())
 }

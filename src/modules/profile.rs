@@ -110,13 +110,13 @@ pub fn run(args: &Args, _: &var::BinaryPaths) -> Result<(), Box<dyn std::error::
     }
 
     // Write the checkpoint file
-    chkpnt::write_checkpoint(&format!("{}/profile.txt", output), "0")?;
+    chkpnt::write_checkpoint(&format!("{}/profile.chk", output), "0")?;
 
     let mapping = format!("{}.map", input_db);
     profile(&input_m8, &mapping, &output, threshold, print_copiness)?;
 
     // Write the checkpoint file
-    chkpnt::write_checkpoint(&format!("{}/profile.txt", output), "1")?;
+    chkpnt::write_checkpoint(&format!("{}/profile.chk", output), "1")?;
     
     Ok(())
 }

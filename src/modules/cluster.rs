@@ -25,7 +25,7 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
     }
 
     // Write the checkpoint file
-    chkpnt::write_checkpoint(&format!("{}/cluster.txt", parent), "0")?;
+    chkpnt::write_checkpoint(&format!("{}/cluster.chk", parent), "0")?;
 
     // cluster_arg into vector, parsing by space
     let cluster_args: Vec<&str> = cluster_options.split_whitespace().collect();
@@ -71,7 +71,7 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
     // TODO: Implement detection and removal of foldseek cluster temporary results
 
     // Write the checkpoint file
-    chkpnt::write_checkpoint(&format!("{}/cluster.txt", parent), "1")?;
+    chkpnt::write_checkpoint(&format!("{}/cluster.chk", parent), "1")?;
 
     Ok(())
 }

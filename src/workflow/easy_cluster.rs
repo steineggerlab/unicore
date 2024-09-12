@@ -25,8 +25,8 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
     };
 
     // Read in the checkpoint file and check if createdb has been run
-    if std::path::Path::new(&format!("{}/createdb.txt", parent)).exists() {
-        let content = read_chkpnt(&format!("{}/createdb.txt", parent))?;
+    if std::path::Path::new(&format!("{}/createdb.chk", parent)).exists() {
+        let content = read_chkpnt(&format!("{}/createdb.chk", parent))?;
         if overwrite || content == "0" {
             mprintln(&"Running createdb module".to_string(), 3);
             createdb(args, bin)?;
@@ -47,8 +47,8 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
         err::error(err::ERR_GENERAL, Some("Could not obtain parent directory of the output".to_string()))
     };
     // Check if the checkpoint file exists
-    if std::path::Path::new(&format!("{}/cluster.txt", parent)).exists() {
-        let content = read_chkpnt(&format!("{}/cluster.txt", parent))?;
+    if std::path::Path::new(&format!("{}/cluster.chk", parent)).exists() {
+        let content = read_chkpnt(&format!("{}/cluster.chk", parent))?;
         if content == "1" {
             mprintln(&"Clustered database already exists, skipping cluster module".to_string(), 3);
         } else {
@@ -63,8 +63,8 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
     // Run the profile module
     // Check if {output} directory has a checkpoint file
     let output = args.profile_output.clone().unwrap_or_else(|| { crate::envs::error_handler::error(crate::envs::error_handler::ERR_ARGPARSE, Some("profile - output".to_string())); });
-    if std::path::Path::new(&format!("{}/profile.txt", output)).exists() {
-        let content = read_chkpnt(&format!("{}/profile.txt", output))?;
+    if std::path::Path::new(&format!("{}/profile.chk", output)).exists() {
+        let content = read_chkpnt(&format!("{}/profile.chk", output))?;
         if content == "1" {
             mprintln(&"Profiled database already exists, skipping profile module".to_string(), 3);
         } else {
@@ -79,8 +79,8 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
     // Run the tree module
     // Check if {output} directory has a checkpoint file
     let output = args.tree_output.clone().unwrap_or_else(|| { crate::envs::error_handler::error(crate::envs::error_handler::ERR_ARGPARSE, Some("tree - output".to_string())); });
-    if std::path::Path::new(&format!("{}/tree.txt", output)).exists() {
-        let content = read_chkpnt(&format!("{}/tree.txt", output))?;
+    if std::path::Path::new(&format!("{}/tree.chk", output)).exists() {
+        let content = read_chkpnt(&format!("{}/tree.chk", output))?;
         if content == "1" {
             mprintln(&"Tree output directory not empty, skipping tree module".to_string(), 3);
         } else {
