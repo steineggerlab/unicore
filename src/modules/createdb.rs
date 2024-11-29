@@ -121,13 +121,9 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
         fasta::write_fasta(&combined_aa, &fasta_data)?;
     }
 
-    if use_python {
-        let _ = _run_python(&combined_aa, &curr_dir, &parent, &output, &model, keep, bin);
-    }
-
-    // Added use_foldseek temporarily.
-    // TODO: Remove use_foldseek when foldseek is ready
     if use_foldseek {
+        // Added use_foldseek temporarily.
+        // TODO: Remove use_foldseek when foldseek is ready
         let foldseek_path = match &bin.get("foldseek") {
             Some(bin) => &bin.path,
             _none => { err::error(err::ERR_BINARY_NOT_FOUND, Some("foldseek".to_string())); }
@@ -157,7 +153,13 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
             cmd.arg("--gpu").arg("1")
         } else { cmd };
         cmd::run(&mut cmd);
-    } else if afdb_lookup {
+    } else if use_python {
+        let _ = _run_python(&combined_aa, &curr_dir, &parent, &output, &model, keep, bin);
+    } else {
+        err::error(err::ERR_GENERAL, Some("Either use_foldseek or use_python must be true".to_string()));
+    }
+
+    if afdb_lookup {
         let foldseek_path = match &bin.get("foldseek") {
             Some(bin) => &bin.path,
             _none => { err::error(err::ERR_BINARY_NOT_FOUND, Some("foldseek".to_string())); }
@@ -194,8 +196,6 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
             cmd::run(Cmd::new(foldseek_path).arg("base:rmdb").arg(&converted_ss_db));
             cmd::run(Cmd::new(foldseek_path).arg("base:rmdb").arg(&converted_ss_h_db));
         }
-    } else {
-        err::error(err::ERR_GENERAL, Some("Either use_foldseek or afdb_lookup must be true".to_string()));
     }
 
     // Delete intermediate files

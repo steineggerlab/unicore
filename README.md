@@ -11,7 +11,8 @@ We will provide a Conda package soon. Please wait for the release.
 * [Foldseek](https://foldseek.com) (version ≥ 9)
 * [Foldmason](https://foldmason.foldseek.com)
 * [IQ-TREE](http://www.iqtree.org/)
-
+* pytorch, transformers, sentencepiece, protobuf
+    - These are required for users who cannot build foldseek with CUDA. Please install them with `pip install torch transformers sentencepiece protobuf`.
 #### Optional requirements
 * [MAFFT](https://mafft.cbrc.jp/alignment/software/)
 * [Fasttree](http://www.microbesonline.org/fasttree/) or [RAxML](https://cme.h-its.org/exelixis/web/software/raxml/)
@@ -73,6 +74,8 @@ To run the module, please use the following command:
 unicore createdb data db/proteome_db /path/to/prostt5/weights
 ```
 This will create a Foldseek database in the `db` folder.
+
+If you have foldseek installed with CUDA, you can run the ProstT5 in the module with foldseek by adding `--use-foldseek` option.
 
 ### cluster
 `cluster` module takes a `createdb` output database, runs Foldseek clustering, and outputs the cluster results.
