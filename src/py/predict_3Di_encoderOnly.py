@@ -18,6 +18,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from transformers import T5EncoderModel, T5Tokenizer
+from tqdm import tqdm
 
 
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
@@ -224,7 +225,9 @@ def get_embeddings(seq_path, out_path, model_dir, split_char, id_field, half_pre
     standard_aa = "ACDEFGHIKLMNPQRSTVWY"
     standard_aa_dict = {aa: aa for aa in standard_aa}
     count = 0
-    for seq_idx, (pdb_id, seq) in enumerate(seq_dict, 1):
+    seq_idx = 0
+    for (pdb_id, seq) in tqdm(seq_dict):
+        seq_idx += 1
         # replace the non-standard amino acids with 'X'
         seq = ''.join([standard_aa_dict.get(aa, 'X') for aa in seq])
         seq_len = len(seq)
