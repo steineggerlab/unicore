@@ -94,7 +94,7 @@ pub enum Commands {
         verbosity: u8,
     },
     /// Search Foldseek database against reference database
-    #[clap(arg_required_else_help = true, allow_hyphen_values = true, hide = true)]
+    #[clap(arg_required_else_help = true, allow_hyphen_values = true)]
     Search {
         /// Input database
         input: PathBuf,
