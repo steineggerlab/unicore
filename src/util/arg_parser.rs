@@ -94,7 +94,7 @@ pub enum Commands {
         verbosity: u8,
     },
     /// Search Foldseek database against reference database
-    #[clap(arg_required_else_help = true, allow_hyphen_values = true)]
+    #[clap(arg_required_else_help = true, allow_hyphen_values = true, hide = true)]
     Search {
         /// Input database
         input: PathBuf,
@@ -228,7 +228,7 @@ pub enum Commands {
         verbosity: u8,
     },
     /// Easy search workflow, from fasta files to phylogenetic tree
-    #[clap(arg_required_else_help = true, allow_hyphen_values = true)]
+    #[clap(arg_required_else_help = true, allow_hyphen_values = true, hide = true)]
     EasySearch {
         /// Input directory with fasta files or a single fasta file
         input: PathBuf,
