@@ -26,8 +26,14 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
     let max_len = args.createdb_max_len.unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("createdb - max_len".to_string())); });
     let gpu = args.createdb_gpu.unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("createdb - gpu".to_string())); });
     let use_python = args.createdb_use_python.unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("createdb - use_python".to_string())); });
+    let use_foldseek = args.createdb_use_foldseek.unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("createdb - use_foldseek".to_string())); });
     let afdb_lookup = args.createdb_afdb_lookup.unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("createdb - afdb_lookup".to_string())); });
     let afdb_local = args.createdb_afdb_local.clone().unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("createdb - afdb_local".to_string())); });
+
+    // Either use_foldseek or use_python must be true
+    if !use_foldseek && !use_python {
+        err::error(err::ERR_ARGPARSE, Some("Either use_foldseek or use_python must be true".to_string()));
+    }
     
     // Try to obtain the parent directory of the output
     let parent = if let Some(p) = Path::new(&output).parent() {
@@ -119,78 +125,82 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
         return _run_python(&combined_aa, &curr_dir, &parent, &output, &model, keep, bin);
     }
 
-    let foldseek_path = match &bin.get("foldseek") {
-        Some(bin) => &bin.path,
-        _none => { err::error(err::ERR_BINARY_NOT_FOUND, Some("foldseek".to_string())); }
-    };
+    // Added use_foldseek temporarily.
+    // TODO: Remove use_foldseek when foldseek is ready
+    if use_foldseek {
+        let foldseek_path = match &bin.get("foldseek") {
+            Some(bin) => &bin.path,
+            _none => { err::error(err::ERR_BINARY_NOT_FOUND, Some("foldseek".to_string())); }
+        };
 
-    // Check if weights exist
-    let model = if Path::new(&model).join("model.bin").exists() {
-        model
-    } else if Path::new(&model).join(format!("model{}model.bin", SEP)).exists() {
-        format!("{}{}model", model, SEP)
-    } else {
-        // Download the model
-        std::fs::create_dir_all(format!("{}{}tmp", model, SEP))?;
+        // Check if weights exist
+        let model = if Path::new(&model).join("model.bin").exists() {
+            model
+        } else if Path::new(&model).join(format!("model{}model.bin", SEP)).exists() {
+            format!("{}{}model", model, SEP)
+        } else {
+            // Download the model
+            std::fs::create_dir_all(format!("{}{}tmp", model, SEP))?;
+            let mut cmd = std::process::Command::new(foldseek_path);
+            let mut cmd = cmd
+                .arg("databases").arg("ProstT5").arg(&model).arg(format!("{}{}tmp", model, SEP));
+            cmd::run(&mut cmd);
+            format!("{}{}model", model, SEP)
+        };
+
+        // Run foldseek createdb
         let mut cmd = std::process::Command::new(foldseek_path);
-        let mut cmd = cmd
-            .arg("databases").arg("ProstT5").arg(&model).arg(format!("{}{}tmp", model, SEP));
+        let cmd = cmd
+            .arg("createdb").arg(&combined_aa).arg(&output)
+            .arg("--prostt5-model").arg(&model);
+        let mut cmd = if gpu {
+            cmd.arg("--gpu").arg("1")
+        } else { cmd };
         cmd::run(&mut cmd);
-        format!("{}{}model", model, SEP)
-    };
 
-    // Run foldseek createdb
-    let mut cmd = std::process::Command::new(foldseek_path);
-    let cmd = cmd
-        .arg("createdb").arg(&combined_aa).arg(&output)
-        .arg("--prostt5-model").arg(&model);
-    let mut cmd = if gpu {
-        cmd.arg("--gpu").arg("1")
-    } else { cmd };
-    cmd::run(&mut cmd);
+        if afdb_lookup {
+            let converted_aa_db = format!("{}{}{}{}converted", curr_dir, SEP, parent, SEP);
+            let converted_h_db = format!("{}{}{}{}converted_h", curr_dir, SEP, parent, SEP);
+            let converted_ss_db = format!("{}{}{}{}converted_ss", curr_dir, SEP, parent, SEP);
+            let converted_ss_h_db = format!("{}{}{}{}converted_ss_h", curr_dir, SEP, parent, SEP);
+            cmd::run(Cmd::new(foldseek_path).arg("base:createdb").arg(&converted_aa).arg(&converted_aa_db).arg("--shuffle").arg("0"));
+            cmd::run(Cmd::new(foldseek_path).arg("base:createdb").arg(&converted_ss).arg(&converted_ss_db).arg("--shuffle").arg("0"));
 
-    if afdb_lookup {
-        let converted_aa_db = format!("{}{}{}{}converted", curr_dir, SEP, parent, SEP);
-        let converted_h_db = format!("{}{}{}{}converted_h", curr_dir, SEP, parent, SEP);
-        let converted_ss_db = format!("{}{}{}{}converted_ss", curr_dir, SEP, parent, SEP);
-        let converted_ss_h_db = format!("{}{}{}{}converted_ss_h", curr_dir, SEP, parent, SEP);
-        cmd::run(Cmd::new(foldseek_path).arg("base:createdb").arg(&converted_aa).arg(&converted_aa_db).arg("--shuffle").arg("0"));
-        cmd::run(Cmd::new(foldseek_path).arg("base:createdb").arg(&converted_ss).arg(&converted_ss_db).arg("--shuffle").arg("0"));
+            // Concatenate the two databases
+            let output_ss = format!("{}_ss", output);
+            let output_h = format!("{}_h", output);
+            let concat_aa_db = format!("{}{}{}{}concat_aa", curr_dir, SEP, parent, SEP);
+            let concat_ss_db = format!("{}{}{}{}concat_ss", curr_dir, SEP, parent, SEP);
+            let concat_h_db = format!("{}{}{}{}concat_h", curr_dir, SEP, parent, SEP);
+            cmd::run(Cmd::new(foldseek_path).arg("base:concatdbs").arg(&output).arg(&converted_aa_db).arg(&concat_aa_db));
+            cmd::run(Cmd::new(foldseek_path).arg("base:concatdbs").arg(&output_ss).arg(&converted_ss_db).arg(&concat_ss_db));
+            cmd::run(Cmd::new(foldseek_path).arg("base:concatdbs").arg(&output_h).arg(&converted_h_db).arg(&concat_h_db));
 
-        // Concatenate the two databases
-        let output_ss = format!("{}_ss", output);
-        let output_h = format!("{}_h", output);
-        let concat_aa_db = format!("{}{}{}{}concat_aa", curr_dir, SEP, parent, SEP);
-        let concat_ss_db = format!("{}{}{}{}concat_ss", curr_dir, SEP, parent, SEP);
-        let concat_h_db = format!("{}{}{}{}concat_h", curr_dir, SEP, parent, SEP);
-        cmd::run(Cmd::new(foldseek_path).arg("base:concatdbs").arg(&output).arg(&converted_aa_db).arg(&concat_aa_db));
-        cmd::run(Cmd::new(foldseek_path).arg("base:concatdbs").arg(&output_ss).arg(&converted_ss_db).arg(&concat_ss_db));
-        cmd::run(Cmd::new(foldseek_path).arg("base:concatdbs").arg(&output_h).arg(&converted_h_db).arg(&concat_h_db));
+            // Rename databases
+            cmd::run(Cmd::new(foldseek_path).arg("base:mvdb").arg(&concat_aa_db).arg(&output));
+            cmd::run(Cmd::new(foldseek_path).arg("base:mvdb").arg(&concat_ss_db).arg(&output_ss));
+            cmd::run(Cmd::new(foldseek_path).arg("base:mvdb").arg(&concat_h_db).arg(&output_h));
 
-        // Rename databases
-        cmd::run(Cmd::new(foldseek_path).arg("base:mvdb").arg(&concat_aa_db).arg(&output));
-        cmd::run(Cmd::new(foldseek_path).arg("base:mvdb").arg(&concat_ss_db).arg(&output_ss));
-        cmd::run(Cmd::new(foldseek_path).arg("base:mvdb").arg(&concat_h_db).arg(&output_h));
+            // Delete intermediate files
+            if !keep {
+                std::fs::remove_file(converted_aa)?;
+                std::fs::remove_file(converted_ss)?;
+                std::fs::remove_file(format!("{}.source", concat_aa_db)).or_else(|_| Ok::<(), Box<dyn std::error::Error>>(()))?;
+                cmd::run(Cmd::new(foldseek_path).arg("base:rmdb").arg(&converted_aa_db));
+                cmd::run(Cmd::new(foldseek_path).arg("base:rmdb").arg(&converted_h_db));
+                cmd::run(Cmd::new(foldseek_path).arg("base:rmdb").arg(&converted_ss_db));
+                cmd::run(Cmd::new(foldseek_path).arg("base:rmdb").arg(&converted_ss_h_db));
+            }
+        }
 
         // Delete intermediate files
         if !keep {
-            std::fs::remove_file(converted_aa)?;
-            std::fs::remove_file(converted_ss)?;
-            std::fs::remove_file(format!("{}.source", concat_aa_db)).or_else(|_| Ok::<(), Box<dyn std::error::Error>>(()))?;
-            cmd::run(Cmd::new(foldseek_path).arg("base:rmdb").arg(&converted_aa_db));
-            cmd::run(Cmd::new(foldseek_path).arg("base:rmdb").arg(&converted_h_db));
-            cmd::run(Cmd::new(foldseek_path).arg("base:rmdb").arg(&converted_ss_db));
-            cmd::run(Cmd::new(foldseek_path).arg("base:rmdb").arg(&converted_ss_h_db));
+            std::fs::remove_file(combined_aa)?;
         }
-    }
 
-    // Delete intermediate files
-    if !keep {
-        std::fs::remove_file(combined_aa)?;
+        // Write the checkpoint file
+        chkpnt::write_checkpoint(&checkpoint_file, "1")?;
     }
-
-    // Write the checkpoint file
-    chkpnt::write_checkpoint(&checkpoint_file, "1")?;
 
     Ok(())
 }
