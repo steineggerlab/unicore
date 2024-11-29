@@ -8,53 +8,48 @@ We will provide a Conda package soon. Please wait for the release.
 ### Manual Installation
 #### Minimum requirements
 * [Cargo](https://www.rust-lang.org/tools/install) (Rust)
-* [Foldseek](https://foldseek.com)
-* [ProstT5 model weight](https://huggingface.co/Rostlab/ProstT5)
+* [Foldseek](https://foldseek.com) (version ≥ 9)
 * [Foldmason](https://foldmason.foldseek.com)
 * [IQ-TREE](http://www.iqtree.org/)
 
 #### Optional requirements
-* AFDB/Swiss-Prot database
-  * For now, please use `foldseek databases` to download
 * [MAFFT](https://mafft.cbrc.jp/alignment/software/)
-* [Fasttree](http://www.microbesonline.org/fasttree/)
+* [Fasttree](http://www.microbesonline.org/fasttree/) or [RAxML](https://cme.h-its.org/exelixis/web/software/raxml/)
 
 #### Guide
-> Note: We will provide an easier way to download these as a `download` module soon.
-> Until then, please follow the steps below.
-
 Please install the latest version of Rust from [here](https://www.rust-lang.org/tools/install).
-
-To run `createdb` module, you have to pre-download the model weight of the ProstT5.
-Please download the model from [here](https://huggingface.co/Rostlab/ProstT5).
 
 Foldseek can be installed from [here](https://foldseek.com).
 
-Default tool for MSA is Foldmason and for phylogeny inference is IQ-TREE.
-You can download Foldmason from [here](https://foldmason.foldseek.com) and IQ-TREE from [here](http://www.iqtree.org/).
+You have to pre-download the model weights of the ProstT5. Run `foldseek databases ProstT5 <dir> tmp` to download the weights on `<dir>`. If this doesn't work, make sure you have the latest version of Foldseek.
+
+Foldmason and IQ-TREE is designated as default tools for alignment and phylogenetic inference. You can download Foldmason from [here](https://foldmason.foldseek.com) and IQ-TREE from [here](http://www.iqtree.org/).
 
 With these tools installed, you can install and run `unicore` by:
 ```
 git clone https://github.com/steineggerlab/unicore.git
 cd unicore
 cargo build --release
-target/release/unicore help
+cp target/release/unicore /path/to/bin
+unicore help
 ```
 
 ## Modules
-Unicore has four main modules:
+Unicore has four main modules, which can be run sequentially to infer the phylogenetic tree of the given species.
 * `createdb` - Create 3Di structural alphabet database from input species
-* `search` - Search structures against given reference database
+* `cluster` - Cluster Foldseek database
 * `profile` - Taxonomic profiling and core gene identification
 * `tree` - Phylogenetic inference using structural core genes
 
+We also provide an easy workflow module that automatically runs the four modules in order.
+* `easy-core` - Easy core gene phylogeny workflow, from fasta files to phylogenetic tree
+
 Run each module with `unicore <module> help` to see the detailed usage.
 
-### createdb
-`createdb` module takes a folder with input species and outputs 3Di structural alphabets predicted with ProstT5.
-This module runs much faster with GPU. Please install `cuda` for GPU acceleration.
+### Preparing input
+Unicore requires a set of proteomes as input to infer the phylogenetic tree. Please prepare the input proteomes in a folder.
 
-> Note. Currently, proteomes in `.fasta` format are only supported as an input. Eventually, we will support more types and formats that can represent species' protein space.
+> Note. Currently, proteomes in `.fasta` format are only supported as an input. We will try to support more types and formats that can represent species.
 
 Example dataset:
 ```
@@ -65,33 +60,43 @@ data/
   └ ProteomeN.fasta
 
 ```
+
+### createdb
+`createdb` module takes a folder with input species and outputs 3Di structural alphabets predicted with ProstT5.
+
+This module runs much faster with GPU. Please install `cuda` for GPU acceleration.
+
 To run the module, please use the following command:
 ```
-unicore createdb data db/proteome_db /path/to/prostt5/model
+// Download ProstT5 weights as below if you haven't already
+// foldseek databases ProstT5 /path/to/prostt5/weights tmp
+unicore createdb data db/proteome_db /path/to/prostt5/weights
 ```
 This will create a Foldseek database in the `db` folder.
 
-### search
-`search` module takes a `createdb` output database, searches them against the given reference database, and outputs the alignment results in BLAST format.
-On default, alignments with 80% bidirectional coverage with E-value < $10^{-3}$ will be reported.
+### cluster
+`cluster` module takes a `createdb` output database, runs Foldseek clustering, and outputs the cluster results.
+
+On default, clustering will be done with 80% bidirectional coverage (-c 0.8).<br>
+You can feed custom clustering parameters for Foldseek via `--cluster-options` option.
 
 Example command:
 ```
-unicore search db/proteome_db /path/to/reference/db search/result tmp
+unicore cluster db/proteome_db out/clu tmp
 ```
-This will create a `result.m8` output file in the `search` folder.
+This will create a `clu.tsv` output file in the `out` folder.
 
 ### profile
-`profile` module takes the database (`createdb` output) and alignment results (`search` output) to find structural core genes.
+`profile` module takes the database (`createdb` output) and cluster results (`cluster` output) to find structural core genes.
 
 On default, the module will report the genes that are present in 80% of the species as a single copy. You can change this threshold by `-t` option.
 
 Example command:
 ```
 // 85% coverage
-unicore profile -t 85 db/proteome_db search/result.m8 result
+unicore profile -t 85 db/proteome_db out/clu.tsv result
 ```
-This will create a `result` folder with the core genes and their occurrence in the species.
+This will create a `result` folder with the core genes and their occurrences in the species.
 
 ### tree
 `tree` module takes the core genes and the species proteomes to infer the phylogenetic tree using the alignments of the structural core genes.
@@ -103,4 +108,28 @@ Example command:
 unicore tree db/proteome_db result tree
 ```
 
-This will create a `tree` folder with the phylogenetic tree in Newick format.
+This will create a `tree` folder with the resulting phylogenetic trees in Newick format.
+
+### easy-core
+`easy-core` module orchestrates the four modules in order, processes all the way from the input proteomes to the phylogenetic tree.
+
+Example command:
+```
+// Download ProstT5 weights as below if you haven't already
+// foldseek databases ProstT5 /path/to/prostt5/weights tmp
+unicore easy-core data tree /path/to/prostt5/weights tmp
+```
+
+This will create a `tree` folder with phylogenetic trees built with the structural core genes identified from the input proteomes.
+
+### Additional modules
+### search
+`search` module takes a `createdb` output database, searches them against the given reference database, and outputs the alignment results in BLAST format.
+
+On default, alignments with 80% bidirectional coverage with E-value < $10^{-3}$ will be reported.
+
+Example command:
+```
+unicore search db/proteome_db /path/to/reference/db search/result tmp
+```
+This will create a `result.m8` output file in the `search` folder, which can be used as an input for the `profile` module instead of the `cluster` output.
