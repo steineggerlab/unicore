@@ -34,6 +34,11 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
     if !use_foldseek && !use_python {
         err::error(err::ERR_ARGPARSE, Some("Either use_foldseek or use_python must be true".to_string()));
     }
+
+    // Check afdb_lookup
+    let afdb_local = if afdb_lookup && !afdb_local.is_some() {
+        err::error(err::ERR_ARGPARSE, Some("afdb-lookup is provided but afdb-local is not given".to_string()));
+    } else if afdb_lookup { afdb_local.unwrap() } else { "".to_string() };
     
     // Try to obtain the parent directory of the output
     let parent = if let Some(p) = Path::new(&output).parent() {

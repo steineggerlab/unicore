@@ -62,8 +62,8 @@ pub enum Commands {
         /// Use AFDB lookup for foldseek createdb. Useful for large databases
         #[arg(long, default_value="false")]
         afdb_lookup: bool,
-        /// Local path to the directory with AFDB lookup tables. hidden option
-        #[arg(long, hide = true)]
+        /// Local path to the directory with AFDB lookup tables. If not exists, it will try to download from the internet
+        #[arg(long)]
         afdb_local: Option<PathBuf>,
         /// Verbosity (0: quiet, 1: +errors, 2: +warnings, 3: +info, 4: +debug)
         #[arg(short='v', long, default_value="3")]
