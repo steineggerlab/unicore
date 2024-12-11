@@ -29,6 +29,7 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
     let use_foldseek = args.createdb_use_foldseek.unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("createdb - use_foldseek".to_string())); });
     let afdb_lookup = args.createdb_afdb_lookup.unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("createdb - afdb_lookup".to_string())); });
     let afdb_local = args.createdb_afdb_local.clone().unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("createdb - afdb_local".to_string())); });
+    let threads = crate::envs::variables::threads();
 
     // Either use_foldseek or use_python must be true
     if !use_foldseek && !use_python {
@@ -144,7 +145,7 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
             std::fs::create_dir_all(format!("{}{}tmp", model, SEP))?;
             let mut cmd = std::process::Command::new(foldseek_path);
             let mut cmd = cmd
-                .arg("databases").arg("ProstT5").arg(&model).arg(format!("{}{}tmp", model, SEP));
+                .arg("--threads").arg(threads.to_string()).arg("databases").arg("ProstT5").arg(&model).arg(format!("{}{}tmp", model, SEP));
             cmd::run(&mut cmd);
             format!("{}{}model", model, SEP)
         };
@@ -152,7 +153,7 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
         // Run foldseek createdb
         let mut cmd = std::process::Command::new(foldseek_path);
         let cmd = cmd
-            .arg("createdb").arg(&combined_aa).arg(&output)
+            .arg("createdb").arg("--threads").arg(threads.to_string()).arg(&combined_aa).arg(&output)
             .arg("--prostt5-model").arg(&model);
         let mut cmd = if gpu {
             cmd.arg("--gpu").arg("1")

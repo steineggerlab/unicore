@@ -22,8 +22,8 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
     let aligner_options = args.tree_aligner_options.clone().unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("tree - aligner_options".to_string())); });
     let tree_options = args.tree_tree_options.clone().unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("tree - tree_options".to_string())); });
     let threshold = args.tree_threshold.clone().unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("tree - threshold".to_string())); });
-    let mut threads = args.tree_threads.clone().unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("tree - threads".to_string())); });
-    
+    let threads = crate::envs::variables::threads();
+
     // If there is no output directory, make one
     if !Path::new(&output).exists() {
         fs::create_dir_all(&output)?;
@@ -31,26 +31,6 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
 
     // Write the checkpoint file
     chkpnt::write_checkpoint(&format!("{}/tree.chk", output), "0")?;
-
-    // Get maximum thread number if threads == -1
-    if threads == 0 {
-        // if the os is linux
-        threads = if cfg!(target_os = "linux") {
-            let output = Command::new("sh")
-                .arg("-c")
-                .arg("grep -c ^processor /proc/cpuinfo")
-                .output()
-                .expect("Failed to get the number of processors");
-            std::str::from_utf8(&output.stdout).unwrap().trim().parse::<usize>().unwrap()
-        } else {
-            let output = Command::new("sysctl")
-                .arg("-n")
-                .arg("hw.ncpu")
-                .output()
-                .expect("Failed to get the number of processors");
-            std::str::from_utf8(&output.stdout).unwrap().trim().parse::<usize>().unwrap()
-        };
-    };
 
     // print out threads
     println!("Using {} threads", threads);

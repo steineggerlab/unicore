@@ -17,6 +17,7 @@ fn load_config(bin: &mut var::BinaryPaths) {
 fn run(args: &parser::Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error::Error>> {
     if args.version { modules::version::run(args, bin); return Ok(()); }
     envs::variables::set_verbosity(args.verbosity);
+    envs::variables::set_threads(args.threads);
     match &args.command {
         Some(parser::Commands::Createdb { .. }) => {
             modules::createdb::run(args, bin).unwrap_or_else(|e| err::error(err::ERR_GENERAL, Some(e.to_string())));

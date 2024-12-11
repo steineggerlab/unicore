@@ -12,6 +12,8 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
     let tmp: String = args.cluster_tmp.clone().unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("cluster - tmp".to_string())); });
     let keep_cluster_db: bool = args.cluster_keep_cluster_db.unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("cluster - keep_cluster_db".to_string())); });
     let cluster_options: String = args.cluster_cluster_options.clone().unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("cluster - cluster_args".to_string())); });
+    let threads = crate::envs::variables::threads();
+    let threads_str = threads.to_string();
 
     // Try to obtain the parent directory of the output
     let parent = if let Some(p) = Path::new(&output).parent() {
@@ -39,7 +41,7 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
     let output_cluster_db = format!("{}_cluster", output);
     let output_tsv = format!("{}.tsv", output);
     let mut foldseek_flag = vec![
-        "cluster", &input, &output_cluster_db, &tmp,
+        "cluster", "--threads", threads_str.as_str(), &input, &output_cluster_db, &tmp,
     ];
     // Include cluster_args into foldseek_flag
     foldseek_flag.extend(cluster_args.iter());
@@ -52,7 +54,7 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
     // Run foldseek createtsv
     let mut cmd = std::process::Command::new(foldseek_path);
     let foldseek_flag = vec![
-        "createtsv", &input, &input, &output_cluster_db, &output_tsv,
+        "createtsv", "--threads", threads_str.as_str(), &input, &input, &output_cluster_db, &output_tsv,
     ];
     let mut cmd = cmd.args(&foldseek_flag);
     cmd::run(&mut cmd);

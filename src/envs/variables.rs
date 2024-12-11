@@ -1,4 +1,5 @@
 use crate::envs::error_handler as err;
+use std::process::Command;
 
 // global variables
 pub const VERSION: &str = "0.1.0";
@@ -50,7 +51,7 @@ impl Binary {
         }
     }
     fn test(&self, args: Vec<&str>) -> bool {
-        std::process::Command::new(&self.path)
+        Command::new(&self.path)
             .args(args)
             .output()
             .is_ok()
@@ -104,4 +105,29 @@ pub fn set_verbosity(verbosity: u8) {
 }
 pub fn verbosity() -> u8 {
     unsafe { VERBOSITY }
+}
+
+pub static mut THREADS: usize = 0;
+pub fn set_threads(threads: usize) {
+    // if the os is linux
+    let threads = if threads > 0 { threads }
+    else if cfg!(target_os = "linux") {
+        let output = Command::new("sh")
+            .arg("-c")
+            .arg("grep -c ^processor /proc/cpuinfo")
+            .output()
+            .expect("Failed to get the number of processors");
+        std::str::from_utf8(&output.stdout).unwrap().trim().parse::<usize>().unwrap()
+    } else {
+        let output = Command::new("sysctl")
+            .arg("-n")
+            .arg("hw.ncpu")
+            .output()
+            .expect("Failed to get the number of processors");
+        std::str::from_utf8(&output.stdout).unwrap().trim().parse::<usize>().unwrap()
+    };
+    unsafe { THREADS = threads; }
+}
+pub fn threads() -> usize {
+    unsafe { THREADS }
 }

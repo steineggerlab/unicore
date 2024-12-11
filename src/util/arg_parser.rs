@@ -65,6 +65,9 @@ pub enum Commands {
         /// Local path to the directory with AFDB lookup tables. If not exists, it will try to download from the internet
         #[arg(long)]
         afdb_local: Option<PathBuf>,
+        /// Number of threads to use; 0 to use all
+        #[arg(long, default_value="0")]
+        threads: usize,
         /// Verbosity (0: quiet, 1: +errors, 2: +warnings, 3: +info, 4: +debug)
         #[arg(short='v', long, default_value="3")]
         verbosity: u8,
@@ -92,6 +95,9 @@ pub enum Commands {
         /// Arguments for foldseek options in string e.g. -c "-c 0.8"
         #[arg(short, long, default_value="-c 0.8")]
         cluster_options: String,
+        /// Number of threads to use; 0 to use all
+        #[arg(long, default_value="0")]
+        threads: usize,
         /// Verbosity (0: quiet, 1: +errors, 2: +warnings, 3: +info, 4: +debug)
         #[arg(short='v', long, default_value="3")]
         verbosity: u8,
@@ -113,6 +119,9 @@ pub enum Commands {
         /// Arguments for foldseek options in string e.g. -s "-c 0.8"
         #[arg(short, long, default_value="-c 0.8")]
         search_options: String,
+        /// Number of threads to use; 0 to use all
+        #[arg(long, default_value="0")]
+        threads: usize,
         /// Verbosity (0: quiet, 1: +errors, 2: +warnings, 3: +info, 4: +debug)
         #[arg(short='v', long, default_value="3")]
         verbosity: u8,
@@ -132,6 +141,9 @@ pub enum Commands {
         /// Generate tsv with copy number statistics
         #[arg(short, long, default_value="true")]
         print_copiness: bool,
+        /// Number of threads to use; 0 to use all
+        #[arg(long, default_value="0")]
+        threads: usize,
         /// Verbosity (0: quiet, 1: +errors, 2: +warnings, 3: +info, 4: +debug)
         #[arg(short='v', long, default_value="3")]
         verbosity: u8,
@@ -160,7 +172,7 @@ pub enum Commands {
         /// Gap threshold for multiple sequence alignment [0 - 100]
         #[arg(short='d', long, default_value="50", value_parser = threshold_in_range)]
         threshold: usize,
-        /// Number of threads to use
+        /// Number of threads to use; 0 to use all
         #[arg(short='c', long, default_value="0")]
         threads: usize,
         /// Verbosity (0: quiet, 1: +errors, 2: +warnings, 3: +info, 4: +debug)
@@ -226,7 +238,7 @@ pub enum Commands {
         /// Gap threshold for multiple sequence alignment [0 - 100]
         #[arg(short='G', long, default_value="50", value_parser = threshold_in_range)]
         gap_threshold: usize,
-        /// Number of threads to use
+        /// Number of threads to use; 0 to use all
         #[arg(long, default_value="0")]
         threads: usize,
         /// Verbosity (0: quiet, 1: +errors, 2: +warnings, 3: +info, 4: +debug)
@@ -294,7 +306,7 @@ pub enum Commands {
         /// Gap threshold for multiple sequence alignment [0 - 100]
         #[arg(short='G', long, default_value="50", value_parser = threshold_in_range)]
         gap_threshold: usize,
-        /// Number of threads to use
+        /// Number of threads to use; 0 to use all
         #[arg(long, default_value="0")]
         threads: usize,
         /// Verbosity (0: quiet, 1: +errors, 2: +warnings, 3: +info, 4: +debug)
@@ -306,6 +318,7 @@ pub enum Commands {
 pub struct Args {
     pub command: Option<Commands>,
     pub version: bool,
+    pub threads: usize,
     pub verbosity: u8,
 
     pub createdb_input: Option<String>,
@@ -347,7 +360,6 @@ pub struct Args {
     pub tree_aligner_options: Option<Option<String>>,
     pub tree_tree_options: Option<String>,
     pub tree_threshold: Option<usize>,
-    pub tree_threads: Option<usize>,
 }
 fn own(path: &PathBuf) -> String { path.clone().to_string_lossy().into_owned() }
 impl Args {
@@ -362,6 +374,16 @@ impl Args {
             Some(EasyCore { verbosity, .. }) => *verbosity,
             Some(EasySearch { verbosity, .. }) => *verbosity,
             _ => 3,
+        };
+        let threads = match &args.command {
+            Some(Createdb { threads, .. }) => *threads,
+            Some(Profile { threads, .. }) => *threads,
+            Some(Search { threads, .. }) => *threads,
+            Some(Cluster { threads, .. }) => *threads,
+            Some(Tree { threads, .. }) => *threads,
+            Some(EasyCore { threads, .. }) => *threads,
+            Some(EasySearch { threads, .. }) => *threads,
+            _ => 0,
         };
 
         let createdb_input = match &args.command {
@@ -532,19 +554,14 @@ impl Args {
             Some(EasyCore { gap_threshold, .. }) => Some(*gap_threshold),
             Some(EasySearch { gap_threshold, .. }) => Some(*gap_threshold), _ => None,
         };
-        let tree_threads = match &args.command {
-            Some(Tree { threads, .. }) => Some(*threads),
-            Some(EasyCore { threads, .. }) => Some(*threads),
-            Some(EasySearch { threads, .. }) => Some(*threads), _ => None,
-        };
 
         Args {
-            command: args.command, version: args.version, verbosity,
+            command: args.command, version: args.version, threads, verbosity,
             createdb_input, createdb_output, createdb_model, createdb_keep, createdb_overwrite, createdb_max_len, createdb_gpu, createdb_use_python, createdb_use_foldseek, createdb_afdb_lookup, createdb_afdb_local,
             profile_input_db, profile_input_m8, profile_output, profile_threshold, profile_print_copiness,
             search_input, search_target, search_output, search_tmp, search_keep_aln_db, search_search_options,
             cluster_input, cluster_output, cluster_tmp, cluster_keep_cluster_db, cluster_cluster_options,
-            tree_db, tree_input, tree_output, tree_aligner, tree_tree_builder, tree_aligner_options, tree_tree_options, tree_threshold, tree_threads,
+            tree_db, tree_input, tree_output, tree_aligner, tree_tree_builder, tree_aligner_options, tree_tree_options, tree_threshold,
         }
     }
 }
