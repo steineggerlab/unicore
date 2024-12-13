@@ -365,6 +365,10 @@ def create_arg_parser():
                         default="output_probabilities.csv",
                         help="Name of the file to store the probabilities. Default: output_probabilities.csv")
 
+    parser.add_argument('--threads', type=int,
+                        default=1,
+                        help="Number of threads to use for prediction. Default: 1")
+
     return parser
 
 
@@ -387,6 +391,8 @@ def main():
         "Running fp16 on CPU is not supported, yet")
     
     output_probs = False if int(args.output_probs) == 0 else True
+
+    torch.set_num_threads(args.threads) # Set number of threads for torch
 
     get_embeddings(
         seq_path,

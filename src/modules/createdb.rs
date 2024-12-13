@@ -160,7 +160,7 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
         } else { cmd };
         cmd::run(&mut cmd);
     } else if use_python {
-        let _ = _run_python(&combined_aa, &curr_dir, &parent, &output, &model, keep, bin);
+        let _ = _run_python(&combined_aa, &curr_dir, &parent, &output, &model, keep, bin, threads.to_string());
     } else {
         err::error(err::ERR_GENERAL, Some("Either use_foldseek or use_python must be true".to_string()));
     }
@@ -216,7 +216,7 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
     Ok(())
 }
 
-fn _run_python(combined_aa: &String, curr_dir: &str, parent: &str, output: &str, model: &str, keep: bool, bin: &crate::envs::variables::BinaryPaths) -> Result<(), Box<dyn std::error::Error>> {
+fn _run_python(combined_aa: &String, curr_dir: &str, parent: &str, output: &str, model: &str, keep: bool, bin: &crate::envs::variables::BinaryPaths, threads: String) -> Result<(), Box<dyn std::error::Error>> {
     let input_3di = format!("{}{}{}{}combined_3di.fasta", curr_dir, SEP, parent, SEP);
     let inter_prob = format!("{}{}{}{}output_probabilities.csv", curr_dir, SEP, parent, SEP);
     let output_3di = format!("{}{}{}_ss", curr_dir, SEP, output);
@@ -228,7 +228,8 @@ fn _run_python(combined_aa: &String, curr_dir: &str, parent: &str, output: &str,
         .arg("-i").arg(&combined_aa)
         .arg("-o").arg(&input_3di)
         .arg("--model").arg(&model)
-        .arg("--half").arg("0");
+        .arg("--half").arg("0")
+        .arg("--threads").arg(threads);
     cmd::run_at(&mut cmd, &Path::new(&var::parent_dir()));
 
     // Build foldseek db
