@@ -31,8 +31,7 @@ With these tools installed, you can install and run `unicore` by:
 git clone https://github.com/steineggerlab/unicore.git
 cd unicore
 cargo build --release
-cp target/release/unicore /path/to/bin
-unicore help
+bin/unicore help
 ```
 
 ## Modules
