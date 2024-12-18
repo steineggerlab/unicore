@@ -315,6 +315,7 @@ pub enum Commands {
     },
 }
 
+#[derive(Default)]
 pub struct Args {
     pub command: Option<Commands>,
     pub version: bool,

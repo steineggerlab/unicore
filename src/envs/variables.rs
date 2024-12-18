@@ -27,6 +27,19 @@ pub fn parent_dir() -> String {
         .to_string()
 }
 
+pub fn test_parent_dir() -> String {
+    // assume binary path = parent/target/debug/deps/unicore-*
+    std::env::current_exe()
+        .unwrap_or_else(|_| err::error(err::ERR_GENERAL, Some("Could not get current directory".to_string())))
+        .parent().unwrap_or_else(|| err::error(err::ERR_GENERAL, Some("Could not get parent directory".to_string())))
+        .parent().unwrap_or_else(|| err::error(err::ERR_GENERAL, Some("Could not get parent directory".to_string())))
+        .parent().unwrap_or_else(|| err::error(err::ERR_GENERAL, Some("Could not get parent directory".to_string())))
+        .parent().unwrap_or_else(|| err::error(err::ERR_GENERAL, Some("Could not get parent directory".to_string())))
+        .to_str()
+        .unwrap_or_else(|| err::error(err::ERR_GENERAL, Some("Could not convert path to string".to_string())))
+        .to_string()
+}
+
 pub fn current_dir() -> String {
     std::env::current_dir()
         .unwrap_or_else(|_| err::error(err::ERR_GENERAL, Some("Could not get current directory".to_string())))
