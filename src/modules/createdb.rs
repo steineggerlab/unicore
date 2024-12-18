@@ -136,16 +136,16 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
         };
 
         // Check if weights exist
-        let model = if Path::new(&model).join("model.bin").exists() {
+        let model = if Path::new(&model).join("cnn.safetensors").exists() {
             model
-        } else if Path::new(&model).join(format!("model{}model.bin", SEP)).exists() {
+        } else if Path::new(&model).join(format!("model{}cnn.safetensors", SEP)).exists() {
             format!("{}{}model", model, SEP)
         } else {
             // Download the model
             std::fs::create_dir_all(format!("{}{}tmp", model, SEP))?;
             let mut cmd = std::process::Command::new(foldseek_path);
             let mut cmd = cmd
-                .arg("--threads").arg(threads.to_string()).arg("databases").arg("ProstT5").arg(&model).arg(format!("{}{}tmp", model, SEP));
+                .arg("databases").arg("ProstT5").arg(&model).arg(format!("{}{}tmp", model, SEP)).arg("--threads").arg(threads.to_string());
             cmd::run(&mut cmd);
             format!("{}{}model", model, SEP)
         };
@@ -153,8 +153,9 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
         // Run foldseek createdb
         let mut cmd = std::process::Command::new(foldseek_path);
         let cmd = cmd
-            .arg("createdb").arg("--threads").arg(threads.to_string()).arg(&combined_aa).arg(&output)
-            .arg("--prostt5-model").arg(&model);
+            .arg("createdb").arg(&combined_aa).arg(&output)
+            .arg("--prostt5-model").arg(&model)
+            .arg("--threads").arg(threads.to_string());
         let mut cmd = if gpu {
             cmd.arg("--gpu").arg("1")
         } else { cmd };
