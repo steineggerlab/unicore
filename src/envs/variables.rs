@@ -1,4 +1,6 @@
 use crate::envs::error_handler as err;
+use std::fs::File;
+use std::path::MAIN_SEPARATOR as SEP;
 use std::process::Command;
 
 // global variables
@@ -16,6 +18,15 @@ pub const LOGO_ART: &str = r"
 
 // environment paths
 pub fn parent_dir() -> String {
+    // assume binary path = parent/bin/unicore
+    std::env::current_exe()
+        .unwrap_or_else(|_| err::error(err::ERR_GENERAL, Some("Could not get current directory".to_string())))
+        .parent().unwrap_or_else(|| err::error(err::ERR_GENERAL, Some("Could not get parent directory".to_string())))
+        .to_str()
+        .unwrap_or_else(|| err::error(err::ERR_GENERAL, Some("Could not convert path to string".to_string())))
+        .to_string()
+}
+pub fn src_parent_dir() -> String {
     // assume binary path = parent/target/release/unicore
     std::env::current_exe()
         .unwrap_or_else(|_| err::error(err::ERR_GENERAL, Some("Could not get current directory".to_string())))
@@ -26,7 +37,6 @@ pub fn parent_dir() -> String {
         .unwrap_or_else(|| err::error(err::ERR_GENERAL, Some("Could not convert path to string".to_string())))
         .to_string()
 }
-
 pub fn test_parent_dir() -> String {
     // assume binary path = parent/target/debug/deps/unicore-*
     std::env::current_exe()
@@ -46,6 +56,27 @@ pub fn current_dir() -> String {
         .to_str()
         .unwrap_or_else(|| err::error(err::ERR_GENERAL, Some("Could not convert path to string".to_string())))
         .to_string()
+}
+
+pub fn locate_path_cfg() -> String {
+    if File::open(format!("{}{}etc{}path.cfg", parent_dir(), SEP, SEP)).is_ok() {
+        format!("{}{}etc{}path.cfg", parent_dir(), SEP, SEP)
+    } else if File::open(format!("{}{}path.cfg", src_parent_dir(), SEP)).is_ok() {
+        format!("{}{}path.cfg", src_parent_dir(), SEP)
+    } else if File::open(format!("{}{}path.cfg", test_parent_dir(), SEP)).is_ok() {
+        format!("{}{}path.cfg", test_parent_dir(), SEP)
+    } else {
+        err::error(err::ERR_GENERAL, Some("Could not locate path.cfg".to_string()));
+    }
+}
+pub fn locate_encoder_py() -> String {
+    if File::open(format!("{}{}etc{}predict_3Di_encoderOnly.py", parent_dir(), SEP, SEP)).is_ok() {
+        format!("{}{}etc{}predict_3Di_encoderOnly.py", parent_dir(), SEP, SEP)
+    } else if File::open(format!("{}{}src{}py{}predict_3Di_encoderOnly.py", src_parent_dir(), SEP, SEP, SEP)).is_ok() {
+        format!("{}{}src{}py{}predict_3Di_encoderOnly.py", src_parent_dir(), SEP, SEP, SEP)
+    } else {
+        err::error(err::ERR_GENERAL, Some("Could not locate path.cfg".to_string()));
+    }
 }
 
 // binary paths

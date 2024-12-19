@@ -9,8 +9,8 @@ use envs::variables as var;
 use util::arg_parser as parser;
 
 // load path config
-fn load_config(bin: &mut var::BinaryPaths, test: bool) {
-    let cfg_path = format!("{}{}path.cfg", if test { var::test_parent_dir() } else { var::parent_dir() }, std::path::MAIN_SEPARATOR);
+fn load_config(bin: &mut var::BinaryPaths) {
+    let cfg_path = var::locate_path_cfg();
     bin.init(&std::path::Path::new(&cfg_path)).unwrap_or_else(|_| err::error(err::ERR_GENERAL, Some("Could not initialize binary paths".to_string())));
 }
 
@@ -54,7 +54,7 @@ fn main() {
 
     // Retrieve bin from the config file
     let mut bin = var::BinaryPaths::new();
-    load_config(&mut bin, false);
+    load_config(&mut bin);
 
     run(&args, &bin, false).unwrap_or_else(|e| err::error(err::ERR_GENERAL, Some(e.to_string())));
 }
@@ -65,7 +65,7 @@ mod tests {
 
     #[test]
     fn test_load_config() {
-        load_config(&mut var::BinaryPaths::new(), true);
+        load_config(&mut var::BinaryPaths::new());
     }
 
     #[test]

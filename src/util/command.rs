@@ -21,7 +21,7 @@ pub fn run(cmd: &mut std::process::Command) {
     }
 }
 
-pub fn run_at(cmd: &mut std::process::Command, path: &std::path::Path) {
+pub fn _run_at(cmd: &mut std::process::Command, path: &std::path::Path) {
     let cmdstr = format!("{:?}", cmd);
     if let Ok(mut child) = cmd.current_dir(path).spawn() {
         let wait = child.wait();

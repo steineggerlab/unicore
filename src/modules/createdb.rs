@@ -225,13 +225,13 @@ fn _run_python(combined_aa: &String, curr_dir: &str, parent: &str, output: &str,
     // Run python script
     let mut cmd = std::process::Command::new("python");
     let mut cmd = cmd
-        .arg(format!("{}{}src{}py{}predict_3Di_encoderOnly.py", var::parent_dir(), SEP, SEP, SEP))
+        .arg(var::locate_encoder_py())
         .arg("-i").arg(&combined_aa)
         .arg("-o").arg(&input_3di)
         .arg("--model").arg(&model)
         .arg("--half").arg("0")
         .arg("--threads").arg(threads);
-    cmd::run_at(&mut cmd, &Path::new(&var::parent_dir()));
+    cmd::run(&mut cmd);
 
     // Build foldseek db
     let foldseek_path = match &bin.get("foldseek") {
