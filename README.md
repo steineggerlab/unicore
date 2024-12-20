@@ -3,7 +3,12 @@ Unicore is a method for scalable and accurate phylogenetic reconstruction with s
 
 ## Installation
 ### Quick Start with Conda
-We will provide a Conda package soon. Please wait for the release.
+```
+conda install -c bioconda unicore
+DIR=$(dirname $(which unicore)) && mkdir -p $DIR/etc && cp -r $DIR/../etc/{path.cfg,*.py} $DIR/etc
+unicore -v
+```
+We have a minor flaw in the path detection logic right now, so we included a messy script (second line) that can deal with it for now.
 
 ### Manual Installation
 #### Minimum requirements
