@@ -254,7 +254,7 @@ fn _run_python(combined_aa: &String, curr_dir: &str, parent: &str, output: &str,
     // Delete intermediate files
     if !keep {
         // std::fs::remove_file(mapping_file)?;
-        std::fs::remove_file(combined_aa)?;
+        // std::fs::remove_file(combined_aa)?;
         std::fs::remove_file(input_3di)?;
         std::fs::remove_file(inter_prob)?;
     }
