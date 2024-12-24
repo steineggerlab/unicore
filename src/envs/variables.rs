@@ -4,7 +4,7 @@ use std::path::MAIN_SEPARATOR as SEP;
 use std::process::Command;
 
 // global variables
-pub const VERSION: &str = "0.1.0";
+pub const VERSION: &str = "1.0.1";
 const STABLE: bool = false;
 pub const STABLE_TEXT: &str = if STABLE { "" } else { "unstable" };
 pub const STABLE_FULL: &str = if STABLE { "Stable" } else { "Unstable" };
@@ -21,6 +21,7 @@ pub fn parent_dir() -> String {
     // assume binary path = parent/bin/unicore
     std::env::current_exe()
         .unwrap_or_else(|_| err::error(err::ERR_GENERAL, Some("Could not get current directory".to_string())))
+        .parent().unwrap_or_else(|| err::error(err::ERR_GENERAL, Some("Could not get parent directory".to_string())))
         .parent().unwrap_or_else(|| err::error(err::ERR_GENERAL, Some("Could not get parent directory".to_string())))
         .to_str()
         .unwrap_or_else(|| err::error(err::ERR_GENERAL, Some("Could not convert path to string".to_string())))
