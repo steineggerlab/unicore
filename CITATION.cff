@@ -1,0 +1,31 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Kim"
+  given-names: "Dongwook"
+  orcid: "https://orcid.org/0000-0001-7386-3163"
+- family-names: "Park"
+  given-names: "Sukhwan"
+  orcid: "https://orcid.org/0000-0002-1623-6566"
+- family-names: "Steinegger"
+  given-names: "Martin"
+  orcid: "https://orcid.org/0000-0001-8781-9753"
+title: "Unicore enables scalable and accurate phylogenetic reconstruction with structural core genes"
+version: 1.0.1
+doi: 10.1101/2024.12.22.629535
+preferred-citation:
+  type: article
+  authors:
+  - family-names: "Kim"
+    given-names: "Dongwook"
+    orcid: "https://orcid.org/0000-0001-7386-3163"
+  - family-names: "Park"
+    given-names: "Sukhwan"
+    orcid: "https://orcid.org/0000-0002-1623-6566"
+  - family-names: "Steinegger"
+    given-names: "Martin"
+    orcid: "https://orcid.org/0000-0001-8781-9753"
+  doi: 10.1101/2024.12.22.629535
+  journal: "bioRxiv"
+  title: "Unicore enables scalable and accurate phylogenetic reconstruction with structural core genes"
+  year: 2024
