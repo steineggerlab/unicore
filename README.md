@@ -8,36 +8,15 @@ conda install -c bioconda unicore
 DIR=$(dirname $(which unicore)) && mkdir -p $DIR/etc && cp -r $DIR/../etc/{path.cfg,*.py} $DIR/etc
 unicore -v
 ```
-We have a minor flaw in the path detection logic right now, so we included a messy script (second line) that can deal with it for now.
+We have a minor flaw in the path detection logic, so we included a messy script (second line) that can deal with it for now.
 
-### Manual Installation
-#### Minimum requirements
-* [Cargo](https://www.rust-lang.org/tools/install) (Rust)
-* [Foldseek](https://foldseek.com) (version ≥ 9)
-* [Foldmason](https://foldmason.foldseek.com)
-* [IQ-TREE](http://www.iqtree.org/)
-* pytorch, transformers, sentencepiece, protobuf
-    - These are required for users who cannot build foldseek with CUDA. Please install them with `pip install torch transformers sentencepiece protobuf`.
-#### Optional requirements
-* [MAFFT](https://mafft.cbrc.jp/alignment/software/)
-* [Fasttree](http://www.microbesonline.org/fasttree/) or [RAxML](https://cme.h-its.org/exelixis/web/software/raxml/)
-
-#### Guide
-Please install the latest version of Rust from [here](https://www.rust-lang.org/tools/install).
-
-Foldseek can be installed from [here](https://foldseek.com).
-
-You have to pre-download the model weights of the ProstT5. Run `foldseek databases ProstT5 <dir> tmp` to download the weights on `<dir>`. If this doesn't work, make sure you have the latest version of Foldseek.
-
-Foldmason and IQ-TREE is designated as default tools for alignment and phylogenetic inference. You can download Foldmason from [here](https://foldmason.foldseek.com) and IQ-TREE from [here](http://www.iqtree.org/).
-
-With these tools installed, you can install and run `unicore` by:
+#### GPU acceleration with CUDA
+`createdb` module can be greatly acclerated with ProstT5-GPU.
+If you have a Linux machine with CUDA-compatible GPU, please install this additional package:
 ```
-git clone https://github.com/steineggerlab/unicore.git
-cd unicore
-cargo build --release
-bin/unicore help
+conda install -c conda-forge pytorch-gpu
 ```
+
 
 ## Modules
 Unicore has four main modules, which can be run sequentially to infer the phylogenetic tree of the given species.
@@ -140,3 +119,32 @@ Example command:
 unicore search db/proteome_db /path/to/reference/db search/result tmp
 ```
 This will create a `result.m8` output file in the `search` folder, which can be used as an input for the `profile` module instead of the `cluster` output.
+
+### Manual Installation
+#### Minimum requirements
+* [Cargo](https://www.rust-lang.org/tools/install) (Rust)
+* [Foldseek](https://foldseek.com) (version ≥ 9)
+* [Foldmason](https://foldmason.foldseek.com)
+* [IQ-TREE](http://www.iqtree.org/)
+* pytorch, transformers, sentencepiece, protobuf
+  - These are required for users who cannot build foldseek with CUDA. Please install them with `pip install torch transformers sentencepiece protobuf`.
+#### Optional requirements
+* [MAFFT](https://mafft.cbrc.jp/alignment/software/)
+* [Fasttree](http://www.microbesonline.org/fasttree/) or [RAxML](https://cme.h-its.org/exelixis/web/software/raxml/)
+
+#### Guide
+Please install the latest version of Rust from [here](https://www.rust-lang.org/tools/install).
+
+Foldseek can be installed from [here](https://foldseek.com).
+
+You have to pre-download the model weights of the ProstT5. Run `foldseek databases ProstT5 <dir> tmp` to download the weights on `<dir>`. If this doesn't work, make sure you have the latest version of Foldseek.
+
+Foldmason and IQ-TREE is designated as default tools for alignment and phylogenetic inference. You can download Foldmason from [here](https://foldmason.foldseek.com) and IQ-TREE from [here](http://www.iqtree.org/).
+
+With these tools installed, you can install and run `unicore` by:
+```
+git clone https://github.com/steineggerlab/unicore.git
+cd unicore
+cargo build --release
+bin/unicore help
+```
