@@ -10,6 +10,8 @@ pub fn run(_: &Args, _: &var::BinaryPaths) {
     println!("Developed by Dongwook Kim and Sukhwan Park");
     println!("Steinegger Lab, Seoul National University. 2024-");
     println!();
+    println!("Please cite: {}", var::CITATION);
+    println!();
     println!("Contact  : endix1029@snu.ac.kr");
     println!("           pskvins@snu.ac.kr");
     println!("Corresp. : martin.steinegger@snu.ac.kr");
