@@ -1,0 +1,2 @@
+#!/bin/sh
+/home/sukhwan/unicore/target/release/unicore $@

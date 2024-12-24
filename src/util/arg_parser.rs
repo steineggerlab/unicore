@@ -206,7 +206,7 @@ pub enum Commands {
         #[arg(long, default_value="true", hide = true)]
         use_python: bool,
         /// Use foldseek for createdb. hidden option
-        #[arg(long, default_value="true", hide = true)]
+        #[arg(long, default_value="false", hide = true)]
         use_foldseek: bool,
         /// Use AFDB lookup for foldseek createdb. Useful for large databases
         #[arg(long, default_value="false")]
@@ -274,7 +274,7 @@ pub enum Commands {
         #[arg(long, default_value="true", hide = true)]
         use_python: bool,
         /// Use foldseek for createdb. hidden option
-        #[arg(long, default_value="true", hide = true)]
+        #[arg(long, default_value="false", hide = true)]
         use_foldseek: bool,
         /// Use AFDB lookup for foldseek createdb. Useful for large databases
         #[arg(long, default_value="false")]
