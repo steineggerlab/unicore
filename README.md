@@ -20,10 +20,8 @@ Kim, D., Park, S., & Steinegger, M. (2024). Unicore enables scalable and accurat
 ## Quick Start with Conda
 ```
 conda install -c bioconda unicore
-DIR=$(dirname $(which unicore)) && mkdir -p $DIR/etc && cp -r $DIR/../etc/{path.cfg,*.py} $DIR/etc
 unicore -v
 ```
-We have a minor flaw in the path detection logic, so we included a messy script (second line) that can deal with it for now.
 
 ### GPU acceleration with CUDA
 `createdb` module can be greatly acclerated with ProstT5-GPU.
