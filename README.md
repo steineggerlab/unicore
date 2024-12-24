@@ -1,5 +1,8 @@
 # Unicore
-Unicore is a method for scalable and accurate phylogenetic reconstruction with structural core genes, universally applicable to any given set of taxa.
+Unicore is a method for scalable and accurate phylogenetic reconstruction with structural core genes using Foldseek and ProstT5, universally applicable to any given set of taxa.
+
+## Publications
+Kim, D., Park, S., & Steinegger, M. (2024). Unicore enables scalable and accurate phylogenetic reconstruction with structural core genes. bioRxiv. [https://doi.org/10.1101/2024.12.22.629535](https://www.biorxiv.org/content/10.1101/2024.12.22.629535v1)
 
 ## Installation
 ### Quick Start with Conda
