@@ -43,24 +43,9 @@ Unicore has four main modules, which can be run sequentially to infer the phylog
 
 Run each module with `unicore <module> help` to see the detailed usage.
 
-#### easy-core
-`easy-core` module orchestrates the four modules in order, processes all the way from the input proteomes to the phylogenetic tree.
-
-Example command:
-```
-// Download ProstT5 weights as below if you haven't already
-// foldseek databases ProstT5 /path/to/prostt5/weights tmp
-// Example dataset is in example/data
-// If you used conda installation, you can download the example dataset from https://unicore.steineggerlab.workers.dev/unicore_example.zip
-unicore easy-core data results /path/to/prostt5/weights tmp
-```
-
-This will create a `results/tree` folder with phylogenetic trees built with the structural core genes identified from the input proteomes.
-
-The `easy-core` module will also create folders named `results/proteome`, `results/cluster`, and `results/profile` with intermediate results for `createdb`, `cluster`, and `profile` module, respectively.
-
 ### Preparing input
-Unicore requires a set of proteomes as input to infer the phylogenetic tree. Please prepare the input proteomes in a folder.
+Unicore requires a set of proteomes as input to infer the phylogenetic tree. Please prepare the input proteomes in a folder.\
+You can also refer to the example dataset in the `example/data` folder or download it from [here](https://unicore.steineggerlab.workers.dev/unicore_example.zip).
 
 > Note. Currently, proteomes in `.fasta` format are only supported as an input. We will try to support more types and formats that can represent species.
 
@@ -73,6 +58,20 @@ data/
   └ ProteomeN.fasta
 
 ```
+
+#### easy-core
+`easy-core` module orchestrates the four modules in order, processes all the way from the input proteomes to the phylogenetic tree.
+
+Example command:
+```
+// Download ProstT5 weights as below if you haven't already
+// foldseek databases ProstT5 /path/to/prostt5/weights tmp
+unicore easy-core data results /path/to/prostt5/weights tmp
+```
+
+This will create a `results/tree` folder with phylogenetic trees built with the structural core genes identified from the input proteomes.
+
+The `easy-core` module will also create folders named `results/proteome`, `results/cluster`, and `results/profile` with intermediate results for `createdb`, `cluster`, and `profile` module, respectively.
 
 ### Main modules
 #### createdb
