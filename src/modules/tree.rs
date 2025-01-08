@@ -6,6 +6,7 @@ use std::process::Command;
 
 use crate::util::arg_parser::Args;
 use crate::envs::error_handler as err;
+use crate::envs::variables as var;
 use crate::util::command as cmd;
 use crate::util::checkpoint as chkpnt;
 use crate::seq::create_gene_specific_fasta as gsf;
@@ -69,6 +70,7 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
     // Iterate through the gene_list and build foldseek db
     // Only need to build foldseek db when the aligner is foldmason
     if aligner == "foldmason" {
+        let foldseek_verbosity = (match var::verbosity() { 4 => 3, 3 => 2, _ => var::verbosity() }).to_string();
         for (i, gene) in gene_list.iter().enumerate() {
             if let Some(gene_name) = gene.file_stem().and_then(|name| name.to_str()) {
                 let gene_dir = gene_fasta_dir.join(gene_name);
@@ -76,23 +78,23 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
                 let mut cmd = Command::new(foldseek_path);
                 let aa_fasta = gene_dir.join("aa.fasta");
                 let aa_db = gene_dir.join(format!("{}_db", gene_name).as_str());
-                let cmd_args = vec!["base:createdb",
+                let mut cmd_args = vec!["base:createdb",
                                     aa_fasta.to_str().unwrap(),
                                     aa_db.to_str().unwrap(),
                                     "--shuffle", "0"];
+                cmd_args.push("-v"); cmd_args.push(foldseek_verbosity.as_str());
                 let mut cmd = cmd.args(cmd_args);
                 cmd::run(&mut cmd);
                 // 3Di db
                 let mut cmd = Command::new(foldseek_path);
                 let di_fasta = gene_dir.join("3di.fasta");
                 let di_db = gene_dir.join(format!("{}_db_ss", gene_name).as_str());
-                let cmd_args = vec![
+                let mut cmd_args = vec![
                     "base:createdb",
                     di_fasta.to_str().unwrap(),
                     di_db.to_str().unwrap(),
-                    "--shuffle", "0",
-                    "-v", "0" // TODO: verbose option should modify this
-                ];
+                    "--shuffle", "0"];
+                cmd_args.push("-v"); cmd_args.push(foldseek_verbosity.as_str());
                 let mut cmd = cmd.args(cmd_args);
                 cmd::run(&mut cmd);
             }
@@ -150,7 +152,7 @@ fn run_mafft(mafft_path: &String, parent: &Path, gene_list: &Vec<PathBuf>, mafft
                 cmd_args.push(threads_copy.as_str());
             }
             cmd_args.push("--anysymbol");
-            cmd_args.push("--quiet"); // TODO: verbose option should disable this
+            if var::verbosity() < 4 { cmd_args.push("--quiet"); }
 
             // add input and output
             let aa_fasta = gene_dir.join("aa.fasta");
@@ -172,6 +174,7 @@ fn run_mafft(mafft_path: &String, parent: &Path, gene_list: &Vec<PathBuf>, mafft
 }
 
 fn run_foldmason(foldmason_path: &String, parent: &Path, gene_list: &Vec<PathBuf>, foldmason_options: &String, threshold: usize, threads: usize) -> Result<(), Box<dyn std::error::Error>> {
+    let foldseek_verbosity = (match var::verbosity() { 4 => 3, 3 => 2, _ => var::verbosity() }).to_string();
     for (i, gene) in gene_list.iter().enumerate() {
         if let Some(gene_name) = gene.file_stem().and_then(|name| name.to_str()) {
             let gene_dir = parent.join(gene_name);
@@ -181,6 +184,7 @@ fn run_foldmason(foldmason_path: &String, parent: &Path, gene_list: &Vec<PathBuf
             let mut cmd_args = vec!["structuremsa",
                             db.to_str().unwrap(),
                             msa_fasta.to_str().unwrap()];
+            cmd_args.push("-v"); cmd_args.push(foldseek_verbosity.as_str());
             // parse foldmason_options into vector
             let mut cmd_options = foldmason_options.split_whitespace().collect::<Vec<&str>>();
             let threads_copy = threads.to_string();
