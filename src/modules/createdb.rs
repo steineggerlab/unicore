@@ -87,7 +87,6 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
     let mapping_file = format!("{}.map", output);
     let mut mapping_writer = BufWriter::new(std::fs::File::create(&mapping_file)?);
     let mut fasta_data = HashMap::new();
-    let mut cnt = 0;
     for file in fasta_files {
         let species = Path::new(&file).file_stem().unwrap().to_str().unwrap();
         let each_fasta = fasta::read_fasta(&file);
@@ -97,8 +96,11 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
             }
             // replace all whitespace characters with underscore
             let key = key.replace(|c: char| need_replacement(c), "_");
-            let hashed_name = format!("unicore_{}", cnt);
-            cnt += 1;
+
+            // hash sequence to avoid name collision
+            let mut hash = format!("{:x}", md5::compute(value.clone()));
+            hash.truncate(10);
+            let hashed_name = format!("unicore_{}", hash);
             fasta_data.insert(hashed_name.clone(), value);
             writeln!(mapping_writer, "{}\t{}\t{}", hashed_name, species, key)?;
         }
