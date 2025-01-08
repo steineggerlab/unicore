@@ -30,6 +30,7 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
     let afdb_lookup = args.createdb_afdb_lookup.unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("createdb - afdb_lookup".to_string())); });
     let afdb_local = args.createdb_afdb_local.clone().unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("createdb - afdb_local".to_string())); });
     let threads = crate::envs::variables::threads();
+    let foldseek_verbosity = (match var::verbosity() { 4 => 3, 3 => 2, _ => var::verbosity() }).to_string();
 
     // Either use_foldseek or use_python must be true
     if !use_foldseek && !use_python {
@@ -177,8 +178,8 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
         let converted_h_db = format!("{}{}{}{}converted_h", curr_dir, SEP, parent, SEP);
         let converted_ss_db = format!("{}{}{}{}converted_ss", curr_dir, SEP, parent, SEP);
         let converted_ss_h_db = format!("{}{}{}{}converted_ss_h", curr_dir, SEP, parent, SEP);
-        cmd::run(Cmd::new(foldseek_path).arg("base:createdb").arg(&converted_aa).arg(&converted_aa_db).arg("--shuffle").arg("0"));
-        cmd::run(Cmd::new(foldseek_path).arg("base:createdb").arg(&converted_ss).arg(&converted_ss_db).arg("--shuffle").arg("0"));
+        cmd::run(Cmd::new(foldseek_path).arg("base:createdb").arg(&converted_aa).arg(&converted_aa_db).arg("--shuffle").arg("0").arg("-v").arg(foldseek_verbosity.as_str()));
+        cmd::run(Cmd::new(foldseek_path).arg("base:createdb").arg(&converted_ss).arg(&converted_ss_db).arg("--shuffle").arg("0").arg("-v").arg(foldseek_verbosity.as_str()));
 
         // Concatenate the two databases
         let output_ss = format!("{}_ss", output);
@@ -186,24 +187,24 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
         let concat_aa_db = format!("{}{}{}{}concat_aa", curr_dir, SEP, parent, SEP);
         let concat_ss_db = format!("{}{}{}{}concat_ss", curr_dir, SEP, parent, SEP);
         let concat_h_db = format!("{}{}{}{}concat_h", curr_dir, SEP, parent, SEP);
-        cmd::run(Cmd::new(foldseek_path).arg("base:concatdbs").arg(&output).arg(&converted_aa_db).arg(&concat_aa_db));
-        cmd::run(Cmd::new(foldseek_path).arg("base:concatdbs").arg(&output_ss).arg(&converted_ss_db).arg(&concat_ss_db));
-        cmd::run(Cmd::new(foldseek_path).arg("base:concatdbs").arg(&output_h).arg(&converted_h_db).arg(&concat_h_db));
+        cmd::run(Cmd::new(foldseek_path).arg("base:concatdbs").arg(&output).arg(&converted_aa_db).arg(&concat_aa_db).arg("-v").arg(foldseek_verbosity.as_str()));
+        cmd::run(Cmd::new(foldseek_path).arg("base:concatdbs").arg(&output_ss).arg(&converted_ss_db).arg(&concat_ss_db).arg("-v").arg(foldseek_verbosity.as_str()));
+        cmd::run(Cmd::new(foldseek_path).arg("base:concatdbs").arg(&output_h).arg(&converted_h_db).arg(&concat_h_db).arg("-v").arg(foldseek_verbosity.as_str()));
 
         // Rename databases
-        cmd::run(Cmd::new(foldseek_path).arg("base:mvdb").arg(&concat_aa_db).arg(&output));
-        cmd::run(Cmd::new(foldseek_path).arg("base:mvdb").arg(&concat_ss_db).arg(&output_ss));
-        cmd::run(Cmd::new(foldseek_path).arg("base:mvdb").arg(&concat_h_db).arg(&output_h));
+        cmd::run(Cmd::new(foldseek_path).arg("base:mvdb").arg(&concat_aa_db).arg(&output).arg("-v").arg(foldseek_verbosity.as_str()));
+        cmd::run(Cmd::new(foldseek_path).arg("base:mvdb").arg(&concat_ss_db).arg(&output_ss).arg("-v").arg(foldseek_verbosity.as_str()));
+        cmd::run(Cmd::new(foldseek_path).arg("base:mvdb").arg(&concat_h_db).arg(&output_h).arg("-v").arg(foldseek_verbosity.as_str()));
 
         // Delete intermediate files
         if !keep {
             std::fs::remove_file(converted_aa)?;
             std::fs::remove_file(converted_ss)?;
             std::fs::remove_file(format!("{}.source", concat_aa_db)).or_else(|_| Ok::<(), Box<dyn std::error::Error>>(()))?;
-            cmd::run(Cmd::new(foldseek_path).arg("base:rmdb").arg(&converted_aa_db));
-            cmd::run(Cmd::new(foldseek_path).arg("base:rmdb").arg(&converted_h_db));
-            cmd::run(Cmd::new(foldseek_path).arg("base:rmdb").arg(&converted_ss_db));
-            cmd::run(Cmd::new(foldseek_path).arg("base:rmdb").arg(&converted_ss_h_db));
+            cmd::run(Cmd::new(foldseek_path).arg("base:rmdb").arg(&converted_aa_db).arg("-v").arg(foldseek_verbosity.as_str()));
+            cmd::run(Cmd::new(foldseek_path).arg("base:rmdb").arg(&converted_h_db).arg("-v").arg(foldseek_verbosity.as_str()));
+            cmd::run(Cmd::new(foldseek_path).arg("base:rmdb").arg(&converted_ss_db).arg("-v").arg(foldseek_verbosity.as_str()));
+            cmd::run(Cmd::new(foldseek_path).arg("base:rmdb").arg(&converted_ss_h_db).arg("-v").arg(foldseek_verbosity.as_str()));
         }
     }
 
@@ -223,6 +224,7 @@ fn _run_python(combined_aa: &String, curr_dir: &str, parent: &str, output: &str,
     let input_3di = format!("{}{}{}{}combined_3di.fasta", curr_dir, SEP, parent, SEP);
     let inter_prob = format!("{}{}{}{}output_probabilities.csv", curr_dir, SEP, parent, SEP);
     let output_3di = format!("{}{}{}_ss", curr_dir, SEP, output);
+    let foldseek_verbosity = (match var::verbosity() { 4 => 3, 3 => 2, _ => var::verbosity() }).to_string();
 
     // Run python script
     let mut cmd = std::process::Command::new("python");
@@ -243,14 +245,17 @@ fn _run_python(combined_aa: &String, curr_dir: &str, parent: &str, output: &str,
     let mut cmd = std::process::Command::new(foldseek_path);
     let mut cmd = cmd
         .arg("base:createdb").arg(&combined_aa).arg(&output)
-        .arg("--shuffle").arg("0");
+        .arg("--shuffle").arg("0")
+        .arg("-v").arg(foldseek_verbosity.as_str());
+
     cmd::run(&mut cmd);
 
     // Build foldseek 3di db
     let mut cmd = std::process::Command::new(foldseek_path);
     let mut cmd = cmd
         .arg("base:createdb").arg(&input_3di).arg(&output_3di)
-        .arg("--shuffle").arg("0");
+        .arg("--shuffle").arg("0")
+        .arg("-v").arg(foldseek_verbosity.as_str());
     cmd::run(&mut cmd);
 
     // Delete intermediate files
