@@ -4,11 +4,12 @@ use std::collections::HashMap;
 use std::io::Write;
 use std::process::Command;
 
-use crate::util::arg_parser::Args;
 use crate::envs::error_handler as err;
 use crate::envs::variables as var;
+use crate::util::arg_parser::Args;
 use crate::util::command as cmd;
 use crate::util::checkpoint as chkpnt;
+use crate::util::message as msg;
 use crate::seq::create_gene_specific_fasta as gsf;
 use crate::seq::combine_fasta as cf;
 use crate::seq::fasta_io as fasta;
@@ -34,7 +35,7 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
     chkpnt::write_checkpoint(&format!("{}/tree.chk", output), "0")?;
 
     // print out threads
-    println!("Using {} threads", threads);
+    msg::println_message(&format!("Using {} threads", threads), 4);
 
     // Check aligner binary
     let aligner_path = match &bin.get(&aligner) {
@@ -98,9 +99,9 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
                 let mut cmd = cmd.args(cmd_args);
                 cmd::run(&mut cmd);
             }
-            print!("\rBuilding foldseek databases {}/{}...", i + 1, gene_list.len());
+            msg::print_message(&format!("\rBuilding foldseek databases {}/{}...", i + 1, gene_list.len()), 3);
         }
-        println!(" Done");
+        msg::println_message(&" Done".to_string(), 3);
     }
 
     // Iterate through the gene_list and generate alignment
@@ -125,12 +126,14 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
     cf::combine_fasta(&msa_list, &combined_fasta)?;
 
     // Build tree
+    msg::print_message(&"Inferring phylogenetic tree...".to_string(), 3);
     if tree_builder == "iqtree" {
         run_iqtree(&tree_builder_path, &output, &combined_fasta.display().to_string(), &tree_options, threads)?;
     } else {
         // TODO: Implement other tree building methods
         err::error(err::ERR_MODULE_NOT_IMPLEMENTED, Some("Need implementation".to_string()))
     }
+    msg::println_message(&" Done".to_string(), 3);
 
     // Write the checkpoint file
     chkpnt::write_checkpoint(&format!("{}/tree.chk", output), "1")?;
@@ -167,9 +170,9 @@ fn run_mafft(mafft_path: &String, parent: &Path, gene_list: &Vec<PathBuf>, mafft
             let output_msa = gene_dir.join(format!("{}.fa.filtered", gene_name)).display().to_string();
             filter_msa(&msa_fasta.display().to_string(), &output_msa, threshold)?;
         }
-        print!("\rAligning genes {}/{}...", i + 1, gene_list.len());
+        msg::print_message(&format!("\rAligning genes {}/{}...", i + 1, gene_list.len()), 3);
     }
-    println!(" Done");
+    msg::println_message(&" Done".to_string(), 3);
     Ok(())
 }
 
@@ -178,7 +181,7 @@ fn run_foldmason(foldmason_path: &String, parent: &Path, gene_list: &Vec<PathBuf
     for (i, gene) in gene_list.iter().enumerate() {
         if let Some(gene_name) = gene.file_stem().and_then(|name| name.to_str()) {
             let gene_dir = parent.join(gene_name);
-            let mut cmd = std::process::Command::new(foldmason_path);
+            let mut cmd = Command::new(foldmason_path);
             let db = gene_dir.join(format!("{}_db", gene_name));
             let msa_fasta = gene_dir.join(gene_name);
             let mut cmd_args = vec!["structuremsa",
@@ -199,14 +202,14 @@ fn run_foldmason(foldmason_path: &String, parent: &Path, gene_list: &Vec<PathBuf
             let output_msa = gene_dir.join(format!("{}.fa.filtered", gene_name)).display().to_string();
             filter_msa(&(msa_fasta.display().to_string() + "_aa.fa"), &output_msa, threshold)?;
         }
-        print!("\rAligning genes {}/{}...", i + 1, gene_list.len());
+        msg::print_message(&format!("\rAligning genes {}/{}...", i + 1, gene_list.len()), 3);
     }
-    println!(" Done");
+    msg::println_message(&" Done".to_string(), 3);
     Ok(())
 }
 
 fn run_iqtree(iqtree_path: &String, output_dir: &String, msa_fasta: &String, iqtree_options: &String, threads: usize) -> Result<(), Box<dyn std::error::Error>> {
-    let mut cmd = std::process::Command::new(iqtree_path);
+    let mut cmd = Command::new(iqtree_path);
     let mut cmd_options = iqtree_options.split_whitespace().collect::<Vec<&str>>();
     // If there is "--prefix" in the option
     let mut cmd_args = vec!["-s", msa_fasta];
@@ -253,7 +256,7 @@ fn filter_msa(input_msa: &String, output_msa: &String, threshold: usize) -> Resu
         .map(|(i, _)| i)
         .collect();
     // Write the filtered MSA
-    let file = std::fs::File::create(output_msa)?;
+    let file = fs::File::create(output_msa)?;
     let mut file_writer = std::io::BufWriter::new(file);
     for (header, sequence) in msa.iter() {
         writeln!(file_writer, ">{}", header)?;
