@@ -212,7 +212,7 @@ pub enum Commands {
         #[arg(long, default_value="false")]
         afdb_lookup: bool,
         /// Local path to the directory with AFDB lookup tables. hidden option
-        #[arg(long, hide = true)]
+        #[arg(long, hide = false)]
         afdb_local: Option<PathBuf>,
         /// Arguments for foldseek options in string e.g. -c "-c 0.8"
         #[arg(short, long, default_value="-c 0.8")]
