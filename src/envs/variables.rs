@@ -1,7 +1,9 @@
 use crate::envs::error_handler as err;
+use crate::util::message as msg;
 use std::fs::File;
 use std::path::MAIN_SEPARATOR as SEP;
 use std::process::Command;
+use num_cpus;
 
 // global variables
 pub const VERSION: &str = "1.0.1";
@@ -156,22 +158,14 @@ pub fn verbosity() -> u8 {
 
 pub static mut THREADS: usize = 0;
 pub fn set_threads(threads: usize) {
-    // if the os is linux
-    let threads = if threads > 0 { threads }
-    else if cfg!(target_os = "linux") {
-        let output = Command::new("sh")
-            .arg("-c")
-            .arg("grep -c ^processor /proc/cpuinfo")
-            .output()
-            .expect("Failed to get the number of processors");
-        std::str::from_utf8(&output.stdout).unwrap().trim().parse::<usize>().unwrap()
-    } else {
-        let output = Command::new("sysctl")
-            .arg("-n")
-            .arg("hw.ncpu")
-            .output()
-            .expect("Failed to get the number of processors");
-        std::str::from_utf8(&output.stdout).unwrap().trim().parse::<usize>().unwrap()
+    let system_cpus = num_cpus::get();
+    let threads = if threads > system_cpus {
+        msg::eprintln_message(&format!("Warning: the given number of threads is greater than the number of system CPUs; adjusting to {}", system_cpus), 2);
+        system_cpus
+    } else { threads };
+    let threads = if threads > 0 { threads } else {
+        msg::println_message(&format!("Automatically setting the number of threads to {}", system_cpus), 4);
+        system_cpus
     };
     unsafe { THREADS = threads; }
 }
