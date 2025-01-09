@@ -1,7 +1,7 @@
-use crate::util::arg_parser::Args;
 use crate::seq::fasta_io as fasta;
 use crate::envs::variables as var;
 use crate::envs::error_handler as err;
+use crate::util::arg_parser::Args;
 use crate::util::command as cmd;
 use crate::util::checkpoint as chkpnt;
 
@@ -138,20 +138,19 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
             _none => { err::error(err::ERR_BINARY_NOT_FOUND, Some("foldseek".to_string())); }
         };
 
+        // Check if old weights exist
+        if Path::new(&model).join("cnn.safetensors").exists() || Path::new(&model).join(format!("model{}cnn.safetensors", SEP)).exists() {
+            err::error(err::ERR_GENERAL, Some("Old weight files detected from the given path. Please provide different path for the model weights".to_string()));
+        }
         // Check if weights exist
-        let model = if Path::new(&model).join("cnn.safetensors").exists() {
-            model
-        } else if Path::new(&model).join(format!("model{}cnn.safetensors", SEP)).exists() {
-            format!("{}{}model", model, SEP)
-        } else {
+        if !Path::new(&model).join("prostt5-f16.gguf").exists() {
             // Download the model
             std::fs::create_dir_all(format!("{}{}tmp", model, SEP))?;
             let mut cmd = std::process::Command::new(foldseek_path);
             let mut cmd = cmd
                 .arg("databases").arg("ProstT5").arg(&model).arg(format!("{}{}tmp", model, SEP)).arg("--threads").arg(threads.to_string());
             cmd::run(&mut cmd);
-            format!("{}{}model", model, SEP)
-        };
+        }
 
         // Run foldseek createdb
         let mut cmd = std::process::Command::new(foldseek_path);
