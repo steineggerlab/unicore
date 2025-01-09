@@ -8,6 +8,7 @@ Kim, D., Park, S., & Steinegger, M. (2024). Unicore enables scalable and accurat
 - [Unicore](#unicore)
 - [Quick Start with Conda](#quick-start-with-conda)
   - [GPU acceleration with CUDA](#gpu-acceleration-with-cuda)
+  - [GPU acceleration with Foldseek-ProstT5 (beta)](#gpu-acceleration-with-foldseek-prostt5-beta)
 - [Tutorial](#tutorial)
 - [Manual](#manual)
   - [Input](#input)
@@ -29,6 +30,19 @@ unicore -v
 If you have a Linux machine with CUDA-compatible GPU, please install this additional package:
 ```
 conda install -c conda-forge pytorch-gpu
+```
+
+### GPU acceleration with Foldseek-ProstT5 (beta)
+> Note. This feature is under development and may not work in some environments. We will provide an update after the stable release of Foldseek-ProstT5.
+
+Foldseek provides a GPU-compatible static binary for ProstT5 prediction (requires Linux with AVX2 support, glibc>=2.29, and nvidia-driver>=525.60.13)<br>
+To use it, please install it by running the following command:
+```
+wget https://mmseqs.com/foldseek/foldseek-linux-gpu.tar.gz; tar xvfz foldseek-linux-gpu.tar.gz; export PATH=$(pwd)/foldseek/bin/:$PATH
+```
+Then, add `--use-foldseek` and `--gpu` options to either `easy-core` or `createdb` module to use Foldseek implementation of ProstT5-GPU:
+```
+unicore easy-core --use-foldseek --gpu <INPUT> <OUTPUT> <MODEL> <TMP>
 ```
 
 <hr>
