@@ -1,8 +1,9 @@
 use std::path::Path;
-use crate::util::arg_parser::Args;
 use crate::envs::error_handler as err;
+use crate::util::arg_parser::Args;
 use crate::util::command as cmd;
 use crate::util::checkpoint as chkpnt;
+use crate::util::message as msg;
 
 // Run foldseek cluster and createtsv
 pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(), Box<dyn std::error::Error>> {
@@ -48,9 +49,11 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
     foldseek_flag.extend(cluster_args.iter());
 
     // Run foldseek cluster
+    msg::print_message(&"Running foldseek cluster...".to_string(), 3);
     let mut cmd = std::process::Command::new(foldseek_path);
     let mut cmd = cmd.args(&foldseek_flag);
     cmd::run(&mut cmd);
+    msg::println_message(&" Done".to_string(), 3);
 
     // Run foldseek createtsv
     let mut cmd = std::process::Command::new(foldseek_path);

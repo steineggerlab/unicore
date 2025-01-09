@@ -1,6 +1,7 @@
 use crate::envs::variables as var;
 use crate::util::arg_parser::Args;
 use crate::util::checkpoint as chkpnt;
+use crate::util::message as msg;
 
 use std::collections::{HashMap, HashSet};
 use std::fs;
@@ -37,7 +38,9 @@ fn profile(tsv_file: &str, mapping: &str, output_dir: &str, threshold: usize, pr
     let mut curr_query: Option<String> = None;
     let mut spe_cnt: HashMap<String, i32> = HashMap::new();
     let mut gene2spe: HashMap<String, HashSet<String>> = HashMap::new();
+    let (mut total_cnt, mut core_cnt) = (0, 0);
 
+    msg::print_message(&"Profiling the taxonomic distribution of the genes...".to_string(), 3);
     for line in reader.lines().filter_map(|l| l.ok()) {
         let parts: Vec<&str> = line.split_whitespace().collect();
         let query = parts[0].to_string();
@@ -45,7 +48,10 @@ fn profile(tsv_file: &str, mapping: &str, output_dir: &str, threshold: usize, pr
 
         if Some(&query) != curr_query.as_ref() {
             if let Some(q) = curr_query.take() {
-                output_statistics_and_genes(&mut output, &q, &spe_cnt, &gene2spe, species_count, threshold, output_dir)?;
+                total_cnt += 1;
+                let is_core = output_statistics_and_genes(&mut output, &q, &spe_cnt, &gene2spe, species_count, threshold, output_dir)
+                    .expect("Failed to write out the statistics and genes");
+                if is_core { core_cnt += 1; }
             }
             curr_query = Some(query);
             spe_cnt.clear();
@@ -61,13 +67,19 @@ fn profile(tsv_file: &str, mapping: &str, output_dir: &str, threshold: usize, pr
     }
 
     if let Some(q) = curr_query {
-        output_statistics_and_genes(&mut output, &q, &spe_cnt, &gene2spe, species_count, threshold, output_dir)?;
+        total_cnt += 1;
+        let is_core = output_statistics_and_genes(&mut output, &q, &spe_cnt, &gene2spe, species_count, threshold, output_dir)
+            .expect("Failed to write out the statistics and genes");
+        if is_core { core_cnt += 1; }
     }
+
+    msg::println_message(&" Done".to_string(), 3);
+    msg::println_message(&format!("{} structural core genes found from {} candidates", core_cnt, total_cnt), 3);
 
     Ok(())
 }
 
-fn output_statistics_and_genes<W: Write>(output: &mut Option<W>, query: &str, spe_cnt: &HashMap<String, i32>, gene2spe: &HashMap<String, HashSet<String>>, species_count: usize, threshold: usize, output_dir: &str) -> io::Result<()> {
+fn output_statistics_and_genes<W: Write>(output: &mut Option<W>, query: &str, spe_cnt: &HashMap<String, i32>, gene2spe: &HashMap<String, HashSet<String>>, species_count: usize, threshold: usize, output_dir: &str) -> io::Result<bool> {
     let single_copy = spe_cnt.values().filter(|&&count| count == 1).count();
     let multiple_copy = spe_cnt.len();
 
@@ -75,6 +87,7 @@ fn output_statistics_and_genes<W: Write>(output: &mut Option<W>, query: &str, sp
     let multiple_copy_percent = multiple_copy as f64 * 100.0 / species_count as f64;
 
     // Write out to copiness.tsv
+    msg::println_message(&format!("Gene {} reported {:.2}% single copy and {:.2}% multiple copy", query, single_copy_percent, multiple_copy_percent), 4);
     if let Some(output) = output.as_mut() {
         writeln!(output, "{}\t{}\t{}", query, multiple_copy_percent, single_copy_percent)?;
     }
@@ -91,9 +104,8 @@ fn output_statistics_and_genes<W: Write>(output: &mut Option<W>, query: &str, sp
             }
         }
         output_file.flush()?;
-    }
-
-    Ok(())
+        Ok(true)
+    } else { Ok(false) }
 }
 
 pub fn run(args: &Args, _: &var::BinaryPaths) -> Result<(), Box<dyn std::error::Error>> {

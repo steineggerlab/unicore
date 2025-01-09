@@ -3,7 +3,7 @@ use crate::util::message as msg;
 
 pub fn run(cmd: &mut std::process::Command) {
     let cmdstr = format!("{:?}", cmd).replace("\"", "");
-    msg::println_message(&format!("Running command: {}", cmdstr), 3);
+    msg::println_message(&format!("Running command: {}", cmdstr), 4);
     if let Ok(mut child) = cmd.spawn() {
         let wait = child.wait();
         if let Ok(status) = wait {
