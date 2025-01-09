@@ -131,8 +131,8 @@ pub enum Commands {
     Profile {
         /// Input database (createdb output)
         input_db: PathBuf,
-        /// Input m8 file (cluster or search output)
-        input_m8: PathBuf,
+        /// Input tsv file (cluster or search output)
+        input_tsv: PathBuf,
         /// Output directory
         output: PathBuf,
         /// Coverage threshold for core structures. [0 - 100]
@@ -335,7 +335,7 @@ pub struct Args {
     pub createdb_afdb_local: Option<Option<String>>,
 
     pub profile_input_db: Option<String>,
-    pub profile_input_m8: Option<String>,
+    pub profile_input_tsv: Option<String>,
     pub profile_output: Option<String>,
     pub profile_threshold: Option<usize>,
     pub profile_print_copiness: Option<bool>,
@@ -448,8 +448,8 @@ impl Args {
             Some(EasyCore { output, .. }) => Some(format!("{}/proteome/proteome_db", own(output))),
             Some(EasySearch { output, .. }) => Some(format!("{}/proteome/proteome_db", own(output))), _ => None,
         };
-        let profile_input_m8 = match &args.command {
-            Some(Profile { input_m8, .. }) => Some(own(input_m8)),
+        let profile_input_tsv = match &args.command {
+            Some(Profile { input_tsv, .. }) => Some(own(input_tsv)),
             Some(EasyCore { output, .. }) => Some(format!("{}/cluster/clust.tsv", own(output))),
             Some(EasySearch { output, .. }) => Some(format!("{}/search/search.m8", own(output))), _ => None,
         };
@@ -559,7 +559,7 @@ impl Args {
         Args {
             command: args.command, version: args.version, threads, verbosity,
             createdb_input, createdb_output, createdb_model, createdb_keep, createdb_overwrite, createdb_max_len, createdb_gpu, createdb_use_python, createdb_use_foldseek, createdb_afdb_lookup, createdb_afdb_local,
-            profile_input_db, profile_input_m8, profile_output, profile_threshold, profile_print_copiness,
+            profile_input_db, profile_input_tsv, profile_output, profile_threshold, profile_print_copiness,
             search_input, search_target, search_output, search_tmp, search_keep_aln_db, search_search_options,
             cluster_input, cluster_output, cluster_tmp, cluster_keep_cluster_db, cluster_cluster_options,
             tree_db, tree_input, tree_output, tree_aligner, tree_tree_builder, tree_aligner_options, tree_tree_options, tree_threshold,

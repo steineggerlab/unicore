@@ -8,7 +8,7 @@ use std::fs::File;
 use std::io::{self, BufRead, BufReader, BufWriter, Write};
 use std::path::Path;
 
-fn profile(m8_file: &str, mapping: &str, output_dir: &str, threshold: usize, print_copiness: bool) -> io::Result<()> {
+fn profile(tsv_file: &str, mapping: &str, output_dir: &str, threshold: usize, print_copiness: bool) -> io::Result<()> {
     let mut gene_to_spe: HashMap<String, HashSet<String>> = HashMap::new();
     let mut species_set: HashSet<String> = HashSet::new();
 
@@ -32,7 +32,7 @@ fn profile(m8_file: &str, mapping: &str, output_dir: &str, threshold: usize, pri
     if let Some(output) = output.as_mut() {
         writeln!(output, "Query\tMultipleCopyPercent\tSingleCopyPercent")?;
     }
-    let file = File::open(m8_file)?;
+    let file = File::open(tsv_file)?;
     let reader = BufReader::new(file);
     let mut curr_query: Option<String> = None;
     let mut spe_cnt: HashMap<String, i32> = HashMap::new();
@@ -99,7 +99,7 @@ fn output_statistics_and_genes<W: Write>(output: &mut Option<W>, query: &str, sp
 pub fn run(args: &Args, _: &var::BinaryPaths) -> Result<(), Box<dyn std::error::Error>> {
     // Retrieve arguments
     let input_db = args.profile_input_db.clone().unwrap_or_else(|| { crate::envs::error_handler::error(crate::envs::error_handler::ERR_ARGPARSE, Some("profile - input".to_string())); });
-    let input_m8 = args.profile_input_m8.clone().unwrap_or_else(|| { crate::envs::error_handler::error(crate::envs::error_handler::ERR_ARGPARSE, Some("profile - mapping".to_string())); });
+    let input_tsv = args.profile_input_tsv.clone().unwrap_or_else(|| { crate::envs::error_handler::error(crate::envs::error_handler::ERR_ARGPARSE, Some("profile - mapping".to_string())); });
     let output = args.profile_output.clone().unwrap_or_else(|| { crate::envs::error_handler::error(crate::envs::error_handler::ERR_ARGPARSE, Some("profile - output".to_string())); });
     let threshold = args.profile_threshold.unwrap_or_else(|| { crate::envs::error_handler::error(crate::envs::error_handler::ERR_ARGPARSE, Some("profile - threshold".to_string())); });
     let print_copiness = args.profile_print_copiness.unwrap_or_else(|| { crate::envs::error_handler::error(crate::envs::error_handler::ERR_ARGPARSE, Some("profile - print_copiness".to_string())); });
@@ -113,7 +113,7 @@ pub fn run(args: &Args, _: &var::BinaryPaths) -> Result<(), Box<dyn std::error::
     chkpnt::write_checkpoint(&format!("{}/profile.chk", output), "0")?;
 
     let mapping = format!("{}.map", input_db);
-    profile(&input_m8, &mapping, &output, threshold, print_copiness)?;
+    profile(&input_tsv, &mapping, &output, threshold, print_copiness)?;
 
     // Write the checkpoint file
     chkpnt::write_checkpoint(&format!("{}/profile.chk", output), "1")?;
