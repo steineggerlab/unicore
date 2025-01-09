@@ -1,7 +1,9 @@
 use crate::envs::error_handler as err;
+use crate::util::message as msg;
 
 pub fn run(cmd: &mut std::process::Command) {
-    let cmdstr = format!("{:?}", cmd);
+    let cmdstr = format!("{:?}", cmd).replace("\"", "");
+    msg::println_message(&format!("Running command: {}", cmdstr), 3);
     if let Ok(mut child) = cmd.spawn() {
         let wait = child.wait();
         if let Ok(status) = wait {
