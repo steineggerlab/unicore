@@ -3,6 +3,7 @@ use crate::envs::variables as var;
 use crate::envs::error_handler as err;
 use crate::util::arg_parser::Args;
 use crate::util::command as cmd;
+use crate::util::message as msg;
 use crate::util::checkpoint as chkpnt;
 
 use std::io::{BufWriter, Write};
@@ -48,6 +49,10 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
     } else {
         err::error(err::ERR_GENERAL, Some("Could not obtain parent directory of the output".to_string()))
     };
+    // If the parent directory is empty, set it to '.'
+    let parent = if parent.is_empty() { ".".to_string() } else { parent };
+    // Print the parent directory
+    msg::println_message(&format!("Parent directory: {}", parent), 4);
     // If the parent directory of the output doesn't exist, make one
     if !Path::new(&parent).exists() {
         std::fs::create_dir_all(&parent)?;
