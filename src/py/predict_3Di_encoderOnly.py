@@ -20,6 +20,17 @@ import torch.nn.functional as F
 from transformers import T5EncoderModel, T5Tokenizer
 from tqdm import tqdm
 
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
 
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 print("Using device: {}".format(device))
@@ -379,6 +390,27 @@ def main():
     seq_path = Path(args.input)  # path to input FASTAS
     out_path = Path(args.output)  # path where predictions should be written to
     model_dir = args.model  # path/repo_link to checkpoint
+
+    # Check if seq_path is in fasta format
+    if not seq_path.is_file():
+        print(f"{bcolors.FAIL}{seq_path} is not a file{bcolors.ENDC}")
+        exit(1)
+
+    # Check if seq_path is empty
+    if seq_path.stat().st_size == 0:
+        print(f"{bcolors.FAIL}{seq_path} is empty{bcolors.ENDC}")
+        exit(1)
+
+    with open(seq_path, 'r') as seq_f:
+        for line in seq_f:
+            # Skip all the lines starts with '#'
+            while line.startswith('#'):
+                continue
+            if line.startswith('>'):
+                break
+            else:
+                print(f"{bcolors.FAIL}{seq_path} does not seem to be in FASTA format (doesn't start with '>')\nPlease check your input files. Only files in fasta/fastq[.gz|bz2] are supported{bcolors.ENDC}")
+                exit(1)
 
     if out_path.is_file():
         print("Output file is already existing and will be overwritten ...")
