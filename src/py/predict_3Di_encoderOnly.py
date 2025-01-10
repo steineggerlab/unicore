@@ -57,7 +57,7 @@ def get_T5_model(model_dir):
         "Rostlab/ProstT5_fp16", cache_dir=model_dir).to(device)
     model = model.eval()
     vocab = T5Tokenizer.from_pretrained(
-        "Rostlab/ProstT5_fp16", do_lower_case=False, cache_dir=model_dir)
+        "Rostlab/ProstT5_fp16", do_lower_case=False, cache_dir=model_dir, legacy=True)
     return model, vocab
 
 
@@ -172,7 +172,7 @@ def load_predictor(weights_link="https://github.com/mheinzinger/ProstT5/raw/main
     global device
 
     #state = torch.load(checkpoint_p, map_location=device)
-    state = torch.load(checkpoint_p, map_location=device)
+    state = torch.load(checkpoint_p, map_location=device, weights_only=True)
 
     model.load_state_dict(state["state_dict"])
 
