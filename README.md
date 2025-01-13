@@ -1,4 +1,8 @@
 # Unicore
+[![Build](https://img.shields.io/github/actions/workflow/status/steineggerlab/unicore/ci.yml)](https://github.com/steineggerlab/unicore/actions)
+[![License](https://img.shields.io/github/license/steineggerlab/unicore)](https://github.com/steineggerlab/unicore/blob/main/LICENSE)
+[![Bioconda](https://img.shields.io/conda/dn/bioconda/unicore?logo=anaconda)](https://anaconda.org/bioconda/unicore)
+
 Unicore is a method for scalable and accurate phylogenetic reconstruction with structural core genes using Foldseek and ProstT5, universally applicable to any given set of taxa.
 
 ## Publications
@@ -35,7 +39,7 @@ conda install -c conda-forge pytorch-gpu
 ### GPU acceleration with Foldseek-ProstT5 (beta)
 > Note. This feature is under development and may not work in some environments. We will provide an update after the stable release of Foldseek-ProstT5.
 
-Foldseek provides a GPU-compatible static binary for ProstT5 prediction (requires Linux with AVX2 support, glibc>=2.29, and nvidia-driver>=525.60.13)<br>
+Foldseek provides a GPU-compatible static binary for ProstT5 prediction (requires Linux with AVX2 support, `glibc` ≥2.29, and `nvidia-driver` ≥525.60.13)<br>
 To use it, please install it by running the following command:
 ```
 wget https://mmseqs.com/foldseek/foldseek-linux-gpu.tar.gz; tar xvfz foldseek-linux-gpu.tar.gz; export PATH=$(pwd)/foldseek/bin/:$PATH
