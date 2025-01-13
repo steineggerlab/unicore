@@ -2,16 +2,18 @@
 Unicore is a method for scalable and accurate phylogenetic reconstruction with structural core genes using Foldseek and ProstT5, universally applicable to any given set of taxa.
 
 ## Publications
-Kim, D., Park, S., & Steinegger, M. (2024). Unicore enables scalable and accurate phylogenetic reconstruction with structural core genes. _bioRxiv_. [https://doi.org/10.1101/2024.12.22.629535](https://www.biorxiv.org/content/10.1101/2024.12.22.629535v1)
+Kim, D., Park, S., & Steinegger, M. (2024). Unicore enables scalable and accurate phylogenetic reconstruction with structural core genes. _bioRxiv_, 2024.12.22.629535. [doi.org/10.1101/2024.12.22.629535](https://doi.org/10.1101/2024.12.22.629535)
 
 ## Table of Contents
 - [Unicore](#unicore)
 - [Quick Start with Conda](#quick-start-with-conda)
   - [GPU acceleration with CUDA](#gpu-acceleration-with-cuda)
+  - [GPU acceleration with Foldseek-ProstT5 (beta)](#gpu-acceleration-with-foldseek-prostt5-beta)
+- [Tutorial](#tutorial)
 - [Manual](#manual)
-  - [Preparing input](#preparing-input)
-  - [Main modules](#main-modules)
-  - [Additional modules](#additional-modules)
+  - [Input](#input)
+  - [easy-core workflow](#easy-core-workflow)
+  - [Modules](#modules)
 - [Build from Source](#build-from-source)
   - [Minimum requirements](#minimum-requirements)
   - [Optional requirements](#optional-requirements)
@@ -30,21 +32,77 @@ If you have a Linux machine with CUDA-compatible GPU, please install this additi
 conda install -c conda-forge pytorch-gpu
 ```
 
+### GPU acceleration with Foldseek-ProstT5 (beta)
+> Note. This feature is under development and may not work in some environments. We will provide an update after the stable release of Foldseek-ProstT5.
+
+Foldseek provides a GPU-compatible static binary for ProstT5 prediction (requires Linux with AVX2 support, glibc>=2.29, and nvidia-driver>=525.60.13)<br>
+To use it, please install it by running the following command:
+```
+wget https://mmseqs.com/foldseek/foldseek-linux-gpu.tar.gz; tar xvfz foldseek-linux-gpu.tar.gz; export PATH=$(pwd)/foldseek/bin/:$PATH
+```
+Then, add `--use-foldseek` and `--gpu` options to either `easy-core` or `createdb` module to use Foldseek implementation of ProstT5-GPU:
+```
+unicore easy-core --use-foldseek --gpu <INPUT> <OUTPUT> <MODEL> <TMP>
+```
+
+<hr>
+
+## Tutorial
+### Download sample data
+If you are using the conda package, you can download the example dataset from the following link:
+```
+wget https://unicore.steineggerlab.workers.dev/unicore_example.zip
+unzip unicore_example.zip
+```
+If you cloned the repository, you can find the example dataset in the `example/data` folder.
+
+### Download ProstT5 weights
+You need to first download the ProstT5 weights to run the `createdb` module.
+```
+foldseek databases ProstT5 weights tmp
+```
+
+### Run the easy-core module
+The `easy-core` module processes all the way from the input proteomes to build the phylogenetic tree based on their structural core genes.
+Use the following command to run the easy-core module:
+```
+unicore easy-core example/data example/results weights tmp
+```
+
+If you have a CUDA-compatible GPU, add `--gpu` flag to run ProstT5 with GPU acceleration.
+
+### Check the results
+After running the `easy-core` module, you can find the results in the `example/results` folder.
+ * `proteome` folder contains the proteome information parsed from the input files.
+ * `cluster` folder contains the Foldseek clustering result (clust.tsv).
+ * `profile` folder contains the taxonomic profiling results and metadata of defined structural core genes.
+ * `tree` folder contains the results from the phylogenetic inference.
+
+#### Phylogenetic tree
+`example/results/tree/iqtree.treefile` is the concatenated structural core gene tree represented in Newick format. <br>
+Each node in the tree represents a species, labeled with their input proteome file name.
+
+#### Structural core genes
+`example/results/tree/fasta` folder contains subfolders named after the defined structural core genes. <br>
+Each subfolder contains the amino acid sequences (aa.fasta) and their 3Di representations (3di.fasta) of the core genes.
+
+<hr>
 
 ## Manual
+We provide an easy workflow module that automatically runs the all modules in order.
+* `easy-core` - Easy core gene phylogeny workflow, from fasta files to phylogenetic tree
+
 Unicore has four main modules, which can be run sequentially to infer the phylogenetic tree of the given species.
 * `createdb` - Create 3Di structural alphabet database from input species
 * `cluster` - Cluster Foldseek database
 * `profile` - Taxonomic profiling and core gene identification
 * `tree` - Phylogenetic inference using structural core genes
 
-We also provide an easy workflow module that automatically runs the four modules in order.
-* `easy-core` - Easy core gene phylogeny workflow, from fasta files to phylogenetic tree
-
 Run each module with `unicore <module> help` to see the detailed usage.
 
-### Preparing input
-Unicore requires a set of proteomes as input to infer the phylogenetic tree. Please prepare the input proteomes in a folder.
+### Input
+Unicore requires a set of proteomes as input to infer the phylogenetic tree. Please prepare the input proteomes in a folder.\
+You can also refer to the example dataset in the `example/data` folder or download it from [here](https://unicore.steineggerlab.workers.dev/unicore_example.zip).
 
 > Note. Currently, proteomes in `.fasta` format are only supported as an input. We will try to support more types and formats that can represent species.
 
@@ -58,7 +116,21 @@ data/
 
 ```
 
-### Main modules
+### easy-core workflow
+`easy-core` workflow module orchestrates four modules in order, processes all the way from the input proteomes to the phylogenetic tree.
+
+Example command:
+```
+// Download ProstT5 weights as below if you haven't already
+// foldseek databases ProstT5 /path/to/prostt5/weights tmp
+unicore easy-core data results /path/to/prostt5/weights tmp
+```
+
+This will create a `results/tree` folder with phylogenetic trees built with the structural core genes identified from the input proteomes.
+
+The `easy-core` module will also create folders named `results/proteome`, `results/cluster`, and `results/profile` with intermediate results for `createdb`, `cluster`, and `profile` module, respectively.
+
+### Modules
 #### createdb
 `createdb` module takes a folder with input species and outputs 3Di structural alphabets predicted with ProstT5.
 
@@ -110,29 +182,7 @@ unicore tree db/proteome_db result tree
 
 This will create a `tree` folder with the resulting phylogenetic trees in Newick format.
 
-#### easy-core
-`easy-core` module orchestrates the four modules in order, processes all the way from the input proteomes to the phylogenetic tree.
-
-Example command:
-```
-// Download ProstT5 weights as below if you haven't already
-// foldseek databases ProstT5 /path/to/prostt5/weights tmp
-unicore easy-core data tree /path/to/prostt5/weights tmp
-```
-
-This will create a `tree` folder with phylogenetic trees built with the structural core genes identified from the input proteomes.
-
-### Additional modules
-#### search
-`search` module takes a `createdb` output database, searches them against the given reference database, and outputs the alignment results in BLAST format.
-
-On default, alignments with 80% bidirectional coverage with E-value < $10^{-3}$ will be reported.
-
-Example command:
-```
-unicore search db/proteome_db /path/to/reference/db search/result tmp
-```
-This will create a `result.m8` output file in the `search` folder, which can be used as an input for the `profile` module instead of the `cluster` output.
+<hr>
 
 ## Build from Source
 ### Minimum requirements
