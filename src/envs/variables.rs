@@ -6,8 +6,8 @@ use std::process::Command;
 use num_cpus;
 
 // global variables
-pub const VERSION: &str = "1.0.1";
-const STABLE: bool = false;
+pub const VERSION: &str = "1.0.2";
+const STABLE: bool = true;
 pub const STABLE_TEXT: &str = if STABLE { "" } else { "unstable" };
 pub const STABLE_FULL: &str = if STABLE { "Stable" } else { "Unstable" };
 pub const LOGO_ART: &str = r"
