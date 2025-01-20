@@ -3,7 +3,6 @@ use std::path::{Path, PathBuf};
 
 use crate::envs::error_handler as err;
 use crate::util::arg_parser::Args;
-use crate::util::checkpoint as chkpnt;
 use crate::util::message as msg;
 use crate::modules::tree::{run_mafft, run_foldmason, run_iqtree};
 
