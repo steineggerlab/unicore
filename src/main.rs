@@ -35,6 +35,9 @@ fn run(args: &parser::Args, bin: &var::BinaryPaths, test: bool) -> Result<(), Bo
         Some(parser::Commands::Tree { .. }) => {
             modules::tree::run(args, bin).unwrap_or_else(|e| err::error(err::ERR_GENERAL, Some(e.to_string())));
         },
+        Some(parser::Commands::GeneTree { .. }) => {
+            modules::genetree::run(args, bin).unwrap_or_else(|e| err::error(err::ERR_GENERAL, Some(e.to_string())));
+        }
         Some(parser::Commands::EasyCore { .. }) => {
             workflow::easy_core::run(args, bin).unwrap_or_else(|e| err::error(err::ERR_GENERAL, Some(e.to_string())));
         },

@@ -179,6 +179,36 @@ pub enum Commands {
         #[arg(short='v', long, default_value="3")]
         verbosity: u8,
     },
+    // Infer phylogenetic tree of each core structures
+    #[clap(arg_required_else_help = true, allow_hyphen_values = true)]
+    GeneTree {
+        /// Input directory containing species phylogenetic tree (Output of the Tree module)
+        input: PathBuf,
+        /// Phylogenetic tree builder [iqtree, fasttree (under development), raxml (under development)]
+        #[arg(short='T', long, default_value="iqtree")]
+        tree_builder: String,
+        /// Options for tree builder; please adjust if using different tree method
+        #[arg(short='p', long, default_value="-m JTT+F+I+G -B 1000")]
+        tree_options: String,
+        /// Compute the Multiple sequence alignment again. This will overwrite the previous alignment
+        #[arg(short='f', long, default_value="false")]
+        refilter: bool,
+        /// Multiple sequence aligner [foldmason, mafft-linsi, mafft]
+        #[arg(short, long, default_value="foldmason")]
+        aligner: String,
+        /// Options for sequence aligner
+        #[arg(short='o', long)]
+        aligner_options: Option<String>,
+        /// Gap threshold for multiple sequence alignment [0 - 100]
+        #[arg(short='d', long, default_value="50", value_parser = threshold_in_range)]
+        threshold: usize,
+        /// Number of threads to use; 0 to use all
+        #[arg(short='c', long, default_value="0")]
+        threads: usize,
+        /// Verbosity (0: quiet, 1: +errors, 2: +warnings, 3: +info, 4: +debug)
+        #[arg(short='v', long, default_value="3")]
+        verbosity: u8,
+    },
     /// Easy core gene phylogeny workflow, from fasta files to phylogenetic tree
     #[clap(arg_required_else_help = true, allow_hyphen_values = true)]
     EasyCore {
@@ -361,6 +391,15 @@ pub struct Args {
     pub tree_aligner_options: Option<Option<String>>,
     pub tree_tree_options: Option<String>,
     pub tree_threshold: Option<usize>,
+
+    pub genetree_input: Option<String>,
+    pub genetree_tree_builder: Option<String>,
+    pub genetree_tree_options: Option<String>,
+    pub genetree_threshold: Option<usize>,
+    pub genetree_refilter: Option<bool>,
+    pub genetree_aligner: Option<String>,
+    pub genetree_aligner_options: Option<Option<String>>,
+    pub genetree_threads: Option<usize>,
 }
 fn own(path: &PathBuf) -> String { path.clone().to_string_lossy().into_owned() }
 impl Args {
@@ -372,6 +411,7 @@ impl Args {
             Some(Search { verbosity, .. }) => *verbosity,
             Some(Cluster { verbosity, .. }) => *verbosity,
             Some(Tree { verbosity, .. }) => *verbosity,
+            Some(GeneTree { verbosity, .. }) => *verbosity,
             Some(EasyCore { verbosity, .. }) => *verbosity,
             Some(EasySearch { verbosity, .. }) => *verbosity,
             _ => 3,
@@ -382,6 +422,7 @@ impl Args {
             Some(Search { threads, .. }) => *threads,
             Some(Cluster { threads, .. }) => *threads,
             Some(Tree { threads, .. }) => *threads,
+            Some(GeneTree { threads, .. }) => *threads,
             Some(EasyCore { threads, .. }) => *threads,
             Some(EasySearch { threads, .. }) => *threads,
             _ => 0,
@@ -556,6 +597,31 @@ impl Args {
             Some(EasySearch { gap_threshold, .. }) => Some(*gap_threshold), _ => None,
         };
 
+        let genetree_input = match &args.command {
+            Some(GeneTree { input, .. }) => Some(own(input)), _ => None,
+        };
+        let genetree_tree_builder = match &args.command {
+            Some(GeneTree { tree_builder, .. }) => Some(tree_builder.clone()), _ => None,
+        };
+        let genetree_tree_options = match &args.command {
+            Some(GeneTree { tree_options, .. }) => Some(tree_options.clone()), _ => None,
+        };
+        let genetree_refilter = match &args.command {
+            Some(GeneTree { refilter, .. }) => Some(*refilter), _ => None,
+        };
+        let genetree_aligner = match &args.command {
+            Some(GeneTree { aligner, .. }) => Some(aligner.clone()), _ => None,
+        };
+        let genetree_aligner_options = match &args.command {
+            Some(GeneTree { aligner_options, .. }) => Some(aligner_options.clone()), _ => None,
+        };
+        let genetree_threshold = match &args.command {
+            Some(GeneTree { threshold, .. }) => Some(*threshold), _ => None,
+        };
+        let genetree_threads = match &args.command {
+            Some(GeneTree { threads, .. }) => Some(*threads), _ => None,
+        };
+
         Args {
             command: args.command, version: args.version, threads, verbosity,
             createdb_input, createdb_output, createdb_model, createdb_keep, createdb_overwrite, createdb_max_len, createdb_gpu, createdb_use_python, createdb_use_foldseek, createdb_afdb_lookup, createdb_afdb_local,
@@ -563,6 +629,7 @@ impl Args {
             search_input, search_target, search_output, search_tmp, search_keep_aln_db, search_search_options,
             cluster_input, cluster_output, cluster_tmp, cluster_keep_cluster_db, cluster_cluster_options,
             tree_db, tree_input, tree_output, tree_aligner, tree_tree_builder, tree_aligner_options, tree_tree_options, tree_threshold,
+            genetree_input, genetree_tree_builder, genetree_tree_options, genetree_refilter, genetree_aligner, genetree_aligner_options, genetree_threshold, genetree_threads,
         }
     }
 }
