@@ -187,7 +187,30 @@ unicore tree db/proteome_db result tree
 This will create a `tree` folder with the resulting phylogenetic trees in Newick format.
 
 #### gene-tree
-`gene-tree` module takes the 
+`gene-tree` module takes the output folder of the `tree` module and infer the phylogenetic tree for each core gene.
+
+Each phylogenetic tree will be saved in the `tree/fasta/{gene_name}` directory.
+
+On default, the module will reuse the alignment computed from the `tree` module.
+
+Example command:
+```
+unicore gene-tree tree
+```
+
+If you want to recompute the alignment for each core gene, you can add `--realign` option, which will build and filter the MSA again.
+
+You can also use `--name` option to provide subset of hashed gene names to infer the phylogenetic tree.
+
+The list of hashed gene names can be created and be used with `--name` by running the following command:
+```
+// Create a list of hashed gene names
+awk -F"\t" 'NR==FNR {a[$1];next} ($3 in a) {print $1}' /path/to/original/gene/names db/proteome_db.map > /path/to/hashed/gene/names
+// Run gene-tree with the list of hashed gene names
+// Also optionally use --realign option to recompute the alignment and --threshold option to filter the MSA
+unicore gene-tree --realign --threshold 30 --name /path/to/hashed/gene/names tree
+```
+
 
 <hr>
 
