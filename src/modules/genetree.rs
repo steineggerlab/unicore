@@ -12,7 +12,7 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
     let names = args.genetree_names.clone().unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("genetree - names".to_string())) });
     let tree_builder = args.genetree_tree_builder.clone().unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("genetree - tree builder".to_string())) });
     let tree_options = args.genetree_tree_options.clone().unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("genetree - tree options".to_string())) });
-    let refilter = args.genetree_refilter.clone().unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("genetree - refilter".to_string())) });
+    let realign = args.genetree_realign.clone().unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("genetree - realign".to_string())) });
     let aligner = args.genetree_aligner.clone().unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("genetree - aligner".to_string())) });
     let aligner_options = args.genetree_aligner_options.clone().unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("genetree - aligner options".to_string())) });
     let threshold = args.genetree_threshold.clone().unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("genetree - threshold".to_string())) });
@@ -72,7 +72,7 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
         gene_list = filtered_gene_list;
     }
 
-    if refilter {
+    if realign {
         // Check aligner binary
         let aligner_path = match &bin.get(&aligner) {
             Some(bin) => &bin.path,

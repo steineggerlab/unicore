@@ -195,7 +195,7 @@ pub enum Commands {
         tree_options: String,
         /// Compute the Multiple sequence alignment again. This will overwrite the previous alignment
         #[arg(short='f', long, default_value="false")]
-        refilter: bool,
+        realign: bool,
         /// Multiple sequence aligner [foldmason, mafft-linsi, mafft]
         #[arg(short, long, default_value="foldmason")]
         aligner: String,
@@ -400,7 +400,7 @@ pub struct Args {
     pub genetree_tree_builder: Option<String>,
     pub genetree_tree_options: Option<String>,
     pub genetree_threshold: Option<usize>,
-    pub genetree_refilter: Option<bool>,
+    pub genetree_realign: Option<bool>,
     pub genetree_aligner: Option<String>,
     pub genetree_aligner_options: Option<Option<String>>,
     pub genetree_threads: Option<usize>,
@@ -613,8 +613,8 @@ impl Args {
         let genetree_tree_options = match &args.command {
             Some(GeneTree { tree_options, .. }) => Some(tree_options.clone()), _ => None,
         };
-        let genetree_refilter = match &args.command {
-            Some(GeneTree { refilter, .. }) => Some(*refilter), _ => None,
+        let genetree_realign = match &args.command {
+            Some(GeneTree { realign, .. }) => Some(*realign), _ => None,
         };
         let genetree_aligner = match &args.command {
             Some(GeneTree { aligner, .. }) => Some(aligner.clone()), _ => None,
@@ -636,7 +636,7 @@ impl Args {
             search_input, search_target, search_output, search_tmp, search_keep_aln_db, search_search_options,
             cluster_input, cluster_output, cluster_tmp, cluster_keep_cluster_db, cluster_cluster_options,
             tree_db, tree_input, tree_output, tree_aligner, tree_tree_builder, tree_aligner_options, tree_tree_options, tree_threshold,
-            genetree_input, genetree_names, genetree_tree_builder, genetree_tree_options, genetree_refilter, genetree_aligner, genetree_aligner_options, genetree_threshold, genetree_threads,
+            genetree_input, genetree_names, genetree_tree_builder, genetree_tree_options, genetree_realign, genetree_aligner, genetree_aligner_options, genetree_threshold, genetree_threads,
         }
     }
 }
