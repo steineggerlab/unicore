@@ -29,9 +29,6 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
         err::error(err::ERR_GENERAL, Some("Input directory does not contain core structure fasta directories".to_string()));
     }
 
-    // Write the checkpoint file
-    chkpnt::write_checkpoint(&format!("{}/genetree.chk", input), "0")?;
-
     // print out threads
     msg::println_message(&format!("Using {} threads", threads), 4);
 
@@ -126,9 +123,6 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
         msg::print_message(&format!("\rInferring gene specific phylogenetic trees {}/{}...", i+1, msa_list.len()), 3);
     }
     msg::println_message(&"Done".to_string(), 3);
-
-    // Write the checkpoint file
-    chkpnt::write_checkpoint(&format!("{}/genetree.chk", input), "1")?;
     
     Ok(())
 }

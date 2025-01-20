@@ -186,6 +186,9 @@ unicore tree db/proteome_db result tree
 
 This will create a `tree` folder with the resulting phylogenetic trees in Newick format.
 
+#### gene-tree
+`gene-tree` module takes the 
+
 <hr>
 
 ## Build from Source
