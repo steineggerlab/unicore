@@ -184,6 +184,9 @@ pub enum Commands {
     GeneTree {
         /// Input directory containing species phylogenetic tree (Output of the Tree module)
         input: PathBuf,
+        /// File containing core structures for computing phylogenetic tree. If not provided, all core structures will be used
+        #[arg(short='n', long, default_value="")]
+        names: String,
         /// Phylogenetic tree builder [iqtree, fasttree (under development), raxml (under development)]
         #[arg(short='T', long, default_value="iqtree")]
         tree_builder: String,
@@ -393,6 +396,7 @@ pub struct Args {
     pub tree_threshold: Option<usize>,
 
     pub genetree_input: Option<String>,
+    pub genetree_names: Option<String>,
     pub genetree_tree_builder: Option<String>,
     pub genetree_tree_options: Option<String>,
     pub genetree_threshold: Option<usize>,
@@ -600,6 +604,9 @@ impl Args {
         let genetree_input = match &args.command {
             Some(GeneTree { input, .. }) => Some(own(input)), _ => None,
         };
+        let genetree_names = match &args.command {
+            Some(GeneTree { names, .. }) => Some(names.clone()), _ => None,
+        };
         let genetree_tree_builder = match &args.command {
             Some(GeneTree { tree_builder, .. }) => Some(tree_builder.clone()), _ => None,
         };
@@ -629,7 +636,7 @@ impl Args {
             search_input, search_target, search_output, search_tmp, search_keep_aln_db, search_search_options,
             cluster_input, cluster_output, cluster_tmp, cluster_keep_cluster_db, cluster_cluster_options,
             tree_db, tree_input, tree_output, tree_aligner, tree_tree_builder, tree_aligner_options, tree_tree_options, tree_threshold,
-            genetree_input, genetree_tree_builder, genetree_tree_options, genetree_refilter, genetree_aligner, genetree_aligner_options, genetree_threshold, genetree_threads,
+            genetree_input, genetree_names, genetree_tree_builder, genetree_tree_options, genetree_refilter, genetree_aligner, genetree_aligner_options, genetree_threshold, genetree_threads,
         }
     }
 }

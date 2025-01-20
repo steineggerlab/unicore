@@ -10,6 +10,7 @@ use crate::modules::tree::{run_mafft, run_foldmason, run_iqtree};
 pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(), Box<dyn std::error::Error>> {
     // Retrieve arguments
     let input = args.genetree_input.clone().unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("genetree - input".to_string())) });
+    let names = args.genetree_names.clone().unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("genetree - names".to_string())) });
     let tree_builder = args.genetree_tree_builder.clone().unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("genetree - tree builder".to_string())) });
     let tree_options = args.genetree_tree_options.clone().unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("genetree - tree options".to_string())) });
     let refilter = args.genetree_refilter.clone().unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("genetree - refilter".to_string())) });
@@ -40,13 +41,41 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
         _none => { err::error(err::ERR_BINARY_NOT_FOUND, Some(tree_builder.clone())); }
     };
     
+    let mut names_list = Vec::new();
+    // If names is not empty, read in the names
+    if !names.is_empty() {
+        let names_path = Path::new(&names);
+        if !names_path.exists() {
+            err::error(err::ERR_GENERAL, Some("Names file does not exist".to_string()));
+        }
+        let names_content = fs::read_to_string(names_path)?;
+        for name in names_content.lines() {
+            names_list.push(name.to_string());
+        }
+    }
+        
     // Prepare gene specific fasta directory
     let gene_fasta_dir = Path::new(&input).join("fasta");
-    let gene_list = fs::read_dir(&gene_fasta_dir)?
+    let mut gene_list = fs::read_dir(&gene_fasta_dir)?
         .filter_map(|entry| entry.ok())
         .map(|entry| entry.path())
         .collect::<Vec<PathBuf>>();
-    
+
+    // Filter gene_list by names_list if names_list is not empty
+    let mut filtered_gene_list = Vec::new();
+    if !names_list.is_empty() {
+        for gene in gene_list.iter() {
+            let gene_name = gene.file_stem().and_then(|name| name.to_str()).unwrap();
+            if names_list.contains(&gene_name.to_string()) {
+                filtered_gene_list.push(gene.clone());
+            }
+        }
+        if filtered_gene_list.is_empty() {
+            err::error(err::ERR_GENERAL, Some("No gene names matched".to_string()));
+        }
+        gene_list = filtered_gene_list;
+    }
+
     if refilter {
         // Check aligner binary
         let aligner_path = match &bin.get(&aligner) {
