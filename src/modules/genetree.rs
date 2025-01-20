@@ -109,6 +109,13 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
             .map(|entry| entry.path())
             .filter(|path| path.file_name().and_then(|name| name.to_str()).unwrap().starts_with("iqtree"))
             .collect::<Vec<PathBuf>>();
+        if !iqtree_files.is_empty() {
+            // Get a parent directory of the iqtree files
+            let iqtree_parent = iqtree_files[0].parent().unwrap().display().to_string();
+
+            // Print out warning message
+            msg::println_message(&format!("Warning: IQ-TREE output already exists. Deleting IQ-TREE results in {}...", iqtree_parent), 2);
+        }
         // Then, delete the files
         for file in iqtree_files.iter() {
             fs::remove_file(file)?;
