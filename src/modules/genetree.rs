@@ -106,6 +106,17 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
     msg::print_message(&format!("\rInferring gene specific phylogenetic trees {}/{}...", 0, msa_list.len()), 3);
     for (i, msa) in msa_list.iter().enumerate() {
         let msa_parent = Path::new(msa).parent().unwrap().display().to_string();
+        // If there is existing iqtree output, delete it
+        // First, find the files start with iqtree
+        let iqtree_files = fs::read_dir(&msa_parent)?
+            .filter_map(|entry| entry.ok())
+            .map(|entry| entry.path())
+            .filter(|path| path.file_name().and_then(|name| name.to_str()).unwrap().starts_with("iqtree"))
+            .collect::<Vec<PathBuf>>();
+        // Then, delete the files
+        for file in iqtree_files.iter() {
+            fs::remove_file(file)?;
+        }
         if tree_builder == "iqtree" {
             run_iqtree(&tree_builder_path, &msa_parent, &msa, &tree_options, threads)?;
         } else {
