@@ -1,7 +1,6 @@
 use std::path::PathBuf;
 use clap::{Parser, Subcommand};
 use crate::util::arg_parser::Commands::*;
-
 #[derive(Parser)]
 #[clap(disable_version_flag = true, arg_required_else_help = true)]
 pub struct ClapArgs {
@@ -448,7 +447,6 @@ pub struct Args {
     pub genetree_realign: Option<bool>,
     pub genetree_aligner: Option<String>,
     pub genetree_aligner_options: Option<Option<String>>,
-    pub genetree_threads: Option<usize>,
 }
 fn own(path: &PathBuf) -> String { path.clone().to_string_lossy().into_owned() }
 impl Args {
@@ -670,9 +668,6 @@ impl Args {
         let genetree_threshold = match &args.command {
             Some(GeneTree { threshold, .. }) => Some(*threshold), _ => None,
         };
-        let genetree_threads = match &args.command {
-            Some(GeneTree { threads, .. }) => Some(*threads), _ => None,
-        };
 
         Args {
             command: args.command, version: args.version, threads, verbosity,
@@ -681,7 +676,7 @@ impl Args {
             search_input, search_target, search_output, search_tmp, search_keep_aln_db, search_search_options,
             cluster_input, cluster_output, cluster_tmp, cluster_keep_cluster_db, cluster_cluster_options,
             tree_db, tree_input, tree_output, tree_aligner, tree_tree_builder, tree_aligner_options, tree_tree_options, tree_threshold,
-            genetree_input, genetree_names, genetree_tree_builder, genetree_tree_options, genetree_realign, genetree_aligner, genetree_aligner_options, genetree_threshold, genetree_threads,
+            genetree_input, genetree_names, genetree_tree_builder, genetree_tree_options, genetree_realign, genetree_aligner, genetree_aligner_options, genetree_threshold,
         }
     }
 }
