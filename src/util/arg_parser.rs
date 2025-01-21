@@ -34,6 +34,14 @@ fn _threshold_in_range_f64(s: &str) -> Result<f64, String> {
 pub enum Commands {
     /// Create Foldseek database from amino acid sequences
     #[clap(arg_required_else_help = true, allow_hyphen_values = true, verbatim_doc_comment)]
+    #[command(
+        after_help=
+        "
+        Example:
+        // Download ProstT5 weights as below if you haven't already
+        // foldseek databases ProstT5 /path/to/prostt5/weights tmp
+        unicore createdb example/data example/db/proteome_db example/model
+        ")]
     Createdb {
         /// Input directory with fasta files or a single fasta file
         input: PathBuf,
@@ -82,6 +90,12 @@ pub enum Commands {
     },
     /// Cluster Foldseek database
     #[clap(arg_required_else_help = true, allow_hyphen_values = true)]
+    #[command(
+        after_help=
+        "
+        Example:
+        unicore cluster example/db/proteome_db example/out/clu tmp
+        ")]
     Cluster {
         /// Input database (createdb output)
         input: PathBuf,
@@ -128,6 +142,13 @@ pub enum Commands {
     },
     /// Create core structures from Foldseek database
     #[clap(arg_required_else_help = true)]
+    #[command(
+        after_help=
+        "
+        Example:
+        // 85% coverage
+        unicore profile -t 85 example/db/proteome_db example/out/clu.tsv result
+        ")]
     Profile {
         /// Input database (createdb output)
         input_db: PathBuf,
@@ -150,6 +171,12 @@ pub enum Commands {
     },
     /// Infer phylogenetic tree from core structures
     #[clap(arg_required_else_help = true, allow_hyphen_values = true)]
+    #[command(
+        after_help=
+        "
+        Example: 
+        unicore tree example/db/proteome_db example/result example/tree
+        ")]
     Tree {
         /// Input database (createdb output)
         db: PathBuf,
@@ -181,6 +208,18 @@ pub enum Commands {
     },
     // Infer phylogenetic tree of each core structures
     #[clap(arg_required_else_help = true, allow_hyphen_values = true)]
+    #[command(
+        after_help=
+        "
+        Examples: 
+        unicore gene-tree example/tree
+
+        // Create a list of hashed gene names
+        awk -F'\t' 'NR==FNR {a[$1];next} ($3 in a) {print $1}' /path/to/original/gene/names db/proteome_db.map > /path/to/hashed/gene/names
+        // Run gene-tree with the list of hashed gene names
+        // Also optionally use --realign option to recompute the alignment and --threshold option to filter the MSA
+        unicore gene-tree --realign --threshold 30 --name /path/to/hashed/gene/names example/tree
+        ")]
     GeneTree {
         /// Input directory containing species phylogenetic tree (Output of the Tree module)
         input: PathBuf,
@@ -214,6 +253,12 @@ pub enum Commands {
     },
     /// Easy core gene phylogeny workflow, from fasta files to phylogenetic tree
     #[clap(arg_required_else_help = true, allow_hyphen_values = true)]
+    #[command(
+        after_help=
+        "
+        Example: 
+        unicore easy-core --use-foldseek --gpu example/data example/results example/model example/tmp
+        ")]
     EasyCore {
         /// Input directory with fasta files or a single fasta file
         input: PathBuf,
