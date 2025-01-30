@@ -12,7 +12,7 @@ Kim, D., Park, S., & Steinegger, M. (2024). Unicore enables scalable and accurat
 - [Unicore](#unicore)
 - [Quick Start with Conda](#quick-start-with-conda)
   - [GPU acceleration with CUDA](#gpu-acceleration-with-cuda)
-  - [GPU acceleration with Foldseek-ProstT5 (beta)](#gpu-acceleration-with-foldseek-prostt5-beta)
+  - [GPU acceleration with Foldseek-ProstT5](#gpu-acceleration-with-foldseek-prostt5)
 - [Tutorial](#tutorial)
 - [Manual](#manual)
   - [Input](#input)
@@ -29,24 +29,15 @@ conda install -c bioconda unicore
 unicore -v
 ```
 
-### GPU acceleration with CUDA
-`createdb` module can be greatly acclerated with ProstT5-GPU.
-If you have a Linux machine with CUDA-compatible GPU, please install this additional package:
-```
-conda install -c conda-forge pytorch-gpu
-```
-
-### GPU acceleration with Foldseek-ProstT5 (beta)
-> Note. This feature is under development and may not work in some environments. We will provide an update after the stable release of Foldseek-ProstT5.
-
-Foldseek provides a GPU-compatible static binary for ProstT5 prediction (requires Linux with AVX2 support, `glibc` ≥2.29, and `nvidia-driver` ≥525.60.13)<br>
+### GPU acceleration with Foldseek-ProstT5
+Foldseek provides a GPU-compatible static binary for ProstT5 prediction (requires Linux with AVX2 support, `glibc` ≥2.17, and `nvidia-driver` ≥525.60.13)<br>
 To use it, please install it by running the following command:
 ```
 wget https://mmseqs.com/foldseek/foldseek-linux-gpu.tar.gz; tar xvfz foldseek-linux-gpu.tar.gz; export PATH=$(pwd)/foldseek/bin/:$PATH
 ```
-Then, add `--use-foldseek` and `--gpu` options to either `easy-core` or `createdb` module to use Foldseek implementation of ProstT5-GPU:
+Then, add `--gpu` options to either `easy-core` or `createdb` module to use Foldseek implementation of ProstT5-GPU:
 ```
-unicore easy-core --use-foldseek --gpu <INPUT> <OUTPUT> <MODEL> <TMP>
+unicore easy-core --gpu <INPUT> <OUTPUT> <MODEL> <TMP>
 ```
 
 <hr>
@@ -148,7 +139,10 @@ unicore createdb data db/proteome_db /path/to/prostt5/weights
 ```
 This will create a Foldseek database in the `db` folder.
 
-If you have foldseek installed with CUDA, you can run the ProstT5 in the module with foldseek by adding `--use-foldseek` option.
+If you want to select the GPU devices, please use the `CUDA_VISIBLE_DEVICES` environment variable.
+
+* `CUDA_VISIBLE_DEVICES=0` to use GPU 0.
+* `CUDA_VISIBLE_DEVICES=0,1` to use GPU 0 and 1.
 
 #### cluster
 `cluster` module takes a `createdb` output database, runs Foldseek clustering, and outputs the cluster results.
@@ -220,8 +214,6 @@ unicore gene-tree --realign --threshold 30 --name /path/to/hashed/gene/names tre
 * [Foldseek](https://foldseek.com) (version ≥ 9)
 * [Foldmason](https://foldmason.foldseek.com)
 * [IQ-TREE](http://www.iqtree.org/)
-* pytorch, transformers, sentencepiece, protobuf
-  - These are required for users who cannot build foldseek with CUDA. Please install them with `pip install torch transformers sentencepiece protobuf`.
 ### Optional requirements
 * [MAFFT](https://mafft.cbrc.jp/alignment/software/)
 * [Fasttree](http://www.microbesonline.org/fasttree/) or [RAxML](https://cme.h-its.org/exelixis/web/software/raxml/)
