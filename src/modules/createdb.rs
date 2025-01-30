@@ -26,17 +26,10 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
     let overwrite = args.createdb_overwrite.unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("createdb - overwrite".to_string())); });
     let max_len = args.createdb_max_len.unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("createdb - max_len".to_string())); });
     let gpu = args.createdb_gpu.unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("createdb - gpu".to_string())); });
-    let use_python = args.createdb_use_python.unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("createdb - use_python".to_string())); });
-    let use_foldseek = args.createdb_use_foldseek.unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("createdb - use_foldseek".to_string())); });
     let afdb_lookup = args.createdb_afdb_lookup.unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("createdb - afdb_lookup".to_string())); });
     let afdb_local = args.createdb_afdb_local.clone().unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("createdb - afdb_local".to_string())); });
     let threads = crate::envs::variables::threads();
     let foldseek_verbosity = (match var::verbosity() { 4 => 3, 3 => 2, _ => var::verbosity() }).to_string();
-
-    // Either use_foldseek or use_python must be true
-    if !use_foldseek && !use_python {
-        err::error(err::ERR_ARGPARSE, Some("Either use_foldseek or use_python must be true".to_string()));
-    }
 
     // Check afdb_lookup
     let afdb_local = if afdb_lookup && !afdb_local.is_some() {
@@ -135,43 +128,36 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
         fasta::write_fasta(&combined_aa, &fasta_data)?;
     }
 
-    if use_foldseek {
-        // Added use_foldseek temporarily.
-        // TODO: Remove use_foldseek when foldseek is ready
-        let foldseek_path = match &bin.get("foldseek") {
-            Some(bin) => &bin.path,
-            _none => { err::error(err::ERR_BINARY_NOT_FOUND, Some("foldseek".to_string())); }
-        };
+    // Use foldseek to create the database
+    let foldseek_path = match &bin.get("foldseek") {
+        Some(bin) => &bin.path,
+        _none => { err::error(err::ERR_BINARY_NOT_FOUND, Some("foldseek".to_string())); }
+    };
 
-        // Check if old weights exist
-        if Path::new(&model).join("cnn.safetensors").exists() || Path::new(&model).join(format!("model{}cnn.safetensors", SEP)).exists() {
-            err::error(err::ERR_GENERAL, Some("Old weight files detected from the given path. Please provide different path for the model weights".to_string()));
-        }
-        // Check if weights exist
-        if !Path::new(&model).join("prostt5-f16.gguf").exists() {
-            // Download the model
-            std::fs::create_dir_all(format!("{}{}tmp", model, SEP))?;
-            let mut cmd = std::process::Command::new(foldseek_path);
-            let mut cmd = cmd
-                .arg("databases").arg("ProstT5").arg(&model).arg(format!("{}{}tmp", model, SEP)).arg("--threads").arg(threads.to_string());
-            cmd::run(&mut cmd);
-        }
-
-        // Run foldseek createdb
-        let mut cmd = std::process::Command::new(foldseek_path);
-        let cmd = cmd
-            .arg("createdb").arg(&combined_aa).arg(&output)
-            .arg("--prostt5-model").arg(&model)
-            .arg("--threads").arg(threads.to_string());
-        let mut cmd = if gpu {
-            cmd.arg("--gpu").arg("1")
-        } else { cmd };
-        cmd::run(&mut cmd);
-    } else if use_python {
-        let _ = _run_python(&combined_aa, &curr_dir, &parent, &output, &model, keep, bin, threads.to_string());
-    } else {
-        err::error(err::ERR_GENERAL, Some("Either use_foldseek or use_python must be true".to_string()));
+    // Check if old weights exist
+    if Path::new(&model).join("cnn.safetensors").exists() || Path::new(&model).join(format!("model{}cnn.safetensors", SEP)).exists() {
+        err::error(err::ERR_GENERAL, Some("Old weight files detected from the given path. Please provide different path for the model weights".to_string()));
     }
+    // Check if weights exist
+    if !Path::new(&model).join("prostt5-f16.gguf").exists() {
+        // Download the model
+        std::fs::create_dir_all(format!("{}{}tmp", model, SEP))?;
+        let mut cmd = std::process::Command::new(foldseek_path);
+        let mut cmd = cmd
+            .arg("databases").arg("ProstT5").arg(&model).arg(format!("{}{}tmp", model, SEP)).arg("--threads").arg(threads.to_string());
+        cmd::run(&mut cmd);
+    }
+
+    // Run foldseek createdb
+    let mut cmd = std::process::Command::new(foldseek_path);
+    let cmd = cmd
+        .arg("createdb").arg(&combined_aa).arg(&output)
+        .arg("--prostt5-model").arg(&model)
+        .arg("--threads").arg(threads.to_string());
+    let mut cmd = if gpu {
+        cmd.arg("--gpu").arg("1")
+    } else { cmd };
+    cmd::run(&mut cmd);
 
     if afdb_lookup {
         let foldseek_path = match &bin.get("foldseek") {
@@ -220,58 +206,6 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
     // Write the checkpoint file
     chkpnt::write_checkpoint(&checkpoint_file, "1")?;
     
-
-    Ok(())
-}
-
-fn _run_python(combined_aa: &String, curr_dir: &str, parent: &str, output: &str, model: &str, keep: bool, bin: &crate::envs::variables::BinaryPaths, threads: String) -> Result<(), Box<dyn std::error::Error>> {
-    let input_3di = format!("{}{}{}{}combined_3di.fasta", curr_dir, SEP, parent, SEP);
-    let inter_prob = format!("{}{}{}{}output_probabilities.csv", curr_dir, SEP, parent, SEP);
-    let output_3di = format!("{}{}{}_ss", curr_dir, SEP, output);
-    let foldseek_verbosity = (match var::verbosity() { 4 => 3, 3 => 2, _ => var::verbosity() }).to_string();
-
-    // Run python script
-    let mut cmd = std::process::Command::new("python");
-    let mut cmd = cmd
-        .arg(var::locate_encoder_py())
-        .arg("-i").arg(&combined_aa)
-        .arg("-o").arg(&input_3di)
-        .arg("--model").arg(&model)
-        .arg("--half").arg("0")
-        .arg("--threads").arg(threads);
-    cmd::run(&mut cmd);
-
-    // Build foldseek db
-    let foldseek_path = match &bin.get("foldseek") {
-        Some(bin) => &bin.path,
-        _none => { err::error(err::ERR_BINARY_NOT_FOUND, Some("foldseek".to_string())); }
-    };
-    let mut cmd = std::process::Command::new(foldseek_path);
-    let mut cmd = cmd
-        .arg("base:createdb").arg(&combined_aa).arg(&output)
-        .arg("--shuffle").arg("0")
-        .arg("-v").arg(foldseek_verbosity.as_str());
-
-    cmd::run(&mut cmd);
-
-    // Build foldseek 3di db
-    let mut cmd = std::process::Command::new(foldseek_path);
-    let mut cmd = cmd
-        .arg("base:createdb").arg(&input_3di).arg(&output_3di)
-        .arg("--shuffle").arg("0")
-        .arg("-v").arg(foldseek_verbosity.as_str());
-    cmd::run(&mut cmd);
-
-    // Delete intermediate files
-    if !keep {
-        // std::fs::remove_file(mapping_file)?;
-        // std::fs::remove_file(combined_aa)?;
-        std::fs::remove_file(input_3di)?;
-        std::fs::remove_file(inter_prob)?;
-    }
-
-    // // Write the checkpoint file
-    // chkpnt::write_checkpoint(&format!("{}/createdb.chk", parent), "1")?;
 
     Ok(())
 }
