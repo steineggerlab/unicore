@@ -30,12 +30,13 @@ unicore -v
 ```
 
 ### GPU acceleration with Foldseek-ProstT5
-Foldseek provides a GPU-compatible static binary for ProstT5 prediction (requires Linux with AVX2 support, `glibc` ≥2.17, and `nvidia-driver` ≥525.60.13)<br>
-To use it, please install it by running the following command:
-```
-wget https://mmseqs.com/foldseek/foldseek-linux-gpu.tar.gz; tar xvfz foldseek-linux-gpu.tar.gz; export PATH=$(pwd)/foldseek/bin/:$PATH
-```
-Then, add `--gpu` options to either `easy-core` or `createdb` module to use Foldseek implementation of ProstT5-GPU:
+Foldseek features GPU-acceleration for ProstT5 prediction under following requirements:
+ * Turing or newer NVIDIA GPU
+ * `foldseek` ≥10
+ * `glibc` ≥2.17
+ * `nvidia-driver` ≥525.60.13
+
+Apply `--gpu` option to either `easy-core` or `createdb` module to use it, e.g.
 ```
 unicore easy-core --gpu <INPUT> <OUTPUT> <MODEL> <TMP>
 ```
@@ -52,7 +53,7 @@ unzip unicore_example.zip
 If you cloned the repository, you can find the example dataset in the `example/data` folder.
 
 ### Download ProstT5 weights
-You need to first download the ProstT5 weights to run the `createdb` module.
+You can preliminarily download the ProstT5 weights required to run the `createdb` module.
 ```
 foldseek databases ProstT5 weights tmp
 ```
@@ -133,8 +134,6 @@ This module runs much faster with GPU. Please install `cuda` for GPU acceleratio
 
 To run the module, please use the following command:
 ```
-// Download ProstT5 weights as below if you haven't already
-// foldseek databases ProstT5 /path/to/prostt5/weights tmp
 unicore createdb data db/proteome_db /path/to/prostt5/weights
 ```
 This will create a Foldseek database in the `db` folder.
@@ -211,7 +210,7 @@ unicore gene-tree --realign --threshold 30 --name /path/to/hashed/gene/names tre
 ## Build from Source
 ### Minimum requirements
 * [Cargo](https://www.rust-lang.org/tools/install) (Rust)
-* [Foldseek](https://foldseek.com) (version ≥ 9)
+* [Foldseek](https://foldseek.com) (version ≥ 10)
 * [Foldmason](https://foldmason.foldseek.com)
 * [IQ-TREE](http://www.iqtree.org/)
 ### Optional requirements
@@ -232,5 +231,5 @@ With these tools installed, you can install and run `unicore` by:
 git clone https://github.com/steineggerlab/unicore.git
 cd unicore
 cargo build --release
-bin/unicore help
+bin/unicore -v
 ```
