@@ -11,7 +11,6 @@ Kim, D., Park, S., & Steinegger, M. (2024). Unicore enables scalable and accurat
 ## Table of Contents
 - [Unicore](#unicore)
 - [Quick Start with Conda](#quick-start-with-conda)
-  - [GPU acceleration with CUDA](#gpu-acceleration-with-cuda)
   - [GPU acceleration with Foldseek-ProstT5](#gpu-acceleration-with-foldseek-prostt5)
 - [Tutorial](#tutorial)
 - [Manual](#manual)
