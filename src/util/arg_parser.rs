@@ -192,7 +192,7 @@ pub enum Commands {
         #[arg(short='v', long, default_value="3")]
         verbosity: u8,
     },
-    // Infer phylogenetic tree of each core structures
+    /// Infer phylogenetic tree of each core structures
     #[clap(arg_required_else_help = true, allow_hyphen_values = true)]
     #[command(after_help=GENETREE_HELP)]
     GeneTree {
