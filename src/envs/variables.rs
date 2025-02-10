@@ -85,18 +85,20 @@ pub fn locate_encoder_py() -> String {
 }
 
 // binary paths
-const VALID_BINARY: [&str; 7] = [
-    "mmseqs", "foldseek", "mafft", "mafft-linsi", "foldmason", "iqtree", "fasttree",
+pub const VALID_BINARY: [&str; 8] = [
+    "mmseqs", "foldseek", "mafft", "mafft-linsi", "foldmason", "iqtree", "fasttree", "raxml"
 ];
 pub struct Binary {
     name: String,
     pub path: String,
+    pub set: bool,
 }
 impl Binary {
     fn new(name: &str, path: &str) -> Self {
         Binary {
             name: name.to_string(),
             path: path.to_string(),
+            set: false,
         }
     }
     fn test(&self, args: Vec<&str>) -> bool {
@@ -131,6 +133,7 @@ impl BinaryPaths {
             let path = split.next().unwrap_or("");
             if let Some(&i) = self.map.get(name) {
                 self.bin[i].path = path.to_string();
+                self.bin[i].set = true;
             }
         }
         Ok(())

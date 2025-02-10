@@ -365,10 +365,7 @@ pub enum Commands {
     /// Runtime environment configuration
     #[clap(arg_required_else_help = true, allow_hyphen_values = true)]
     Config {
-        /// Show current environment
-        #[arg(short='s', long)]
-        show: bool,
-        /// Check dependencies
+        /// Check current environment configuration
         #[arg(short='c', long)]
         check: bool,
         /// Set mmseqs binary path
@@ -457,7 +454,6 @@ pub struct Args {
     pub genetree_aligner: Option<String>,
     pub genetree_aligner_options: Option<Option<String>>,
 
-    pub config_show: Option<bool>,
     pub config_check: Option<bool>,
     pub config_set_mmseqs: Option<String>,
     pub config_set_foldseek: Option<String>,
@@ -690,9 +686,6 @@ impl Args {
             Some(GeneTree { threshold, .. }) => Some(*threshold), _ => None,
         };
 
-        let config_show = match &args.command {
-            Some(Config { show, .. }) => Some(*show), _ => None,
-        };
         let config_check = match &args.command {
             Some(Config { check, .. }) => Some(*check), _ => None,
         };
@@ -729,7 +722,7 @@ impl Args {
             cluster_input, cluster_output, cluster_tmp, cluster_keep_cluster_db, cluster_cluster_options,
             tree_db, tree_input, tree_output, tree_aligner, tree_tree_builder, tree_aligner_options, tree_tree_options, tree_threshold,
             genetree_input, genetree_names, genetree_tree_builder, genetree_tree_options, genetree_realign, genetree_aligner, genetree_aligner_options, genetree_threshold,
-            config_show, config_check, config_set_mmseqs, config_set_foldseek, config_set_foldmason, config_set_mafft, config_set_mafft_linsi, config_set_iqtree, config_set_fasttree, config_set_raxml,
+            config_check, config_set_mmseqs, config_set_foldseek, config_set_foldmason, config_set_mafft, config_set_mafft_linsi, config_set_iqtree, config_set_fasttree, config_set_raxml,
         }
     }
 }
