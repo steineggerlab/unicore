@@ -131,6 +131,7 @@ impl BinaryPaths {
             let mut split = line.split('=');
             let name = split.next().unwrap_or("");
             let path = split.next().unwrap_or("");
+            if path.len() == 0 { continue; }
             if let Some(&i) = self.map.get(name) {
                 self.bin[i].path = path.to_string();
                 self.bin[i].set = true;
