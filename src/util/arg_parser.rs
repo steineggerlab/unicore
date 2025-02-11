@@ -362,6 +362,40 @@ pub enum Commands {
         #[arg(short='v', long, default_value="3")]
         verbosity: u8,
     },
+    /// Runtime environment configuration
+    #[clap(arg_required_else_help = true, allow_hyphen_values = true)]
+    Config {
+        /// Check current environment configuration
+        #[arg(short='c', long)]
+        check: bool,
+        /// Set mmseqs binary path
+        #[arg(long)]
+        set_mmseqs: Option<PathBuf>,
+        /// Set foldseek binary path
+        #[arg(long)]
+        set_foldseek: Option<PathBuf>,
+        /// Set foldmason binary path
+        #[arg(long)]
+        set_foldmason: Option<PathBuf>,
+        /// Set mafft binary path
+        #[arg(long)]
+        set_mafft: Option<PathBuf>,
+        /// Set mafft-linsi binary path
+        #[arg(long)]
+        set_mafft_linsi: Option<PathBuf>,
+        /// Set iqtree binary path
+        #[arg(long)]
+        set_iqtree: Option<PathBuf>,
+        /// Set fasttree binary path
+        #[arg(long)]
+        set_fasttree: Option<PathBuf>,
+        /// Set raxml binary path
+        #[arg(long)]
+        set_raxml: Option<PathBuf>,
+        /// Verbosity (0: quiet, 1: +errors, 2: +warnings, 3: +info, 4: +debug)
+        #[arg(short='v', long, default_value="3")]
+        verbosity: u8,
+    },
 }
 
 #[derive(Default)]
@@ -419,6 +453,16 @@ pub struct Args {
     pub genetree_realign: Option<bool>,
     pub genetree_aligner: Option<String>,
     pub genetree_aligner_options: Option<Option<String>>,
+
+    pub config_check: Option<bool>,
+    pub config_set_mmseqs: Option<String>,
+    pub config_set_foldseek: Option<String>,
+    pub config_set_foldmason: Option<String>,
+    pub config_set_mafft: Option<String>,
+    pub config_set_mafft_linsi: Option<String>,
+    pub config_set_iqtree: Option<String>,
+    pub config_set_fasttree: Option<String>,
+    pub config_set_raxml: Option<String>,
 }
 fn own(path: &PathBuf) -> String { path.clone().to_string_lossy().into_owned() }
 impl Args {
@@ -433,6 +477,7 @@ impl Args {
             Some(GeneTree { verbosity, .. }) => *verbosity,
             Some(EasyCore { verbosity, .. }) => *verbosity,
             Some(EasySearch { verbosity, .. }) => *verbosity,
+            Some(Config { verbosity, .. }) => *verbosity,
             _ => 3,
         };
         let threads = match &args.command {
@@ -641,6 +686,34 @@ impl Args {
             Some(GeneTree { threshold, .. }) => Some(*threshold), _ => None,
         };
 
+        let config_check = match &args.command {
+            Some(Config { check, .. }) => Some(*check), _ => None,
+        };
+        let config_set_mmseqs = match &args.command {
+            Some(Config { set_mmseqs, .. }) => match set_mmseqs { Some(p) => Some(own(p)), _ => None }, _ => None,
+        };
+        let config_set_foldseek = match &args.command {
+            Some(Config { set_foldseek, .. }) => match set_foldseek { Some(p) => Some(own(p)), _ => None }, _ => None,
+        };
+        let config_set_foldmason = match &args.command {
+            Some(Config { set_foldmason, .. }) => match set_foldmason { Some(p) => Some(own(p)), _ => None }, _ => None,
+        };
+        let config_set_mafft = match &args.command {
+            Some(Config { set_mafft, .. }) => match set_mafft { Some(p) => Some(own(p)), _ => None }, _ => None,
+        };
+        let config_set_mafft_linsi = match &args.command {
+            Some(Config { set_mafft_linsi, .. }) => match set_mafft_linsi { Some(p) => Some(own(p)), _ => None }, _ => None,
+        };
+        let config_set_iqtree = match &args.command {
+            Some(Config { set_iqtree, .. }) => match set_iqtree { Some(p) => Some(own(p)), _ => None }, _ => None,
+        };
+        let config_set_fasttree = match &args.command {
+            Some(Config { set_fasttree, .. }) => match set_fasttree { Some(p) => Some(own(p)), _ => None }, _ => None,
+        };
+        let config_set_raxml = match &args.command {
+            Some(Config { set_raxml, .. }) => match set_raxml { Some(p) => Some(own(p)), _ => None }, _ => None,
+        };
+
         Args {
             command: args.command, version: args.version, threads, verbosity,
             createdb_input, createdb_output, createdb_model, createdb_keep, createdb_overwrite, createdb_max_len, createdb_gpu, createdb_use_python, createdb_use_foldseek, createdb_afdb_lookup, createdb_afdb_local,
@@ -649,6 +722,7 @@ impl Args {
             cluster_input, cluster_output, cluster_tmp, cluster_keep_cluster_db, cluster_cluster_options,
             tree_db, tree_input, tree_output, tree_aligner, tree_tree_builder, tree_aligner_options, tree_tree_options, tree_threshold,
             genetree_input, genetree_names, genetree_tree_builder, genetree_tree_options, genetree_realign, genetree_aligner, genetree_aligner_options, genetree_threshold,
+            config_check, config_set_mmseqs, config_set_foldseek, config_set_foldmason, config_set_mafft, config_set_mafft_linsi, config_set_iqtree, config_set_fasttree, config_set_raxml,
         }
     }
 }

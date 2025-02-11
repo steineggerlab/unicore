@@ -5,3 +5,4 @@ pub mod search;
 pub mod profile;
 pub mod tree;
 pub mod genetree;
+pub mod config;
