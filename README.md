@@ -11,8 +11,7 @@ Kim, D., Park, S., & Steinegger, M. (2024). Unicore enables scalable and accurat
 ## Table of Contents
 - [Unicore](#unicore)
 - [Quick Start with Conda](#quick-start-with-conda)
-  - [GPU acceleration with CUDA](#gpu-acceleration-with-cuda)
-  - [GPU acceleration with Foldseek-ProstT5 (beta)](#gpu-acceleration-with-foldseek-prostt5-beta)
+  - [GPU acceleration with Foldseek-ProstT5](#gpu-acceleration-with-foldseek-prostt5)
 - [Tutorial](#tutorial)
 - [Manual](#manual)
   - [Input](#input)
@@ -29,24 +28,16 @@ conda install -c bioconda unicore
 unicore -v
 ```
 
-### GPU acceleration with CUDA
-`createdb` module can be greatly acclerated with ProstT5-GPU.
-If you have a Linux machine with CUDA-compatible GPU, please install this additional package:
-```
-conda install -c conda-forge pytorch-gpu
-```
+### GPU acceleration with Foldseek-ProstT5
+Foldseek features GPU-acceleration for ProstT5 prediction under following requirements:
+ * Turing or newer NVIDIA GPU
+ * `foldseek` ≥10
+ * `glibc` ≥2.17
+ * `nvidia-driver` ≥525.60.13
 
-### GPU acceleration with Foldseek-ProstT5 (beta)
-> Note. This feature is under development and may not work in some environments. We will provide an update after the stable release of Foldseek-ProstT5.
-
-Foldseek provides a GPU-compatible static binary for ProstT5 prediction (requires Linux with AVX2 support, `glibc` ≥2.29, and `nvidia-driver` ≥525.60.13)<br>
-To use it, please install it by running the following command:
+Apply `--gpu` option to either `easy-core` or `createdb` module to use it, e.g.
 ```
-wget https://mmseqs.com/foldseek/foldseek-linux-gpu.tar.gz; tar xvfz foldseek-linux-gpu.tar.gz; export PATH=$(pwd)/foldseek/bin/:$PATH
-```
-Then, add `--use-foldseek` and `--gpu` options to either `easy-core` or `createdb` module to use Foldseek implementation of ProstT5-GPU:
-```
-unicore easy-core --use-foldseek --gpu <INPUT> <OUTPUT> <MODEL> <TMP>
+unicore easy-core --gpu <INPUT> <OUTPUT> <MODEL> <TMP>
 ```
 
 <hr>
@@ -61,7 +52,7 @@ unzip unicore_example.zip
 If you cloned the repository, you can find the example dataset in the `example/data` folder.
 
 ### Download ProstT5 weights
-You need to first download the ProstT5 weights to run the `createdb` module.
+You can preliminarily download the ProstT5 weights required to run the `createdb` module.
 ```
 foldseek databases ProstT5 weights tmp
 ```
@@ -142,13 +133,14 @@ This module runs much faster with GPU. Please install `cuda` for GPU acceleratio
 
 To run the module, please use the following command:
 ```
-// Download ProstT5 weights as below if you haven't already
-// foldseek databases ProstT5 /path/to/prostt5/weights tmp
 unicore createdb data db/proteome_db /path/to/prostt5/weights
 ```
 This will create a Foldseek database in the `db` folder.
 
-If you have foldseek installed with CUDA, you can run the ProstT5 in the module with foldseek by adding `--use-foldseek` option.
+If you want to select the GPU devices, please use the `CUDA_VISIBLE_DEVICES` environment variable.
+
+* `CUDA_VISIBLE_DEVICES=0` to use GPU 0.
+* `CUDA_VISIBLE_DEVICES=0,1` to use GPU 0 and 1.
 
 #### cluster
 `cluster` module takes a `createdb` output database, runs Foldseek clustering, and outputs the cluster results.
@@ -217,11 +209,9 @@ unicore gene-tree --realign --threshold 30 --name /path/to/hashed/gene/names tre
 ## Build from Source
 ### Minimum requirements
 * [Cargo](https://www.rust-lang.org/tools/install) (Rust)
-* [Foldseek](https://foldseek.com) (version ≥ 9)
+* [Foldseek](https://foldseek.com) (version ≥ 10)
 * [Foldmason](https://foldmason.foldseek.com)
 * [IQ-TREE](http://www.iqtree.org/)
-* pytorch, transformers, sentencepiece, protobuf
-  - These are required for users who cannot build foldseek with CUDA. Please install them with `pip install torch transformers sentencepiece protobuf`.
 ### Optional requirements
 * [MAFFT](https://mafft.cbrc.jp/alignment/software/)
 * [Fasttree](http://www.microbesonline.org/fasttree/) or [RAxML](https://cme.h-its.org/exelixis/web/software/raxml/)
@@ -240,5 +230,5 @@ With these tools installed, you can install and run `unicore` by:
 git clone https://github.com/steineggerlab/unicore.git
 cd unicore
 cargo build --release
-bin/unicore help
+bin/unicore -v
 ```

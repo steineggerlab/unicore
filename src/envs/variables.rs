@@ -74,15 +74,6 @@ pub fn locate_path_cfg() -> String {
         err::error(err::ERR_GENERAL, Some("Could not locate path.cfg".to_string()));
     }
 }
-pub fn locate_encoder_py() -> String {
-    if File::open(format!("{}{}etc{}predict_3Di_encoderOnly.py", parent_dir(), SEP, SEP)).is_ok() {
-        format!("{}{}etc{}predict_3Di_encoderOnly.py", parent_dir(), SEP, SEP)
-    } else if File::open(format!("{}{}src{}py{}predict_3Di_encoderOnly.py", src_parent_dir(), SEP, SEP, SEP)).is_ok() {
-        format!("{}{}src{}py{}predict_3Di_encoderOnly.py", src_parent_dir(), SEP, SEP, SEP)
-    } else {
-        err::error(err::ERR_GENERAL, Some("Could not locate path.cfg".to_string()));
-    }
-}
 
 // binary paths
 pub const VALID_BINARY: [&str; 8] = [
