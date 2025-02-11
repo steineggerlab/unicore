@@ -5,6 +5,7 @@ use crate::util::arg_parser::Commands::*;
 
 #[derive(Parser)]
 #[clap(disable_version_flag = true, arg_required_else_help = true)]
+#[command(subcommand_value_name = "MODULE")]
 pub struct ClapArgs {
     #[command(subcommand)]
     pub command: Option<Commands>,
@@ -43,7 +44,130 @@ const GENETREE_HELP: &str = cstr!(r#"<bold><underline>Example:</underline></bold
   <bold>unicore gene-tree --realign --threshold 30 --name /path/to/hashed/gene/names example/tree</bold>
 "#);
 #[derive(Subcommand)]
+#[command(subcommand_help_heading = "Modules")]
 pub enum Commands {
+    /// Easy core gene phylogeny workflow, from fasta files to phylogenetic tree
+    #[clap(arg_required_else_help = true, allow_hyphen_values = true)]
+    EasyCore {
+        /// Input directory with fasta files or a single fasta file
+        input: PathBuf,
+        /// Output directory where all results will be saved
+        output: PathBuf,
+        /// ProstT5 model
+        model: PathBuf,
+        /// tmp directory
+        tmp: PathBuf,
+        /// Keep intermediate files
+        #[arg(short, long, default_value="false")]
+        keep: bool,
+        /// Force overwrite output database
+        #[arg(short='w', long, default_value="false")]
+        overwrite: bool,
+        /// Set maximum sequence length threshold
+        #[arg(long)]
+        max_len: Option<usize>,
+        /// Use GPU for foldseek createdb
+        #[arg(short, long, default_value="false")]
+        gpu: bool,
+        /// Use AFDB lookup for foldseek createdb. Useful for large databases
+        #[arg(long, default_value="false")]
+        afdb_lookup: bool,
+        /// Local path to the directory with AFDB lookup tables. hidden option
+        #[arg(long, hide = false)]
+        afdb_local: Option<PathBuf>,
+        /// Arguments for foldseek options in string e.g. -c "-c 0.8"
+        #[arg(short, long, default_value="-c 0.8")]
+        cluster_options: String,
+        /// Coverage threshold for core structures. [0 - 100]
+        #[arg(short='C', long, default_value="80", value_parser = threshold_in_range)]
+        core_threshold: usize,
+        /// Generate tsv with copy number statistics
+        #[arg(short, long, default_value="true")]
+        print_copiness: bool,
+        /// Multiple sequence aligner [foldmason, mafft-linsi, mafft]
+        #[arg(short='A', long, default_value="foldmason")]
+        aligner: String,
+        /// Phylogenetic tree builder [iqtree, fasttree (under development), raxml (under development)]
+        #[arg(short='T', long, default_value="iqtree")]
+        tree_builder: String,
+        /// Options for sequence aligner
+        #[arg(short, long)]
+        aligner_options: Option<String>,
+        /// Options for tree builder; please adjust if using different tree method
+        #[arg(short, long, default_value="-m JTT+F+I+G -B 1000")]
+        tree_options: String,
+        /// Gap threshold for multiple sequence alignment [0 - 100]
+        #[arg(short='G', long, default_value="50", value_parser = threshold_in_range)]
+        gap_threshold: usize,
+        /// Number of threads to use; 0 to use all
+        #[arg(long, default_value="0")]
+        threads: usize,
+        /// Verbosity (0: quiet, 1: +errors, 2: +warnings, 3: +info, 4: +debug)
+        #[arg(short='v', long, default_value="3")]
+        verbosity: u8,
+    },
+    /// Easy search workflow, from fasta files to phylogenetic tree
+    #[clap(arg_required_else_help = true, allow_hyphen_values = true, hide = true)]
+    EasySearch {
+        /// Input directory with fasta files or a single fasta file
+        input: PathBuf,
+        /// Target database to search against
+        target: PathBuf,
+        /// Output directory where all results will be saved
+        output: PathBuf,
+        /// ProstT5 model
+        model: PathBuf,
+        /// tmp directory
+        tmp: PathBuf,
+        /// Keep intermediate files
+        #[arg(short, long, default_value="false")]
+        keep: bool,
+        /// Force overwrite output database
+        #[arg(short='w', long, default_value="false")]
+        overwrite: bool,
+        /// Set maximum sequence length threshold
+        #[arg(long)]
+        max_len: Option<usize>,
+        /// Use GPU for foldseek createdb
+        #[arg(short, long, default_value="false")]
+        gpu: bool,
+        /// Use AFDB lookup for foldseek createdb. Useful for large databases
+        #[arg(long, default_value="false")]
+        afdb_lookup: bool,
+        /// Local path to the directory with AFDB lookup tables. hidden option
+        #[arg(long, hide = true)]
+        afdb_local: Option<PathBuf>,
+        /// Arguments for foldseek options in string e.g. -s "-c 0.8"
+        #[arg(short, long, default_value="-c 0.8")]
+        search_options: String,
+        /// Coverage threshold for core structures. [0 - 100]
+        #[arg(short='C', long, default_value="80", value_parser = threshold_in_range)]
+        core_threshold: usize,
+        /// Generate tsv with copy number statistics
+        #[arg(short, long, default_value="true")]
+        print_copiness: bool,
+        /// Multiple sequence aligner [foldmason, mafft-linsi, mafft]
+        #[arg(short='A', long, default_value="foldmason")]
+        aligner: String,
+        /// Phylogenetic tree builder [iqtree, fasttree (under development), raxml (under development)]
+        #[arg(short='T', long, default_value="iqtree")]
+        tree_builder: String,
+        /// Options for sequence aligner
+        #[arg(short, long)]
+        aligner_options: Option<String>,
+        /// Options for tree builder; please adjust if using different tree method
+        #[arg(short, long, default_value="-m JTT+F+I+G -B 1000")]
+        tree_options: String,
+        /// Gap threshold for multiple sequence alignment [0 - 100]
+        #[arg(short='G', long, default_value="50", value_parser = threshold_in_range)]
+        gap_threshold: usize,
+        /// Number of threads to use; 0 to use all
+        #[arg(long, default_value="0")]
+        threads: usize,
+        /// Verbosity (0: quiet, 1: +errors, 2: +warnings, 3: +info, 4: +debug)
+        #[arg(short='v', long, default_value="3")]
+        verbosity: u8,
+    },
     /// Create Foldseek database from amino acid sequences
     #[clap(arg_required_else_help = true, allow_hyphen_values = true, verbatim_doc_comment)]
     Createdb {
@@ -186,7 +310,7 @@ pub enum Commands {
         #[arg(short='v', long, default_value="3")]
         verbosity: u8,
     },
-    // Infer phylogenetic tree of each core structures
+    /// Infer phylogenetic tree of each core structures
     #[clap(arg_required_else_help = true, allow_hyphen_values = true)]
     #[command(after_help=GENETREE_HELP)]
     GeneTree {
@@ -220,124 +344,36 @@ pub enum Commands {
         #[arg(short='v', long, default_value="3")]
         verbosity: u8,
     },
-    /// Easy core gene phylogeny workflow, from fasta files to phylogenetic tree
+    /// Runtime environment configuration
     #[clap(arg_required_else_help = true, allow_hyphen_values = true)]
-    EasyCore {
-        /// Input directory with fasta files or a single fasta file
-        input: PathBuf,
-        /// Output directory where all results will be saved
-        output: PathBuf,
-        /// ProstT5 model
-        model: PathBuf,
-        /// tmp directory
-        tmp: PathBuf,
-        /// Keep intermediate files
-        #[arg(short, long, default_value="false")]
-        keep: bool,
-        /// Force overwrite output database
-        #[arg(short='w', long, default_value="false")]
-        overwrite: bool,
-        /// Set maximum sequence length threshold
+    Config {
+        /// Check current environment configuration
+        #[arg(short='c', long)]
+        check: bool,
+        /// Set mmseqs binary path
         #[arg(long)]
-        max_len: Option<usize>,
-        /// Use GPU for foldseek createdb
-        #[arg(short, long, default_value="false")]
-        gpu: bool,
-        /// Use AFDB lookup for foldseek createdb. Useful for large databases
-        #[arg(long, default_value="false")]
-        afdb_lookup: bool,
-        /// Local path to the directory with AFDB lookup tables. hidden option
-        #[arg(long, hide = false)]
-        afdb_local: Option<PathBuf>,
-        /// Arguments for foldseek options in string e.g. -c "-c 0.8"
-        #[arg(short, long, default_value="-c 0.8")]
-        cluster_options: String,
-        /// Coverage threshold for core structures. [0 - 100]
-        #[arg(short='C', long, default_value="80", value_parser = threshold_in_range)]
-        core_threshold: usize,
-        /// Generate tsv with copy number statistics
-        #[arg(short, long, default_value="true")]
-        print_copiness: bool,
-        /// Multiple sequence aligner [foldmason, mafft-linsi, mafft]
-        #[arg(short='A', long, default_value="foldmason")]
-        aligner: String,
-        /// Phylogenetic tree builder [iqtree, fasttree (under development), raxml (under development)]
-        #[arg(short='T', long, default_value="iqtree")]
-        tree_builder: String,
-        /// Options for sequence aligner
-        #[arg(short, long)]
-        aligner_options: Option<String>,
-        /// Options for tree builder; please adjust if using different tree method
-        #[arg(short, long, default_value="-m JTT+F+I+G -B 1000")]
-        tree_options: String,
-        /// Gap threshold for multiple sequence alignment [0 - 100]
-        #[arg(short='G', long, default_value="50", value_parser = threshold_in_range)]
-        gap_threshold: usize,
-        /// Number of threads to use; 0 to use all
-        #[arg(long, default_value="0")]
-        threads: usize,
-        /// Verbosity (0: quiet, 1: +errors, 2: +warnings, 3: +info, 4: +debug)
-        #[arg(short='v', long, default_value="3")]
-        verbosity: u8,
-    },
-    /// Easy search workflow, from fasta files to phylogenetic tree
-    #[clap(arg_required_else_help = true, allow_hyphen_values = true, hide = true)]
-    EasySearch {
-        /// Input directory with fasta files or a single fasta file
-        input: PathBuf,
-        /// Target database to search against
-        target: PathBuf,
-        /// Output directory where all results will be saved
-        output: PathBuf,
-        /// ProstT5 model
-        model: PathBuf,
-        /// tmp directory
-        tmp: PathBuf,
-        /// Keep intermediate files
-        #[arg(short, long, default_value="false")]
-        keep: bool,
-        /// Force overwrite output database
-        #[arg(short='w', long, default_value="false")]
-        overwrite: bool,
-        /// Set maximum sequence length threshold
+        set_mmseqs: Option<PathBuf>,
+        /// Set foldseek binary path
         #[arg(long)]
-        max_len: Option<usize>,
-        /// Use GPU for foldseek createdb
-        #[arg(short, long, default_value="false")]
-        gpu: bool,
-        /// Use AFDB lookup for foldseek createdb. Useful for large databases
-        #[arg(long, default_value="false")]
-        afdb_lookup: bool,
-        /// Local path to the directory with AFDB lookup tables. hidden option
-        #[arg(long, hide = true)]
-        afdb_local: Option<PathBuf>,
-        /// Arguments for foldseek options in string e.g. -s "-c 0.8"
-        #[arg(short, long, default_value="-c 0.8")]
-        search_options: String,
-        /// Coverage threshold for core structures. [0 - 100]
-        #[arg(short='C', long, default_value="80", value_parser = threshold_in_range)]
-        core_threshold: usize,
-        /// Generate tsv with copy number statistics
-        #[arg(short, long, default_value="true")]
-        print_copiness: bool,
-        /// Multiple sequence aligner [foldmason, mafft-linsi, mafft]
-        #[arg(short='A', long, default_value="foldmason")]
-        aligner: String,
-        /// Phylogenetic tree builder [iqtree, fasttree (under development), raxml (under development)]
-        #[arg(short='T', long, default_value="iqtree")]
-        tree_builder: String,
-        /// Options for sequence aligner
-        #[arg(short, long)]
-        aligner_options: Option<String>,
-        /// Options for tree builder; please adjust if using different tree method
-        #[arg(short, long, default_value="-m JTT+F+I+G -B 1000")]
-        tree_options: String,
-        /// Gap threshold for multiple sequence alignment [0 - 100]
-        #[arg(short='G', long, default_value="50", value_parser = threshold_in_range)]
-        gap_threshold: usize,
-        /// Number of threads to use; 0 to use all
-        #[arg(long, default_value="0")]
-        threads: usize,
+        set_foldseek: Option<PathBuf>,
+        /// Set foldmason binary path
+        #[arg(long)]
+        set_foldmason: Option<PathBuf>,
+        /// Set mafft binary path
+        #[arg(long)]
+        set_mafft: Option<PathBuf>,
+        /// Set mafft-linsi binary path
+        #[arg(long)]
+        set_mafft_linsi: Option<PathBuf>,
+        /// Set iqtree binary path
+        #[arg(long)]
+        set_iqtree: Option<PathBuf>,
+        /// Set fasttree binary path
+        #[arg(long)]
+        set_fasttree: Option<PathBuf>,
+        /// Set raxml binary path
+        #[arg(long)]
+        set_raxml: Option<PathBuf>,
         /// Verbosity (0: quiet, 1: +errors, 2: +warnings, 3: +info, 4: +debug)
         #[arg(short='v', long, default_value="3")]
         verbosity: u8,
@@ -397,6 +433,16 @@ pub struct Args {
     pub genetree_realign: Option<bool>,
     pub genetree_aligner: Option<String>,
     pub genetree_aligner_options: Option<Option<String>>,
+
+    pub config_check: Option<bool>,
+    pub config_set_mmseqs: Option<String>,
+    pub config_set_foldseek: Option<String>,
+    pub config_set_foldmason: Option<String>,
+    pub config_set_mafft: Option<String>,
+    pub config_set_mafft_linsi: Option<String>,
+    pub config_set_iqtree: Option<String>,
+    pub config_set_fasttree: Option<String>,
+    pub config_set_raxml: Option<String>,
 }
 fn own(path: &PathBuf) -> String { path.clone().to_string_lossy().into_owned() }
 impl Args {
@@ -411,6 +457,7 @@ impl Args {
             Some(GeneTree { verbosity, .. }) => *verbosity,
             Some(EasyCore { verbosity, .. }) => *verbosity,
             Some(EasySearch { verbosity, .. }) => *verbosity,
+            Some(Config { verbosity, .. }) => *verbosity,
             _ => 3,
         };
         let threads = match &args.command {
@@ -609,6 +656,34 @@ impl Args {
             Some(GeneTree { threshold, .. }) => Some(*threshold), _ => None,
         };
 
+        let config_check = match &args.command {
+            Some(Config { check, .. }) => Some(*check), _ => None,
+        };
+        let config_set_mmseqs = match &args.command {
+            Some(Config { set_mmseqs, .. }) => match set_mmseqs { Some(p) => Some(own(p)), _ => None }, _ => None,
+        };
+        let config_set_foldseek = match &args.command {
+            Some(Config { set_foldseek, .. }) => match set_foldseek { Some(p) => Some(own(p)), _ => None }, _ => None,
+        };
+        let config_set_foldmason = match &args.command {
+            Some(Config { set_foldmason, .. }) => match set_foldmason { Some(p) => Some(own(p)), _ => None }, _ => None,
+        };
+        let config_set_mafft = match &args.command {
+            Some(Config { set_mafft, .. }) => match set_mafft { Some(p) => Some(own(p)), _ => None }, _ => None,
+        };
+        let config_set_mafft_linsi = match &args.command {
+            Some(Config { set_mafft_linsi, .. }) => match set_mafft_linsi { Some(p) => Some(own(p)), _ => None }, _ => None,
+        };
+        let config_set_iqtree = match &args.command {
+            Some(Config { set_iqtree, .. }) => match set_iqtree { Some(p) => Some(own(p)), _ => None }, _ => None,
+        };
+        let config_set_fasttree = match &args.command {
+            Some(Config { set_fasttree, .. }) => match set_fasttree { Some(p) => Some(own(p)), _ => None }, _ => None,
+        };
+        let config_set_raxml = match &args.command {
+            Some(Config { set_raxml, .. }) => match set_raxml { Some(p) => Some(own(p)), _ => None }, _ => None,
+        };
+
         Args {
             command: args.command, version: args.version, threads, verbosity,
             createdb_input, createdb_output, createdb_model, createdb_keep, createdb_overwrite, createdb_max_len, createdb_gpu, createdb_afdb_lookup, createdb_afdb_local,
@@ -617,6 +692,7 @@ impl Args {
             cluster_input, cluster_output, cluster_tmp, cluster_keep_cluster_db, cluster_cluster_options,
             tree_db, tree_input, tree_output, tree_aligner, tree_tree_builder, tree_aligner_options, tree_tree_options, tree_threshold,
             genetree_input, genetree_names, genetree_tree_builder, genetree_tree_options, genetree_realign, genetree_aligner, genetree_aligner_options, genetree_threshold,
+            config_check, config_set_mmseqs, config_set_foldseek, config_set_foldmason, config_set_mafft, config_set_mafft_linsi, config_set_iqtree, config_set_fasttree, config_set_raxml,
         }
     }
 }
