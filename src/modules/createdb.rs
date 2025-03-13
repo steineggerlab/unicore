@@ -93,6 +93,10 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
             if let Some(max_len) = max_len {
                 if value.len() > max_len { continue; }
             }
+            if value.len() < 2 {
+                msg::println_message(&format!("Skipping {} as it is too short", key), 3);
+                continue;
+            }
             // replace all whitespace characters with underscore
             let key = key.replace(|c: char| need_replacement(c), "_");
 
