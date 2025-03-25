@@ -119,9 +119,9 @@ pub fn run(fasta_data: &HashMap<String, String>, afdb_local: &String, converted_
     mprintln(&format!("{} sequences found from the lookup tables", conv), 3);
     mprintln(&format!("{} sequences not found and will be predicted", pred), 3);
 
-    write_fasta(&converted_aa, &converted_aa_data)?;
-    write_fasta(&converted_ss, &converted_ss_data)?;
-    write_fasta(&combined_aa, &combined_data)?;
+    write_fasta(&converted_aa, &converted_aa_data, true)?;
+    write_fasta(&converted_ss, &converted_ss_data, true)?;
+    write_fasta(&combined_aa, &combined_data, false)?;
 
     Ok(())
 }

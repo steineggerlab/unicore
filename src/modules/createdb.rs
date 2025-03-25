@@ -129,7 +129,7 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
         // this will split data into converted and combined fasta files
         crate::seq::afdb_lookup::run(&fasta_data, &afdb_local, &converted_aa, &converted_ss, &combined_aa)?;
     } else {
-        fasta::write_fasta(&combined_aa, &fasta_data)?;
+        fasta::write_fasta(&combined_aa, &fasta_data, false)?;
     }
 
     // Use foldseek to create the database
@@ -181,9 +181,9 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
         let concat_aa_db = format!("{}{}{}{}concat_aa", curr_dir, SEP, parent, SEP);
         let concat_ss_db = format!("{}{}{}{}concat_ss", curr_dir, SEP, parent, SEP);
         let concat_h_db = format!("{}{}{}{}concat_h", curr_dir, SEP, parent, SEP);
-        cmd::run(Cmd::new(foldseek_path).arg("base:concatdbs").arg(&output).arg(&converted_aa_db).arg(&concat_aa_db).arg("-v").arg(foldseek_verbosity.as_str()));
-        cmd::run(Cmd::new(foldseek_path).arg("base:concatdbs").arg(&output_ss).arg(&converted_ss_db).arg(&concat_ss_db).arg("-v").arg(foldseek_verbosity.as_str()));
-        cmd::run(Cmd::new(foldseek_path).arg("base:concatdbs").arg(&output_h).arg(&converted_h_db).arg(&concat_h_db).arg("-v").arg(foldseek_verbosity.as_str()));
+        cmd::run(Cmd::new(foldseek_path).arg("base:concatdbs").arg(&output).arg(&converted_aa_db).arg(&concat_aa_db).arg("-v").arg(foldseek_verbosity.as_str()).arg("--threads").arg("1"));
+        cmd::run(Cmd::new(foldseek_path).arg("base:concatdbs").arg(&output_ss).arg(&converted_ss_db).arg(&concat_ss_db).arg("-v").arg(foldseek_verbosity.as_str()).arg("--threads").arg("1"));
+        cmd::run(Cmd::new(foldseek_path).arg("base:concatdbs").arg(&output_h).arg(&converted_h_db).arg(&concat_h_db).arg("-v").arg(foldseek_verbosity.as_str()).arg("--threads").arg("1"));
 
         // Rename databases
         cmd::run(Cmd::new(foldseek_path).arg("base:mvdb").arg(&concat_aa_db).arg(&output).arg("-v").arg(foldseek_verbosity.as_str()));

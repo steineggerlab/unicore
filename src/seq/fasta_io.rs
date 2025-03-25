@@ -24,15 +24,24 @@ pub fn read_fasta(file: &str) -> HashMap<String, String> {
     sequences
 }
 
-pub fn write_fasta(file: &str, mapping: &HashMap<String, String>) -> io::Result<()> {
+pub fn write_fasta(file: &str, mapping: &HashMap<String, String>, sort: bool) -> io::Result<()> {
     // Open the file
     let file = File::create(file)?;
     let mut file_writer = io::BufWriter::new(file);
 
-    // Write the sequences to the file
-    for (header, sequence) in mapping {
-        writeln!(file_writer, ">{}\n{}", header, sequence)?;
+    // Sort the headers if requested
+    let mut headers: Vec<&String> = mapping.keys().collect();
+    if sort {
+        headers.sort();
     }
+
+    // Write the sequences to the file
+    for header in headers {
+        writeln!(file_writer, ">{}\n{}", header, mapping[header])?;
+    }
+    // for (header, sequence) in mapping {
+    //     writeln!(file_writer, ">{}\n{}", header, sequence)?;
+    // }
     file_writer.flush()?;
 
     Ok(())
