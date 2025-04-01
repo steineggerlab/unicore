@@ -45,7 +45,7 @@ fn download_table(path: &String) -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-pub fn run(fasta_data: &HashMap<String, String>, afdb_local: &String, converted_aa: &String, converted_ss: &String, combined_aa: &String) -> Result<(), Box<dyn std::error::Error>> {
+pub fn run(fasta_data: &HashMap<String, String>, afdb_local: &String, converted_aa: &String, converted_ss: &String, combined_aa: &String, custom: bool) -> Result<(), Box<dyn std::error::Error>> {
     // check if the directory is present
     let path = afdb_local.clone();
     let mut md5_path = format!("{}{}md5", path, SEP);

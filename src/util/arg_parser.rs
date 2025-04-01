@@ -70,8 +70,11 @@ pub enum Commands {
         #[arg(short, long, default_value="false")]
         gpu: bool,
         /// Use AFDB lookup for foldseek createdb. Useful for large databases
-        #[arg(long, hide = false)]
+        #[arg(long)]
         afdb_lookup: Option<PathBuf>,
+        /// Use custom lookup database, accepts any Foldseek database to reference against
+        #[arg(long)]
+        custom_lookup: Option<PathBuf>,
         /// Arguments for foldseek options in string e.g. -c "-c 0.8"
         #[arg(short, long, default_value="-c 0.8")]
         cluster_options: String,
@@ -129,8 +132,11 @@ pub enum Commands {
         #[arg(short, long, default_value="false")]
         gpu: bool,
         /// Use AFDB lookup for foldseek createdb. Useful for large databases
-        #[arg(long, hide = true)]
+        #[arg(long)]
         afdb_lookup: Option<PathBuf>,
+        /// Use custom lookup database, accepts any Foldseek database to reference against
+        #[arg(long)]
+        custom_lookup: Option<PathBuf>,
         /// Arguments for foldseek options in string e.g. -s "-c 0.8"
         #[arg(short, long, default_value="-c 0.8")]
         search_options: String,
@@ -186,6 +192,9 @@ pub enum Commands {
         /// Use AFDB lookup for foldseek createdb. Useful for large databases
         #[arg(long)]
         afdb_lookup: Option<PathBuf>,
+        /// Use custom lookup database, accepts any Foldseek database to reference against
+        #[arg(long)]
+        custom_lookup: Option<PathBuf>,
         /// Number of threads to use; 0 to use all
         #[arg(long, default_value="0")]
         threads: usize,
@@ -386,6 +395,7 @@ pub struct Args {
     pub createdb_max_len: Option<Option<usize>>,
     pub createdb_gpu: Option<bool>,
     pub createdb_afdb_lookup: Option<Option<String>>,
+    pub createdb_custom_lookup: Option<Option<String>>,
 
     pub profile_input_db: Option<String>,
     pub profile_input_tsv: Option<String>,
@@ -501,6 +511,11 @@ impl Args {
             Some(Createdb { afdb_lookup, .. }) => match afdb_lookup { Some(p) => Some(Some(own(p))), _none => Some(None) },
             Some(EasyCore { afdb_lookup, .. }) => match afdb_lookup { Some(p) => Some(Some(own(p))), _none => Some(None) },
             Some(EasySearch { afdb_lookup, .. }) => match afdb_lookup { Some(p) => Some(Some(own(p))), _none => Some(None) }, _ => None,
+        };
+        let createdb_custom_lookup = match &args.command {
+            Some(Createdb { custom_lookup, .. }) => match custom_lookup { Some(p) => Some(Some(own(p))), _none => Some(None) },
+            Some(EasyCore { custom_lookup, .. }) => match custom_lookup { Some(p) => Some(Some(own(p))), _none => Some(None) },
+            Some(EasySearch { custom_lookup, .. }) => match custom_lookup { Some(p) => Some(Some(own(p))), _none => Some(None) }, _ => None,
         };
 
         let profile_input_db = match &args.command {
@@ -671,7 +686,7 @@ impl Args {
 
         Args {
             command: args.command, version: args.version, threads, verbosity,
-            createdb_input, createdb_output, createdb_model, createdb_keep, createdb_overwrite, createdb_max_len, createdb_gpu, createdb_afdb_lookup,
+            createdb_input, createdb_output, createdb_model, createdb_keep, createdb_overwrite, createdb_max_len, createdb_gpu, createdb_afdb_lookup, createdb_custom_lookup,
             profile_input_db, profile_input_tsv, profile_output, profile_threshold, profile_print_copiness,
             search_input, search_target, search_output, search_tmp, search_keep_aln_db, search_search_options,
             cluster_input, cluster_output, cluster_tmp, cluster_keep_cluster_db, cluster_cluster_options,
