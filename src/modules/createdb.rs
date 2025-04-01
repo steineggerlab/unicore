@@ -26,15 +26,9 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
     let overwrite = args.createdb_overwrite.unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("createdb - overwrite".to_string())); });
     let max_len = args.createdb_max_len.unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("createdb - max_len".to_string())); });
     let gpu = args.createdb_gpu.unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("createdb - gpu".to_string())); });
-    let afdb_lookup = args.createdb_afdb_lookup.unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("createdb - afdb_lookup".to_string())); });
-    let afdb_local = args.createdb_afdb_local.clone().unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("createdb - afdb_local".to_string())); });
+    let afdb_lookup = args.createdb_afdb_lookup.clone().unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("createdb - afdb_lookup".to_string())); });
     let threads = crate::envs::variables::threads();
     let foldseek_verbosity = (match var::verbosity() { 4 => 3, 3 => 2, _ => var::verbosity() }).to_string();
-
-    // Check afdb_lookup
-    let afdb_local = if afdb_lookup && !afdb_local.is_some() {
-        err::error(err::ERR_ARGPARSE, Some("afdb-lookup is provided but afdb-local is not given".to_string()));
-    } else if afdb_lookup { afdb_local.unwrap() } else { "".to_string() };
     
     // Try to obtain the parent directory of the output
     let parent = if let Some(p) = Path::new(&output).parent() {
@@ -125,9 +119,9 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
     let combined_aa = format!("{}{}{}{}combined_aa.fasta", curr_dir, SEP, parent, SEP);
     let converted_aa = format!("{}{}{}{}converted_aa.fasta", curr_dir, SEP, parent, SEP);
     let converted_ss = format!("{}{}{}{}converted_ss.fasta", curr_dir, SEP, parent, SEP);
-    if afdb_lookup {
+    if afdb_lookup.is_some() {
         // this will split data into converted and combined fasta files
-        crate::seq::afdb_lookup::run(&fasta_data, &afdb_local, &converted_aa, &converted_ss, &combined_aa)?;
+        crate::seq::afdb_lookup::run(&fasta_data, &afdb_lookup.clone().unwrap(), &converted_aa, &converted_ss, &combined_aa)?;
     } else {
         fasta::write_fasta(&combined_aa, &fasta_data, false)?;
     }
@@ -163,7 +157,7 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
     } else { cmd };
     cmd::run(&mut cmd);
 
-    if afdb_lookup {
+    if afdb_lookup.is_some() {
         let foldseek_path = match &bin.get("foldseek") {
             Some(bin) => &bin.path,
             _none => { err::error(err::ERR_BINARY_NOT_FOUND, Some("foldseek".to_string())); }

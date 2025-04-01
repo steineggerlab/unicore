@@ -70,11 +70,8 @@ pub enum Commands {
         #[arg(short, long, default_value="false")]
         gpu: bool,
         /// Use AFDB lookup for foldseek createdb. Useful for large databases
-        #[arg(long, default_value="false")]
-        afdb_lookup: bool,
-        /// Local path to the directory with AFDB lookup tables. hidden option
         #[arg(long, hide = false)]
-        afdb_local: Option<PathBuf>,
+        afdb_lookup: Option<PathBuf>,
         /// Arguments for foldseek options in string e.g. -c "-c 0.8"
         #[arg(short, long, default_value="-c 0.8")]
         cluster_options: String,
@@ -132,11 +129,8 @@ pub enum Commands {
         #[arg(short, long, default_value="false")]
         gpu: bool,
         /// Use AFDB lookup for foldseek createdb. Useful for large databases
-        #[arg(long, default_value="false")]
-        afdb_lookup: bool,
-        /// Local path to the directory with AFDB lookup tables. hidden option
         #[arg(long, hide = true)]
-        afdb_local: Option<PathBuf>,
+        afdb_lookup: Option<PathBuf>,
         /// Arguments for foldseek options in string e.g. -s "-c 0.8"
         #[arg(short, long, default_value="-c 0.8")]
         search_options: String,
@@ -190,11 +184,8 @@ pub enum Commands {
         #[arg(short, long, default_value="false")]
         gpu: bool,
         /// Use AFDB lookup for foldseek createdb. Useful for large databases
-        #[arg(long, default_value="false")]
-        afdb_lookup: bool,
-        /// Local path to the directory with AFDB lookup tables. If not exists, it will try to download from the internet
         #[arg(long)]
-        afdb_local: Option<PathBuf>,
+        afdb_lookup: Option<PathBuf>,
         /// Number of threads to use; 0 to use all
         #[arg(long, default_value="0")]
         threads: usize,
@@ -394,8 +385,7 @@ pub struct Args {
     pub createdb_overwrite: Option<bool>,
     pub createdb_max_len: Option<Option<usize>>,
     pub createdb_gpu: Option<bool>,
-    pub createdb_afdb_lookup: Option<bool>,
-    pub createdb_afdb_local: Option<Option<String>>,
+    pub createdb_afdb_lookup: Option<Option<String>>,
 
     pub profile_input_db: Option<String>,
     pub profile_input_tsv: Option<String>,
@@ -508,14 +498,9 @@ impl Args {
             Some(EasySearch { gpu, .. }) => Some(*gpu), _ => None,
         };
         let createdb_afdb_lookup = match &args.command {
-            Some(Createdb { afdb_lookup, .. }) => Some(*afdb_lookup),
-            Some(EasyCore { afdb_lookup, .. }) => Some(*afdb_lookup),
-            Some(EasySearch { afdb_lookup, .. }) => Some(*afdb_lookup), _ => None,
-        };
-        let createdb_afdb_local = match &args.command {
-            Some(Createdb { afdb_local, .. }) => match afdb_local { Some(p) => Some(Some(own(p))), _none => Some(None) },
-            Some(EasyCore { afdb_local, .. }) => match afdb_local { Some(p) => Some(Some(own(p))), _none => Some(None) },
-            Some(EasySearch { afdb_local, .. }) => match afdb_local { Some(p) => Some(Some(own(p))), _none => Some(None) }, _ => None,
+            Some(Createdb { afdb_lookup, .. }) => match afdb_lookup { Some(p) => Some(Some(own(p))), _none => Some(None) },
+            Some(EasyCore { afdb_lookup, .. }) => match afdb_lookup { Some(p) => Some(Some(own(p))), _none => Some(None) },
+            Some(EasySearch { afdb_lookup, .. }) => match afdb_lookup { Some(p) => Some(Some(own(p))), _none => Some(None) }, _ => None,
         };
 
         let profile_input_db = match &args.command {
@@ -686,7 +671,7 @@ impl Args {
 
         Args {
             command: args.command, version: args.version, threads, verbosity,
-            createdb_input, createdb_output, createdb_model, createdb_keep, createdb_overwrite, createdb_max_len, createdb_gpu, createdb_afdb_lookup, createdb_afdb_local,
+            createdb_input, createdb_output, createdb_model, createdb_keep, createdb_overwrite, createdb_max_len, createdb_gpu, createdb_afdb_lookup,
             profile_input_db, profile_input_tsv, profile_output, profile_threshold, profile_print_copiness,
             search_input, search_target, search_output, search_tmp, search_keep_aln_db, search_search_options,
             cluster_input, cluster_output, cluster_tmp, cluster_keep_cluster_db, cluster_cluster_options,
