@@ -1,4 +1,5 @@
 use crate::envs::variables as var;
+use crate::envs::error_handler as err;
 use crate::util::arg_parser::Args;
 use crate::util::checkpoint as chkpnt;
 use crate::util::message as msg;
@@ -38,6 +39,11 @@ fn profile(tsv_file: &str, mapping: &str, output_dir: &str, threshold: usize, pr
     let mut curr_query: Option<String> = None;
     let mut spe_cnt: HashMap<String, i32> = HashMap::new();
     let mut gene2spe: HashMap<String, HashSet<String>> = HashMap::new();
+    let mut spe_full_cnt: HashMap<String, i32> = HashMap::new();
+    // Initialize spe_full_cnt with species_set
+    for spe in species_set {
+        spe_full_cnt.insert(spe, 0);
+    }
     let (mut total_cnt, mut core_cnt) = (0, 0);
 
     msg::print_message(&"Profiling the taxonomic distribution of the genes...".to_string(), 3);
@@ -51,7 +57,19 @@ fn profile(tsv_file: &str, mapping: &str, output_dir: &str, threshold: usize, pr
                 total_cnt += 1;
                 let is_core = output_statistics_and_genes(&mut output, &q, &spe_cnt, &gene2spe, species_count, threshold, output_dir)
                     .expect("Failed to write out the statistics and genes");
-                if is_core { core_cnt += 1; }
+                if is_core {
+                    core_cnt += 1;
+                    // Update the full count if the gene is considered as core
+                    for (spe, count) in spe_cnt.iter() {
+                        if *count == 1 {
+                            if let Some(full_count) = spe_full_cnt.get_mut(spe) {
+                                *full_count += 1;
+                            } else {
+                                err::error(err::ERR_GENERAL, Some(format!("Species {} not found in the mapping file", spe)));
+                            }
+                        }
+                    }
+                }
             }
             curr_query = Some(query);
             spe_cnt.clear();
@@ -70,12 +88,32 @@ fn profile(tsv_file: &str, mapping: &str, output_dir: &str, threshold: usize, pr
         total_cnt += 1;
         let is_core = output_statistics_and_genes(&mut output, &q, &spe_cnt, &gene2spe, species_count, threshold, output_dir)
             .expect("Failed to write out the statistics and genes");
-        if is_core { core_cnt += 1; }
+        if is_core {
+            core_cnt += 1;
+            // Update the full count if the gene is considered as core
+            for (spe, count) in spe_cnt.iter() {
+                if *count == 1 {
+                    if let Some(full_count) = spe_full_cnt.get_mut(spe) {
+                        *full_count += 1;
+                    } else {
+                        err::error(err::ERR_GENERAL, Some(format!("Species {} not found in the mapping file", spe)));
+                    }
+                }
+            }
+        }
     }
-
+    
     msg::println_message(&" Done".to_string(), 3);
     msg::println_message(&format!("{} structural core genes found from {} candidates", core_cnt, total_cnt), 3);
-
+    
+    // Check if there is any species that has less than 50% of the core genes
+    let core_threshold = ((core_cnt + 1) as f64 * 0.5) as i32;
+    for (spe, count) in spe_full_cnt {
+        if count < core_threshold {
+            err::warning(err::WRN_GENERAL, Some(format!("Species {} has only {} core genes out of {} core genes", spe, count, core_cnt)));
+        }
+    }
+    
     Ok(())
 }
 
