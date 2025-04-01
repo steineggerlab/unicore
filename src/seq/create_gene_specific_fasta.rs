@@ -6,7 +6,7 @@ use std::path::{Path, PathBuf};
 use crate::envs::error_handler as err;
 
 // Read in one file
-fn read_db(filename: &String) -> Vec<String> {
+pub fn read_db(filename: &String) -> Vec<String> {
     let mut db: Vec<String> = Vec::new();
     // Open the file
     let reader = BufReader::new(File::open(filename).unwrap());

@@ -1,7 +1,9 @@
 use crate::seq::fasta_io::write_fasta;
+use crate::seq::create_gene_specific_fasta::read_db;
 use crate::util::message::print_message as mprint;
 use crate::util::message::println_message as mprintln;
 use crate::util::command as cmd;
+use crate::envs::error_handler as err;
 
 use std::collections::HashMap;
 use std::io::prelude::*;
@@ -127,5 +129,53 @@ pub fn run_afdb(fasta_data: &HashMap<String, String>, afdb_lookup: &String, conv
 }
 
 pub fn run_custom(fasta_data: &HashMap<String, String>, custom_lookup: &String, converted_aa: &String, converted_ss: &String, combined_aa: &String) -> Result<(), Box<dyn std::error::Error>> {
+    // check if the directory is present
+    let path = custom_lookup.clone();
+    let ss_path = format!("{}_ss", path);
+    if std::fs::File::open(&path).is_err() || std::fs::File::open(&ss_path).is_err() {
+        err::error(err::ERR_GENERAL, Some("Custom lookup database does not exist or improperly formatted.".to_string()));
+    }
+
+    let mut converted_aa_data: HashMap<String, String> = HashMap::new();
+    let mut converted_ss_data: HashMap<String, String> = HashMap::new();
+    let mut combined_data: HashMap<String, String> = HashMap::new();
+
+    // load table to memory
+    mprintln(&"\nLoading the database...".to_string(), 3);
+    let table_aa = read_db(&path);
+    let table_ss = read_db(&ss_path);
+    if table_aa.len() != table_ss.len() {
+        err::error(err::ERR_GENERAL, Some("The custom lookup database is not properly formatted.".to_string()));
+    }
+    let mut table_map = HashMap::<String, String>::new();
+    for (aa, ss) in table_aa.into_iter().zip(table_ss.into_iter()) {
+        table_map.insert(aa, ss);
+    }
+
+    let cnt = fasta_data.len();
+    let (mut conv, mut pred) = (0, 0);
+    mprint(&"Looking up the custom database... 0.0%".to_string(), 3);
+    for (i, (h, seq)) in fasta_data.iter().enumerate() {
+        mprint(&format!("\rLooking up the custom database... {:.1}%", (i as f64 + 1.0) * 100.0 / (cnt as f64)), 3);
+        match table_map.get(seq) {
+            Some(converted_seq) => {
+                converted_aa_data.insert(h.clone(), seq.clone());
+                converted_ss_data.insert(h.clone(), converted_seq.clone());
+                conv += 1;
+            },
+            None => {
+                combined_data.insert(h.clone(), seq.clone());
+                pred += 1;
+            },
+        }
+    }
+    mprintln(&"\rLooking up the custom database... 100.0% Done".to_string(), 3);
+    mprintln(&format!("{} sequences found from the lookup database", conv), 3);
+    mprintln(&format!("{} sequences not found and will be predicted", pred), 3);
+
+    write_fasta(&converted_aa, &converted_aa_data, true)?;
+    write_fasta(&converted_ss, &converted_ss_data, true)?;
+    write_fasta(&combined_aa, &combined_data, false)?;
+
     Ok(())
 }
