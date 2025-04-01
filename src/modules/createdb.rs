@@ -127,9 +127,9 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
     let converted_ss = format!("{}{}{}{}converted_ss.fasta", curr_dir, SEP, parent, SEP);
     if afdb_lookup.is_some() {
         // this will split data into converted and combined fasta files
-        crate::seq::afdb_lookup::run(&fasta_data, &afdb_lookup.clone().unwrap(), &converted_aa, &converted_ss, &combined_aa, false)?;
+        crate::seq::afdb_lookup::run_afdb(&fasta_data, &afdb_lookup.clone().unwrap(), &converted_aa, &converted_ss, &combined_aa)?;
     } else if custom_lookup.is_some() {
-        crate::seq::afdb_lookup::run(&fasta_data, &afdb_lookup.clone().unwrap(), &converted_aa, &converted_ss, &combined_aa, true)?;
+        crate::seq::afdb_lookup::run_custom(&fasta_data, &custom_lookup.clone().unwrap(), &converted_aa, &converted_ss, &combined_aa)?;
     } else {
         fasta::write_fasta(&combined_aa, &fasta_data, false)?;
     }

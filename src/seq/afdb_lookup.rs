@@ -45,9 +45,9 @@ fn download_table(path: &String) -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-pub fn run(fasta_data: &HashMap<String, String>, afdb_local: &String, converted_aa: &String, converted_ss: &String, combined_aa: &String, custom: bool) -> Result<(), Box<dyn std::error::Error>> {
+pub fn run_afdb(fasta_data: &HashMap<String, String>, afdb_lookup: &String, converted_aa: &String, converted_ss: &String, combined_aa: &String) -> Result<(), Box<dyn std::error::Error>> {
     // check if the directory is present
-    let path = afdb_local.clone();
+    let path = afdb_lookup.clone();
     let mut md5_path = format!("{}{}md5", path, SEP);
     if std::path::Path::new(&path).exists() && std::fs::File::open(&format!("{}{}00.tsv", path, SEP)).is_ok() { md5_path = path.clone(); }
     if std::fs::File::open(&format!("{}{}00.tsv", md5_path, SEP)).is_err() {
@@ -123,5 +123,9 @@ pub fn run(fasta_data: &HashMap<String, String>, afdb_local: &String, converted_
     write_fasta(&converted_ss, &converted_ss_data, true)?;
     write_fasta(&combined_aa, &combined_data, false)?;
 
+    Ok(())
+}
+
+pub fn run_custom(fasta_data: &HashMap<String, String>, custom_lookup: &String, converted_aa: &String, converted_ss: &String, combined_aa: &String) -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
