@@ -107,7 +107,7 @@ fn profile(tsv_file: &str, mapping: &str, output_dir: &str, threshold: usize, pr
     msg::println_message(&format!("{} structural core genes found from {} candidates", core_cnt, total_cnt), 3);
     
     // Check if there is any species that has less than 50% of the core genes
-    let core_threshold = ((core_cnt + 1) as f64 * 0.5) as i32;
+    let core_threshold = (core_cnt + 1) / 2;
     for (spe, count) in spe_full_cnt {
         if count < core_threshold {
             err::warning(err::WRN_GENERAL, Some(format!("Species {} has only {} core genes out of {} core genes", spe, count, core_cnt)));
