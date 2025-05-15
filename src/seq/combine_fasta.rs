@@ -1,5 +1,5 @@
 use std::fs::File;
-use std::path::PathBuf;
+use std::path::Path;
 use std::io::{self, BufRead, BufReader, BufWriter, Write};
 use crate::envs::error_handler as err;
 
@@ -24,14 +24,24 @@ fn skip_to_next_fasta_line(reader: &mut BufReader<File>, sequence: &mut String, 
     }
     Ok(())
 }
-pub fn combine_fasta(fasta_files: &Vec<String>, output_file: &PathBuf) -> Result<(), Box<dyn std::error::Error>> {
+pub fn combine_fasta(fasta_files: &Vec<String>, output: &String) -> Result<(), Box<dyn std::error::Error>> {
     let mut names: Vec<String> = Vec::new();
     let mut sequences: Vec<String> = Vec::new();
     let mut prev_len = 0;
 
+    let output_file = Path::new(&output).join("combined.fasta");
+    let partition_file = Path::new(&output).join("combined.fasta.partitions");
+    
+    let mut partition = BufWriter::new(File::create(partition_file)?);
     // Process each FASTA file
     for fasta_path in fasta_files {
         let file = File::open(fasta_path.trim())?;
+        // Get the name of the parent directory
+        let hash = Path::new(fasta_path.trim())
+            .parent()
+            .and_then(|p| p.file_name())
+            .and_then(|name| name.to_str())
+            .unwrap_or("unknown");
         let mut reader = BufReader::new(file);
         let mut line = String::new();
         let mut add_this = 0;
@@ -79,6 +89,9 @@ pub fn combine_fasta(fasta_files: &Vec<String>, output_file: &PathBuf) -> Result
             }
         }
 
+        // Write to partition file
+        writeln!(partition, ", {}={}-{}", hash, prev_len + 1, prev_len + add_this)?;
+
         prev_len += add_this;
         // Pad sequences if shorter than prev_len
         for seq in sequences.iter_mut() {
@@ -87,6 +100,7 @@ pub fn combine_fasta(fasta_files: &Vec<String>, output_file: &PathBuf) -> Result
             }
         }
     }
+    partition.flush()?;
 
     // Write to output file
     let mut output = BufWriter::new(File::create(output_file)?);

@@ -123,7 +123,7 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
 
     // Combine alignment
     let combined_fasta = Path::new(&output).join("combined.fasta");
-    cf::combine_fasta(&msa_list, &combined_fasta)?;
+    cf::combine_fasta(&msa_list, &output)?;
 
     // Build tree
     msg::print_message(&"Inferring phylogenetic tree...".to_string(), 3);
