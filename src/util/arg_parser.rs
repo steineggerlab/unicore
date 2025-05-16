@@ -90,7 +90,7 @@ pub enum Commands {
         /// Stop the tree module after alignment (before tree inference)
         #[arg(short, long, default_value="false")]
         no_inference: bool,
-        /// Phylogenetic tree builder [iqtree, fasttree (under development), raxml (under development)]
+        /// Phylogenetic tree builder [iqtree, fasttree, raxml]
         #[arg(short='T', long, default_value="iqtree")]
         tree_builder: String,
         /// Options for sequence aligner
@@ -158,7 +158,7 @@ pub enum Commands {
         /// Stop the tree module after alignment (before tree inference)
         #[arg(short, long, default_value="false")]
         no_inference: bool,
-        /// Phylogenetic tree builder [iqtree, fasttree (under development), raxml (under development)]
+        /// Phylogenetic tree builder [iqtree, fasttree, raxml]
         #[arg(short='T', long, default_value="iqtree")]
         tree_builder: String,
         /// Options for sequence aligner
@@ -303,7 +303,7 @@ pub enum Commands {
         /// Multiple sequence aligner [foldmason, mafft-linsi, mafft]
         #[arg(short, long, default_value="foldmason")]
         aligner: String,
-        /// Phylogenetic tree builder [iqtree, fasttree (under development), raxml (under development)]
+        /// Phylogenetic tree builder [iqtree, fasttree, raxml]
         #[arg(short, long, default_value="iqtree")]
         tree_builder: String,
         /// Options for sequence aligner
@@ -337,7 +337,7 @@ pub enum Commands {
         /// File containing core structures for computing phylogenetic tree. If not provided, all core structures will be used
         #[arg(short='n', long, default_value="")]
         names: String,
-        /// Phylogenetic tree builder [iqtree, fasttree (under development), raxml (under development)]
+        /// Phylogenetic tree builder [iqtree, fasttree, raxml]
         #[arg(short='T', long, default_value="iqtree")]
         tree_builder: String,
         /// Options for tree builder; If not given, following options will be applied:

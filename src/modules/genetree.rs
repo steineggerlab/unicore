@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 use crate::envs::error_handler as err;
 use crate::util::arg_parser::Args;
 use crate::util::message as msg;
-use crate::modules::tree::{run_mafft, run_foldmason, run_iqtree};
+use crate::modules::tree::{run_mafft, run_foldmason, run_iqtree, run_raxml, run_fasttree};
 
 pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(), Box<dyn std::error::Error>> {
     // Retrieve arguments
@@ -96,7 +96,7 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
         } else if aligner == "foldmason" {
             run_foldmason(&aligner_path, &gene_fasta_dir, &gene_list, &aligner_options, threshold, threads)?;
         } else {
-            err::error(err::ERR_MODULE_NOT_IMPLEMENTED, Some("Need implementation".to_string()))
+            err::error(err::ERR_GENERAL, Some("Unrecognized aligner".to_string()));
         }
     }
 
@@ -132,9 +132,12 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
         }
         if tree_builder == "iqtree" {
             run_iqtree(&tree_builder_path, &msa_parent, &msa, &tree_options, threads)?;
+        } else if tree_builder == "raxml" {
+            run_raxml(&tree_builder_path, &msa_parent, &msa, &tree_options, threads)?;
+        } else if tree_builder == "fasttree" {
+            run_fasttree(&tree_builder_path, &msa_parent, &msa, &tree_options)?;
         } else {
-            // TODO: Implement other tree builders
-            err::error(err::ERR_MODULE_NOT_IMPLEMENTED, Some("Need implementation".to_string()))
+            err::error(err::ERR_GENERAL, Some("Unrecognized tree builder".to_string()));
         }
         msg::print_message(&format!("\rInferring gene specific phylogenetic trees {}/{}...", i+1, msa_list.len()), 3);
     }

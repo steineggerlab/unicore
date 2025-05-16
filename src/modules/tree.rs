@@ -115,7 +115,7 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
         } else if aligner == "foldmason" {
             run_foldmason(&aligner_path, &gene_fasta_dir, &gene_list, &aligner_options, threshold, threads)?;
         } else {
-            err::error(err::ERR_MODULE_NOT_IMPLEMENTED, Some("Need implementation".to_string()))
+            err::error(err::ERR_GENERAL, Some("Unrecognized aligner".to_string()));
         }
 
         // Make the vector of alignment files
