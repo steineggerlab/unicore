@@ -90,7 +90,7 @@ pub fn combine_fasta(fasta_files: &Vec<String>, output: &String) -> Result<(), B
         }
 
         // Write to partition file
-        writeln!(partition, ", {}={}-{}", hash, prev_len + 1, prev_len + add_this)?;
+        writeln!(partition, "JTT+F+I+G, {}={}-{}", hash, prev_len + 1, prev_len + add_this)?;
 
         prev_len += add_this;
         // Pad sequences if shorter than prev_len
