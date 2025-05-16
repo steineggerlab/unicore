@@ -96,9 +96,12 @@ pub enum Commands {
         /// Options for sequence aligner
         #[arg(short, long)]
         aligner_options: Option<String>,
-        /// Options for tree builder; please adjust if using different tree method
-        #[arg(short, long, default_value="-m JTT+F+I+G -B 1000")]
-        tree_options: String,
+        /// Options for tree builder; If not given, following options will be applied:
+        /// iqtree:   -m JTT+F+I+G -B 1000
+        /// fasttree: -gamma -boot 1000
+        /// raxml:    -m PROTCATJTT -p 12345 -x 12345 -f a -N 1000
+        #[arg(short='p', long, verbatim_doc_comment)]
+        tree_options: Option<String>,
         /// Gap threshold for multiple sequence alignment [0 - 100]
         #[arg(short='G', long, default_value="50", value_parser = threshold_in_range)]
         gap_threshold: usize,
@@ -161,9 +164,12 @@ pub enum Commands {
         /// Options for sequence aligner
         #[arg(short, long)]
         aligner_options: Option<String>,
-        /// Options for tree builder; please adjust if using different tree method
-        #[arg(short, long, default_value="-m JTT+F+I+G -B 1000")]
-        tree_options: String,
+        /// Options for tree builder; If not given, following options will be applied:
+        /// iqtree:   -m JTT+F+I+G -B 1000
+        /// fasttree: -gamma -boot 1000
+        /// raxml:    -m PROTCATJTT -p 12345 -x 12345 -f a -N 1000
+        #[arg(short='p', long, verbatim_doc_comment)]
+        tree_options: Option<String>,
         /// Gap threshold for multiple sequence alignment [0 - 100]
         #[arg(short='G', long, default_value="50", value_parser = threshold_in_range)]
         gap_threshold: usize,
@@ -306,9 +312,12 @@ pub enum Commands {
         /// Stop the tree module after alignment (before tree inference)
         #[arg(short, long, default_value="false")]
         no_inference: bool,
-        /// Options for tree builder; please adjust if using different tree method
-        #[arg(short='p', long, default_value="-m JTT+F+I+G -B 1000")]
-        tree_options: String,
+        /// Options for tree builder; If not given, following options will be applied:
+        /// iqtree:   -m JTT+F+I+G -B 1000
+        /// fasttree: -gamma -boot 1000
+        /// raxml:    -m PROTCATJTT -p 12345 -x 12345 -f a -N 1000
+        #[arg(short='p', long, verbatim_doc_comment)]
+        tree_options: Option<String>,
         /// Gap threshold for multiple sequence alignment [0 - 100]
         #[arg(short='d', long, default_value="50", value_parser = threshold_in_range)]
         threshold: usize,
@@ -331,9 +340,12 @@ pub enum Commands {
         /// Phylogenetic tree builder [iqtree, fasttree (under development), raxml (under development)]
         #[arg(short='T', long, default_value="iqtree")]
         tree_builder: String,
-        /// Options for tree builder; please adjust if using different tree method
-        #[arg(short='p', long, default_value="-m JTT+F+I+G -B 1000")]
-        tree_options: String,
+        /// Options for tree builder; If not given, following options will be applied:
+        /// iqtree:   -m JTT+F+I+G -B 1000
+        /// fasttree: -gamma -boot 1000
+        /// raxml:    -m PROTCATJTT -p 12345 -x 12345 -f a -N 1000
+        #[arg(short='p', long, verbatim_doc_comment)]
+        tree_options: Option<String>,
         /// Compute the Multiple sequence alignment again. This will overwrite the previous alignment
         #[arg(short='f', long, default_value="false")]
         realign: bool,
@@ -432,13 +444,13 @@ pub struct Args {
     pub tree_no_inference: Option<bool>,
     pub tree_tree_builder: Option<String>,
     pub tree_aligner_options: Option<Option<String>>,
-    pub tree_tree_options: Option<String>,
+    pub tree_tree_options: Option<Option<String>>,
     pub tree_threshold: Option<usize>,
 
     pub genetree_input: Option<String>,
     pub genetree_names: Option<String>,
     pub genetree_tree_builder: Option<String>,
-    pub genetree_tree_options: Option<String>,
+    pub genetree_tree_options: Option<Option<String>>,
     pub genetree_threshold: Option<usize>,
     pub genetree_realign: Option<bool>,
     pub genetree_aligner: Option<String>,

@@ -36,6 +36,16 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
         Some(bin) => &bin.path,
         _none => { err::error(err::ERR_BINARY_NOT_FOUND, Some(tree_builder.clone())); }
     };
+
+    // Define tree options
+    let tree_options = if tree_options.is_some() {
+        tree_options.unwrap()
+    } else {
+        if tree_builder == "iqtree" { "-m JTT+F+I+G -B 1000".to_string() }
+        else if tree_builder == "raxml" { "-m PROTCATJTT -p 12345 -x 12345 -f a -N 1000".to_string() }
+        else if tree_builder == "fasttree" { "-gamma -boot 1000".to_string() }
+        else { err::error(err::ERR_GENERAL, Some("Unrecognized tree builder".to_string())); }
+    };
     
     let mut names_list = Vec::new();
     // If names is not empty, read in the names
