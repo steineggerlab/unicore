@@ -150,10 +150,11 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
     msg::print_message(&"Inferring phylogenetic tree...".to_string(), 3);
     if tree_builder == "iqtree" {
         run_iqtree(&tree_builder_path, &output, &combined_fasta.display().to_string(), &tree_options, threads)?;
-    } else {
-        // TODO: Implement other tree building methods
-        err::error(err::ERR_MODULE_NOT_IMPLEMENTED, Some("Need implementation".to_string()))
-    }
+    } else if tree_builder == "raxml" {
+        run_raxml(&tree_builder_path, &output, &combined_fasta.display().to_string(), &tree_options, threads)?;
+    } else if tree_builder == "fasttree" {
+        run_fasttree(&tree_builder_path, &output, &combined_fasta.display().to_string(), &tree_options)?;
+    } else { err::error(err::ERR_GENERAL, Some("Unrecognized tree builder".to_string())); }
     msg::println_message(&" Done".to_string(), 3);
 
     // Write the checkpoint file
@@ -251,6 +252,50 @@ pub fn run_iqtree(iqtree_path: &String, output_dir: &String, msa_fasta: &String,
     // parse iqtree_options into vector
     cmd_args.append(&mut cmd_options);
     let mut cmd = cmd.args(cmd_args);
+    cmd::run(&mut cmd);
+    Ok(())
+}
+
+pub fn run_raxml(raxml_path: &String, output_dir: &String, msa_fasta: &String, raxml_options: &String, threads: usize) -> Result<(), Box<dyn std::error::Error>> {
+    let mut cmd = Command::new(raxml_path);
+    let mut cmd_options = raxml_options.split_whitespace().collect::<Vec<&str>>();
+    let mut cmd_args = vec!["-s", msa_fasta];
+
+    // get absolute path of output_dir
+    let output_dir = Path::new(output_dir).canonicalize()?.display().to_string();
+    if !cmd_options.contains(&"-w") {
+        cmd_args.push("-w");
+        cmd_args.push(output_dir.as_str());
+    }
+
+    if !cmd_options.contains(&"-n"){
+        cmd_args.push("-n");
+        cmd_args.push("raxml");
+    }
+
+    let threads_copy = threads.to_string();
+    if !cmd_options.contains(&"-T"){
+        cmd_args.push("-T");
+        cmd_args.push(threads_copy.as_str());
+    }
+
+    cmd_args.append(&mut cmd_options);
+    let mut cmd = cmd.args(cmd_args);
+    cmd::run(&mut cmd);
+    Ok(())
+}
+
+pub fn run_fasttree(fasttree_path: &String, output_dir: &String, msa_fasta: &String, fasttree_options: &String) -> Result<(), Box<dyn std::error::Error>> {
+    let mut cmd = Command::new(fasttree_path);
+    let mut cmd_options = fasttree_options.split_whitespace().collect::<Vec<&str>>();
+    let mut cmd_args = vec![];
+
+    cmd_args.append(&mut cmd_options);
+    cmd_args.push(msa_fasta.as_str());
+
+    let mut cmd = cmd.args(cmd_args);
+    let output_file = Path::new(output_dir).join("fasttree.nwk").display().to_string();
+    cmd.stdout(fs::File::create(output_file)?);
     cmd::run(&mut cmd);
     Ok(())
 }
