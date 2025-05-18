@@ -141,7 +141,7 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
         tree_options.unwrap()
     } else {
         if tree_builder == "iqtree" { "-m JTT+F+I+G -B 1000".to_string() }
-        else if tree_builder == "raxml" { "-m PROTCATJTT -p 12345 -x 12345 -f a -N 1000".to_string() }
+        else if tree_builder == "raxml-ng" { "--model JTT+F+I+G --seed 12345 --all --tree pars{90},rand{10}".to_string() }
         else if tree_builder == "fasttree" { "-gamma -boot 1000".to_string() }
         else { err::error(err::ERR_GENERAL, Some("Unrecognized tree builder".to_string())); }
     };
@@ -150,7 +150,7 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
     msg::print_message(&"Inferring phylogenetic tree...".to_string(), 3);
     if tree_builder == "iqtree" {
         run_iqtree(&tree_builder_path, &output, &combined_fasta.display().to_string(), &tree_options, threads)?;
-    } else if tree_builder == "raxml" {
+    } else if tree_builder == "raxml-ng" {
         run_raxml(&tree_builder_path, &output, &combined_fasta.display().to_string(), &tree_options, threads)?;
     } else if tree_builder == "fasttree" {
         run_fasttree(&tree_builder_path, &output, &combined_fasta.display().to_string(), &tree_options)?;
@@ -259,23 +259,18 @@ pub fn run_iqtree(iqtree_path: &String, output_dir: &String, msa_fasta: &String,
 pub fn run_raxml(raxml_path: &String, output_dir: &String, msa_fasta: &String, raxml_options: &String, threads: usize) -> Result<(), Box<dyn std::error::Error>> {
     let mut cmd = Command::new(raxml_path);
     let mut cmd_options = raxml_options.split_whitespace().collect::<Vec<&str>>();
-    let mut cmd_args = vec!["-s", msa_fasta];
+    let mut cmd_args = vec!["--msa", msa_fasta];
 
-    // get absolute path of output_dir
-    let output_dir = Path::new(output_dir).canonicalize()?.display().to_string();
-    if !cmd_options.contains(&"-w") {
-        cmd_args.push("-w");
-        cmd_args.push(output_dir.as_str());
-    }
-
-    if !cmd_options.contains(&"-n"){
-        cmd_args.push("-n");
-        cmd_args.push("raxml");
+    // get the prefix for the output file
+    let prefix = Path::new(output_dir).canonicalize()?.display().to_string() + "/raxml-ng";
+    if !cmd_options.contains(&"--prefix") {
+        cmd_args.push("--prefix");
+        cmd_args.push(prefix.as_str());
     }
 
     let threads_copy = threads.to_string();
-    if !cmd_options.contains(&"-T"){
-        cmd_args.push("-T");
+    if !cmd_options.contains(&"--threads"){
+        cmd_args.push("--threads");
         cmd_args.push(threads_copy.as_str());
     }
 

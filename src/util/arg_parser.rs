@@ -90,7 +90,7 @@ pub enum Commands {
         /// Stop the tree module after alignment (before tree inference)
         #[arg(short, long, default_value="false")]
         no_inference: bool,
-        /// Phylogenetic tree builder [iqtree, fasttree, raxml]
+        /// Phylogenetic tree builder [iqtree, fasttree, raxml-ng]
         #[arg(short='T', long, default_value="iqtree")]
         tree_builder: String,
         /// Options for sequence aligner
@@ -99,7 +99,7 @@ pub enum Commands {
         /// Options for tree builder; If not given, following options will be applied:
         /// iqtree:   -m JTT+F+I+G -B 1000
         /// fasttree: -gamma -boot 1000
-        /// raxml:    -m PROTCATJTT -p 12345 -x 12345 -f a -N 1000
+        /// raxml-ng: --model JTT+F+I+G --seed 12345 --all --tree pars{90},rand{10}
         #[arg(short='p', long, verbatim_doc_comment)]
         tree_options: Option<String>,
         /// Gap threshold for multiple sequence alignment [0 - 100]
@@ -158,7 +158,7 @@ pub enum Commands {
         /// Stop the tree module after alignment (before tree inference)
         #[arg(short, long, default_value="false")]
         no_inference: bool,
-        /// Phylogenetic tree builder [iqtree, fasttree, raxml]
+        /// Phylogenetic tree builder [iqtree, fasttree, raxml-ng]
         #[arg(short='T', long, default_value="iqtree")]
         tree_builder: String,
         /// Options for sequence aligner
@@ -167,7 +167,7 @@ pub enum Commands {
         /// Options for tree builder; If not given, following options will be applied:
         /// iqtree:   -m JTT+F+I+G -B 1000
         /// fasttree: -gamma -boot 1000
-        /// raxml:    -m PROTCATJTT -p 12345 -x 12345 -f a -N 1000
+        /// raxml-ng: --model JTT+F+I+G --seed 12345 --all --tree pars{90},rand{10}
         #[arg(short='p', long, verbatim_doc_comment)]
         tree_options: Option<String>,
         /// Gap threshold for multiple sequence alignment [0 - 100]
@@ -303,7 +303,7 @@ pub enum Commands {
         /// Multiple sequence aligner [foldmason, mafft-linsi, mafft]
         #[arg(short, long, default_value="foldmason")]
         aligner: String,
-        /// Phylogenetic tree builder [iqtree, fasttree, raxml]
+        /// Phylogenetic tree builder [iqtree, fasttree, raxml-ng]
         #[arg(short, long, default_value="iqtree")]
         tree_builder: String,
         /// Options for sequence aligner
@@ -315,7 +315,7 @@ pub enum Commands {
         /// Options for tree builder; If not given, following options will be applied:
         /// iqtree:   -m JTT+F+I+G -B 1000
         /// fasttree: -gamma -boot 1000
-        /// raxml:    -m PROTCATJTT -p 12345 -x 12345 -f a -N 1000
+        /// raxml-ng: --model JTT+F+I+G --seed 12345 --all --tree pars{90},rand{10}
         #[arg(short='p', long, verbatim_doc_comment)]
         tree_options: Option<String>,
         /// Gap threshold for multiple sequence alignment [0 - 100]
@@ -337,13 +337,13 @@ pub enum Commands {
         /// File containing core structures for computing phylogenetic tree. If not provided, all core structures will be used
         #[arg(short='n', long, default_value="")]
         names: String,
-        /// Phylogenetic tree builder [iqtree, fasttree, raxml]
+        /// Phylogenetic tree builder [iqtree, fasttree, raxml-ng]
         #[arg(short='T', long, default_value="iqtree")]
         tree_builder: String,
         /// Options for tree builder; If not given, following options will be applied:
         /// iqtree:   -m JTT+F+I+G -B 1000
         /// fasttree: -gamma -boot 1000
-        /// raxml:    -m PROTCATJTT -p 12345 -x 12345 -f a -N 1000
+        /// raxml-ng: --model JTT+F+I+G --seed 12345 --all --tree pars{90},rand{10}
         #[arg(short='p', long, verbatim_doc_comment)]
         tree_options: Option<String>,
         /// Compute the Multiple sequence alignment again. This will overwrite the previous alignment
@@ -392,7 +392,7 @@ pub enum Commands {
         /// Set fasttree binary path
         #[arg(long)]
         set_fasttree: Option<PathBuf>,
-        /// Set raxml binary path
+        /// Set raxml-ng binary path
         #[arg(long)]
         set_raxml: Option<PathBuf>,
         /// Verbosity (0: quiet, 1: +errors, 2: +warnings, 3: +info, 4: +debug)

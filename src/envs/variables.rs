@@ -77,7 +77,7 @@ pub fn locate_path_cfg() -> String {
 
 // binary paths
 pub const VALID_BINARY: [&str; 8] = [
-    "mmseqs", "foldseek", "mafft", "mafft-linsi", "foldmason", "iqtree", "fasttree", "raxml"
+    "mmseqs", "foldseek", "mafft", "mafft-linsi", "foldmason", "iqtree", "fasttree", "raxml-ng"
 ];
 pub struct Binary {
     name: String,

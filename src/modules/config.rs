@@ -40,8 +40,8 @@ fn task_check(bin: &BinaryPaths) -> Result<(), Box<dyn std::error::Error>> {
                                   if let Some(&ref bin) = &bin.get("fasttree") { if bin.set { if binary_run_test(&bin.path, "fasttree") { cstr!(r#"<green>ok</green>"#) } else { cstr!(r#"<red>no</red>"#) } } else { cstr!(r#"<dim>n/a</dim>"#) } } else { cstr!(r#"<dim>n/a</dim>"#) },
     ), 3);
     msg::println_message(&format!("RAxML: {} .. {}",
-                                  if let Some(&ref bin) = &bin.get("raxml") { if bin.set { bin.path.clone() } else { "Unset".to_string() } } else { "Undefined".to_string() },
-                                  if let Some(&ref bin) = &bin.get("raxml") { if bin.set { if binary_run_test(&bin.path, "raxml") { cstr!(r#"<green>ok</green>"#) } else { cstr!(r#"<red>no</red>"#) } } else { cstr!(r#"<dim>n/a</dim>"#) } } else { cstr!(r#"<dim>n/a</dim>"#) },
+                                  if let Some(&ref bin) = &bin.get("raxml-ng") { if bin.set { bin.path.clone() } else { "Unset".to_string() } } else { "Undefined".to_string() },
+                                  if let Some(&ref bin) = &bin.get("raxml-ng") { if bin.set { if binary_run_test(&bin.path, "raxml-ng") { cstr!(r#"<green>ok</green>"#) } else { cstr!(r#"<red>no</red>"#) } } else { cstr!(r#"<dim>n/a</dim>"#) } } else { cstr!(r#"<dim>n/a</dim>"#) },
     ), 3);
     Ok(())
 }
@@ -53,7 +53,7 @@ fn binary_run_test(path: &str, sw: &str) -> bool {
         "mmseqs" | "foldseek" | "foldmason" => test_command.arg("version"),
         "mafft" | "mafft-linsi" | "iqtree" => test_command.arg("--version"),
         "fasttree" => &mut test_command,
-        "raxml" => test_command.arg("-v"),
+        "raxml-ng" => test_command.arg("-v"),
         _ => return false,
     };
     cmd::run_code(test_command) == 0
@@ -87,7 +87,7 @@ pub fn run(args: &Args, bin: &BinaryPaths) -> Result<(), Box<dyn std::error::Err
     else if args.config_set_mafft_linsi.is_some() { set_binary(bin, args.config_set_mafft_linsi.clone().unwrap().as_str(), "mafft-linsi")?; }
     else if args.config_set_iqtree.is_some() { set_binary(bin, args.config_set_iqtree.clone().unwrap().as_str(), "iqtree")?; }
     else if args.config_set_fasttree.is_some() { set_binary(bin, args.config_set_fasttree.clone().unwrap().as_str(), "fasttree")?; }
-    else if args.config_set_raxml.is_some() { set_binary(bin, args.config_set_raxml.clone().unwrap().as_str(), "raxml")?; }
+    else if args.config_set_raxml.is_some() { set_binary(bin, args.config_set_raxml.clone().unwrap().as_str(), "raxml-ng")?; }
     else { err::error(err::ERR_ARGPARSE, Some("No task specified".to_string())) };
     Ok(())
 }
