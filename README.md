@@ -176,7 +176,13 @@ Example command:
 unicore tree db/proteome_db result tree
 ```
 
-This will create a `tree` folder with the resulting phylogenetic trees in Newick format.
+This will create a `tree` folder with a concatenated alignment, partition file, and the resulting phylogenetic trees in Newick format.
+
+You can also use `--no-inference` option to skip the phylogenetic inference and only build the concatenated alignment with a partition file.
+
+```
+unicore tree db/proteome_db result tree --no-inference
+```
 
 #### gene-tree
 `gene-tree` module takes the output folder of the `tree` module and infer the phylogenetic tree for each core gene.
