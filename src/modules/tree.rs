@@ -133,7 +133,7 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
             return Ok(());
         }
     } else {
-        msg::println_message(&"Concatenated alignment file already exists".to_string(), 3);
+        msg::println_message(&format!("Concatenated alignment file {} already exists, skipping alignment step", combined_fasta.display().to_string()), 3);
     }
 
     // Define tree options
