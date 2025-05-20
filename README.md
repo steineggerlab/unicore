@@ -216,7 +216,7 @@ After running the `tree` module, you can modify the RAxML-style partition file n
 Example file:
 ```
 JTT+F+I+G, unicore_a657dac463=1-539 # On default, JTT+F+I+G model is used
-GTR+F+I+G, unicore_ce22814bce=540-887 # Modified to GTR+F+I+G model
+WAG+F+I, unicore_ce22814bce=540-887 # Modified to WAG+F+I model
 LG, unicore_86f3076ae5=888-1183 # Modified to LG model
 ...
 ```
