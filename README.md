@@ -17,6 +17,7 @@ Kim, D., Park, S., & Steinegger, M. (2024). Unicore enables scalable and accurat
   - [Input](#input)
   - [easy-core workflow](#easy-core-workflow)
   - [Modules](#modules)
+  - [Phylogenetic inference with partition model](#phylogenetic-inference-with-partition-model)
 - [Build from Source](#build-from-source)
   - [Minimum requirements](#minimum-requirements)
   - [Optional requirements](#optional-requirements)
@@ -178,7 +179,7 @@ unicore tree db/proteome_db result tree
 
 This will create a `tree` folder with a concatenated alignment, partition file, and the resulting phylogenetic trees in Newick format.
 
-You can also use `--no-inference` option to skip the phylogenetic inference and only build the concatenated alignment with a partition file.
+You can also use `--no-inference` option to skip the phylogenetic inference and only build the concatenated alignment with a RAxML-style partition file.
 
 ```
 unicore tree db/proteome_db result tree --no-inference
@@ -209,6 +210,23 @@ awk -F"\t" 'NR==FNR {a[$1];next} ($3 in a) {print $1}' /path/to/original/gene/na
 unicore gene-tree --realign --threshold 30 --name /path/to/hashed/gene/names tree
 ```
 
+## Phylogenetic inference with partition model
+After running the `tree` module, you can modify the RAxML-style partition file named `combined.fasta.partitions` to run the phylogenetic inference with partition model.
+
+Example file:
+```
+JTT+F+I+G, unicore_a657dac463=1-539 # On default, JTT+F+I+G model is used
+GTR+F+I+G, unicore_ce22814bce=540-887 # Modified to GTR+F+I+G model
+LG, unicore_86f3076ae5=888-1183 # Modified to LG model
+...
+```
+
+After modifying the partition file, you can either run the phylogenetic tree inference using the software of your choice (i.e. IQ-TREE, RAxML, etc.) or use the `tree` module again with the appropriate `--tree-options`.
+
+Example command:
+```
+unicore tree db/proteome_db -t iqtree --tree-options "-p tree/combined.fasta.partitions -B 1000" result tree
+```
 
 <hr>
 
