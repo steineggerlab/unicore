@@ -6,8 +6,8 @@
 Unicore is a method for scalable and accurate phylogenetic reconstruction with structural core genes using Foldseek and ProstT5, universally applicable to any given set of taxa.
 
 ## Publications
-Accepted manuscript is now published in _Genome Biology and Evolution_:
-Kim, D., Park, S., & Steinegger, M. (2025). Unicore enables scalable and accurate phylogenetic reconstruction with structural core genes. _Genome Biology and Evolution_, evaf109. [doi.org/10.1093/gbe/evaf109](https://doi.org/10.1093/gbe/evaf109)
+Accepted manuscript is now published in _Genome Biology and Evolution_. Please cite:
+> Kim, D., Park, S., & Steinegger, M. (2025). Unicore enables scalable and accurate phylogenetic reconstruction with structural core genes. _Genome Biology and Evolution_, evaf109. [doi.org/10.1093/gbe/evaf109](https://doi.org/10.1093/gbe/evaf109)
 
 ## Table of Contents
 - [Unicore](#unicore)
