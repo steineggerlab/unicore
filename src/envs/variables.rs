@@ -18,7 +18,7 @@ pub const LOGO_ART: &str = r"
 ╚██████╔╝██║ ╚████║██║╚██████╗╚██████╔╝██║  ██║███████╗
  ╚═════╝ ╚═╝  ╚═══╝╚═╝ ╚═════╝ ╚═════╝ ╚═╝  ╚═╝╚══════╝";
 
-pub const CITATION: &str = "Kim, D., Park, S., & Steinegger, M. (2024). Unicore enables scalable and accurate phylogenetic reconstruction with structural core genes. bioRxiv";
+pub const CITATION: &str = "Kim, D., Park, S., & Steinegger, M. (2025). Unicore enables scalable and accurate phylogenetic reconstruction with structural core genes. Genome Biology and Evolution, evaf109";
 
 // environment paths
 pub fn parent_dir() -> String {

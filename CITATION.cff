@@ -11,8 +11,8 @@ authors:
   given-names: "Martin"
   orcid: "https://orcid.org/0000-0001-8781-9753"
 title: "Unicore enables scalable and accurate phylogenetic reconstruction with structural core genes"
-version: 1.0.1
-doi: 10.1101/2024.12.22.629535
+version: 1.1.1
+doi: 10.1093/gbe/evaf109
 preferred-citation:
   type: article
   authors:
@@ -25,7 +25,7 @@ preferred-citation:
   - family-names: "Steinegger"
     given-names: "Martin"
     orcid: "https://orcid.org/0000-0001-8781-9753"
-  doi: 10.1101/2024.12.22.629535
-  journal: "bioRxiv"
+  doi: 10.1093/gbe/evaf109
+  journal: "Genome Biology and Evolution"
   title: "Unicore enables scalable and accurate phylogenetic reconstruction with structural core genes"
-  year: 2024
+  year: 2025
