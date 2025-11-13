@@ -160,7 +160,8 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
         cmd::run(&mut cmd);
     }
 
-    // Run foldseek createdb
+    // Run foldseek createdb; check if combined_aa file is non-empty
+    let empty_combined = std::fs::metadata(&combined_aa)?.len() == 0;
     let mut cmd = std::process::Command::new(foldseek_path);
     let cmd = cmd
         .arg("createdb").arg(&combined_aa).arg(&output)
@@ -169,19 +170,23 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
     let mut cmd = if gpu {
         cmd.arg("--gpu").arg("1")
     } else { cmd };
-    cmd::run(&mut cmd);
+    if !empty_combined { cmd::run(&mut cmd); }
 
     if afdb_lookup.is_some() || custom_lookup.is_some() {
         let foldseek_path = match &bin.get("foldseek") {
             Some(bin) => &bin.path,
             _none => { err::error(err::ERR_BINARY_NOT_FOUND, Some("foldseek".to_string())); }
         };
+        
+        let empty_converted = std::fs::metadata(&converted_aa)?.len() == 0;
         let converted_aa_db = format!("{}{}{}{}converted", curr_dir, SEP, parent, SEP);
         let converted_h_db = format!("{}{}{}{}converted_h", curr_dir, SEP, parent, SEP);
         let converted_ss_db = format!("{}{}{}{}converted_ss", curr_dir, SEP, parent, SEP);
         let converted_ss_h_db = format!("{}{}{}{}converted_ss_h", curr_dir, SEP, parent, SEP);
-        cmd::run(Cmd::new(foldseek_path).arg("base:createdb").arg(&converted_aa).arg(&converted_aa_db).arg("--shuffle").arg("0").arg("-v").arg(foldseek_verbosity.as_str()));
-        cmd::run(Cmd::new(foldseek_path).arg("base:createdb").arg(&converted_ss).arg(&converted_ss_db).arg("--shuffle").arg("0").arg("-v").arg(foldseek_verbosity.as_str()));
+        if !empty_converted { 
+            cmd::run(Cmd::new(foldseek_path).arg("base:createdb").arg(&converted_aa).arg(&converted_aa_db).arg("--shuffle").arg("0").arg("-v").arg(foldseek_verbosity.as_str()));
+            cmd::run(Cmd::new(foldseek_path).arg("base:createdb").arg(&converted_ss).arg(&converted_ss_db).arg("--shuffle").arg("0").arg("-v").arg(foldseek_verbosity.as_str()));
+        }
 
         // Concatenate the two databases
         let output_ss = format!("{}_ss", output);
@@ -189,9 +194,19 @@ pub fn run(args: &Args, bin: &var::BinaryPaths) -> Result<(), Box<dyn std::error
         let concat_aa_db = format!("{}{}{}{}concat_aa", curr_dir, SEP, parent, SEP);
         let concat_ss_db = format!("{}{}{}{}concat_ss", curr_dir, SEP, parent, SEP);
         let concat_h_db = format!("{}{}{}{}concat_h", curr_dir, SEP, parent, SEP);
-        cmd::run(Cmd::new(foldseek_path).arg("base:concatdbs").arg(&output).arg(&converted_aa_db).arg(&concat_aa_db).arg("-v").arg(foldseek_verbosity.as_str()).arg("--threads").arg("1"));
-        cmd::run(Cmd::new(foldseek_path).arg("base:concatdbs").arg(&output_ss).arg(&converted_ss_db).arg(&concat_ss_db).arg("-v").arg(foldseek_verbosity.as_str()).arg("--threads").arg("1"));
-        cmd::run(Cmd::new(foldseek_path).arg("base:concatdbs").arg(&output_h).arg(&converted_h_db).arg(&concat_h_db).arg("-v").arg(foldseek_verbosity.as_str()).arg("--threads").arg("1"));
+        if empty_combined {
+            cmd::run(Cmd::new(foldseek_path).arg("base:mvdb").arg(&converted_aa_db).arg(&concat_aa_db).arg("-v").arg(foldseek_verbosity.as_str()));
+            cmd::run(Cmd::new(foldseek_path).arg("base:mvdb").arg(&converted_ss_db).arg(&concat_ss_db).arg("-v").arg(foldseek_verbosity.as_str()));
+            cmd::run(Cmd::new(foldseek_path).arg("base:mvdb").arg(&converted_h_db).arg(&concat_h_db).arg("-v").arg(foldseek_verbosity.as_str()));
+        } else if empty_converted {
+            cmd::run(Cmd::new(foldseek_path).arg("base:mvdb").arg(&output).arg(&concat_aa_db).arg("-v").arg(foldseek_verbosity.as_str()));
+            cmd::run(Cmd::new(foldseek_path).arg("base:mvdb").arg(&output_ss).arg(&concat_ss_db).arg("-v").arg(foldseek_verbosity.as_str()));
+            cmd::run(Cmd::new(foldseek_path).arg("base:mvdb").arg(&output_h).arg(&concat_h_db).arg("-v").arg(foldseek_verbosity.as_str()));
+        } else {
+            cmd::run(Cmd::new(foldseek_path).arg("base:concatdbs").arg(&output).arg(&converted_aa_db).arg(&concat_aa_db).arg("-v").arg(foldseek_verbosity.as_str()).arg("--threads").arg("1"));
+            cmd::run(Cmd::new(foldseek_path).arg("base:concatdbs").arg(&output_ss).arg(&converted_ss_db).arg(&concat_ss_db).arg("-v").arg(foldseek_verbosity.as_str()).arg("--threads").arg("1"));
+            cmd::run(Cmd::new(foldseek_path).arg("base:concatdbs").arg(&output_h).arg(&converted_h_db).arg(&concat_h_db).arg("-v").arg(foldseek_verbosity.as_str()).arg("--threads").arg("1"));
+        }
 
         // Rename databases
         cmd::run(Cmd::new(foldseek_path).arg("base:mvdb").arg(&concat_aa_db).arg(&output).arg("-v").arg(foldseek_verbosity.as_str()));
