@@ -211,6 +211,28 @@ awk -F"\t" 'NR==FNR {a[$1];next} ($3 in a) {print $1}' /path/to/original/gene/na
 unicore gene-tree --realign --threshold 30 --name /path/to/hashed/gene/names tree
 ```
 
+## Phylogenetic inference with 3Di MSA
+If you want to infer the phylogenetic tree with the 3Di MSA or amino acid and 3Di MSA combined (partitioned), you can use `--msa-for-tree` option in the `tree` module to specify the MSA type for tree inference.
+
+When `--msa-for-tree 1` or `--msa-for-tree 2` is specified, the module will build the concatenated MSA with 3Di or combined (amino acid and 3Di) MSA, respectively, and run the phylogenetic inference with the concatenated MSA.
+
+When you use the 3Di or combined MSA for tree inference, you have to make sure you provide a right path to the nexus format file containing the 3Di rate matrices. You can provide it with an option `--rate-matrix-3di`.
+
+Example command:
+```
+unicore tree db/proteome_db -t iqtree --msa-for-tree 1 --rate-matrix-3di rate_matrices/matrices.nex result tree
+```
+
+You can also specify which 3Di rate matrix to use by providing the name of the matrix with `--rate-matrix-3di-name` option. If you are using IQ-TREE, this should be the name of the rate matrix defined in the nexus file. If you are using RAxML, this should be the path to the rate matrix file in PAML format.
+
+Example command:
+```
+unicore tree db/proteome_db -t iqtree --msa-for-tree 1 --rate-matrix-3di rate_matrices/matrices.nex --rate-matrix-3di-name GH_LLM_3DI result tree
+```
+
+If you are using `GH_AF_3DI` or `GH_LLM_3Di` matrix, please cite:
+> Garg, Sriram G., and Georg KA Hochberg. "A general substitution matrix for structural phylogenetics." Molecular Biology and Evolution 42.6 (2025): msaf124. [doi.org/10.1093/molbev/msaf124](https://academic.oup.com/mbe/article/42/6/msaf124/8157654)
+
 ## Phylogenetic inference with partition model
 After running the `tree` module, you can modify the RAxML-style partition file named `combined.fasta.partitions` to run the phylogenetic inference with partition model.
 

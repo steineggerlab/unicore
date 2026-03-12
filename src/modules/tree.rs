@@ -21,6 +21,9 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
     let output = args.tree_output.clone().unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("tree - output".to_string())); });
     let aligner = args.tree_aligner.clone().unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("tree - aligner".to_string())); });
     let no_inference = args.tree_no_inference.unwrap_or(false);
+    let msa_for_tree = args.tree_msa_for_tree.unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("tree - msa_for_tree".to_string())); });
+    let rate_matrix_3di = args.tree_rate_matrix_3di.clone().unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("tree - rate_matrix_3di".to_string())); });
+    let rate_matrix_3di_name = args.tree_rate_matrix_3di_name.clone().unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("tree - rate_matrix_3di_name".to_string())); });
     let tree_builder = args.tree_tree_builder.clone().unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("tree - tree_builder".to_string())); });
     let aligner_options = args.tree_aligner_options.clone().unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("tree - aligner_options".to_string())); });
     let tree_options = args.tree_tree_options.clone().unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("tree - tree_options".to_string())); });
@@ -30,6 +33,11 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
     // If there is no output directory, make one
     if !Path::new(&output).exists() {
         fs::create_dir_all(&output)?;
+    }
+
+    // If msa_for_tree is not 0, aligner should be foldmason
+    if msa_for_tree != 0 && aligner != "foldmason" {
+        err::error(err::ERR_GENERAL, Some("If --msa-for-tree is set to 1 or 2, the aligner must be foldmason".to_string()));
     }
 
     // Write the checkpoint file
@@ -50,8 +58,9 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
         Some(bin) => &bin.path,
         _none => { err::error(err::ERR_BINARY_NOT_FOUND, Some(tree_builder.clone())); }
     };
-    
+
     let combined_fasta = Path::new(&output).join("combined.fasta");
+    let combined_fasta_partition = Path::new(&output).join("combined.fasta.partitions").display().to_string();
     // Check if combined fasta exists
     // If it does, skip the alignment step
     if !Path::new(&combined_fasta).exists() {
@@ -119,15 +128,35 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
         }
 
         // Make the vector of alignment files
-        let msa_list = gene_list.iter()
+        let mut msa_list = gene_list.iter()
             .map(|gene| {
                 let gene_name = gene.file_stem().and_then(|name| name.to_str()).unwrap();
                 gene_fasta_dir.join(gene_name).join(format!("{}.fa.filtered", gene_name)).display().to_string()
             })
             .collect::<Vec<_>>();
+        
+        // If msa_for_tree is 2, also include the 3di filtered msa
+        if msa_for_tree == 1 {
+            // Change the msa_list to include the 3di filtered msa
+            msa_list = gene_list.iter()
+                .map(|gene| {
+                    let gene_name = gene.file_stem().and_then(|name| name.to_str()).unwrap();
+                    gene_fasta_dir.join(gene_name).join(format!("{}.fa.filtered.3di", gene_name)).display().to_string()
+                })
+                .collect::<Vec<_>>();
+        } else if msa_for_tree == 2 {
+            // Add the 3di filtered msa to the msa_list
+            let mut msa_list_3di = gene_list.iter()
+                .map(|gene| {
+                    let gene_name = gene.file_stem().and_then(|name| name.to_str()).unwrap();
+                    gene_fasta_dir.join(gene_name).join(format!("{}.fa.filtered.3di", gene_name)).display().to_string()
+                })
+                .collect::<Vec<_>>();
+            msa_list.append(&mut msa_list_3di);
+        }
 
         // Combine alignment
-        cf::combine_fasta(&msa_list, &output)?;
+        cf::combine_fasta(&msa_list, &output, &msa_for_tree, &tree_builder, &rate_matrix_3di_name)?;
 
         if no_inference {
             return Ok(());
@@ -139,11 +168,26 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
     // Define tree options
     let tree_options = if tree_options.is_some() {
         tree_options.unwrap()
-    } else {
+    } else if msa_for_tree == 0 {
         if tree_builder == "iqtree" { "-m JTT+F+I+G -B 1000".to_string() }
         else if tree_builder == "raxml-ng" { "--model JTT+F+I+G --seed 12345 --all --tree pars{90},rand{10}".to_string() }
         else if tree_builder == "fasttree" { "-gamma -boot 1000".to_string() }
         else { err::error(err::ERR_GENERAL, Some("Unrecognized tree builder".to_string())); }
+    } else if msa_for_tree == 1 {
+        // Only 3Di
+        if tree_builder == "iqtree" { format!("-m {}+F+I+G -mdef {} -B 1000", rate_matrix_3di_name, rate_matrix_3di) }
+        else if tree_builder == "raxml-ng" { format!("--model PROTGTR{{{}}}+F+I+G --seed 12345 --all --tree pars{{90}},rand{{10}}", rate_matrix_3di) }
+        else if tree_builder == "fasttree" { err::error(err::ERR_GENERAL, Some("Support for FastTree is not yet implemented".to_string())); }
+        // else if tree_builder == "fasttree" { format!("-matrix {} -boot 1000", rate_matrix_3di) }
+        else { err::error(err::ERR_GENERAL, Some("Unrecognized tree builder".to_string())); }
+    } else if msa_for_tree == 2 {
+        // Partition file
+        if tree_builder == "iqtree" { format!("-q {} -mdef {} -B 1000", combined_fasta_partition, rate_matrix_3di) }
+        else if tree_builder == "raxml-ng" { format!("--model {} --seed 12345 --all --tree pars{{90}},rand{{10}}", combined_fasta_partition) }
+        else if tree_builder == "fasttree" { err::error(err::ERR_GENERAL, Some("Partition method is not supported in FastTree".to_string())) }
+        else { err::error(err::ERR_GENERAL, Some("Unrecognized tree builder".to_string())); }
+    } else {
+        err::error(err::ERR_GENERAL, Some("Invalid value for msa_for_tree".to_string()));
     };
 
     // Build tree
@@ -222,7 +266,9 @@ pub fn run_foldmason(foldmason_path: &String, parent: &Path, gene_list: &Vec<Pat
             cmd::run(&mut cmd);
             // output_msa is msa_fasta + ".filtered"
             let output_msa = gene_dir.join(format!("{}.fa.filtered", gene_name)).display().to_string();
+            let output_msa_3di = gene_dir.join(format!("{}.fa.filtered.3di", gene_name)).display().to_string();
             filter_msa(&(msa_fasta.display().to_string() + "_aa.fa"), &output_msa, threshold)?;
+            filter_msa(&(msa_fasta.display().to_string() + "_3di.fa"), &output_msa_3di, threshold)?;
         }
         msg::print_message(&format!("\rAligning genes {}/{}...", i + 1, gene_list.len()), 3);
     }

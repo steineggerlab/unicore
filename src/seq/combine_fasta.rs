@@ -1,5 +1,6 @@
 use std::fs::File;
 use std::path::Path;
+use std::collections::HashMap;
 use std::io::{self, BufRead, BufReader, BufWriter, Write};
 use crate::envs::error_handler as err;
 
@@ -24,15 +25,17 @@ fn skip_to_next_fasta_line(reader: &mut BufReader<File>, sequence: &mut String, 
     }
     Ok(())
 }
-pub fn combine_fasta(fasta_files: &Vec<String>, output: &String) -> Result<(), Box<dyn std::error::Error>> {
+pub fn combine_fasta(fasta_files: &Vec<String>, output: &String, msa_for_tree: &u8, tree_builder: &String, rate_matrix_3di: &String) -> Result<(), Box<dyn std::error::Error>> {
     let mut names: Vec<String> = Vec::new();
     let mut sequences: Vec<String> = Vec::new();
     let mut prev_len = 0;
 
     let output_file = Path::new(&output).join("combined.fasta");
     let partition_file = Path::new(&output).join("combined.fasta.partitions");
-    
+
     let mut partition = BufWriter::new(File::create(partition_file)?);
+    let mut processed_fasta_files = HashMap::new();
+    let mut di = false;
     // Process each FASTA file
     for fasta_path in fasta_files {
         let file = File::open(fasta_path.trim())?;
@@ -42,6 +45,11 @@ pub fn combine_fasta(fasta_files: &Vec<String>, output: &String) -> Result<(), B
             .and_then(|p| p.file_name())
             .and_then(|name| name.to_str())
             .unwrap_or("unknown");
+        if processed_fasta_files.contains_key(hash) {
+            di = true;
+        } else {
+            processed_fasta_files.insert(hash, true);
+        }
         let mut reader = BufReader::new(file);
         let mut line = String::new();
         let mut add_this = 0;
@@ -90,7 +98,17 @@ pub fn combine_fasta(fasta_files: &Vec<String>, output: &String) -> Result<(), B
         }
 
         // Write to partition file
-        writeln!(partition, "JTT+F+I+G, {}={}-{}", hash, prev_len + 1, prev_len + add_this)?;
+        if di || *msa_for_tree == 1 {
+            if tree_builder == "iqtree" || tree_builder == "fasttree" {
+                writeln!(partition, "{}+F+I+G, {}={}-{}", rate_matrix_3di.clone(), (hash.to_owned() + "_3di").to_string(), prev_len + 1, prev_len + add_this)?;
+            } else if tree_builder == "raxml-ng" {
+                writeln!(partition, "PROTGTR{{{}}}+F+I+G, {}={}-{}", rate_matrix_3di.clone(), (hash.to_owned() + "_3di").to_string(), prev_len + 1, prev_len + add_this)?;
+            } else {
+                err::error(err::ERR_GENERAL, Some("Unknown tree builder".to_string()));
+            }
+        } else {
+            writeln!(partition, "JTT+F+I+G, {}={}-{}", hash, prev_len + 1, prev_len + add_this)?;
+        }
 
         prev_len += add_this;
         // Pad sequences if shorter than prev_len

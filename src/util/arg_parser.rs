@@ -90,6 +90,20 @@ pub enum Commands {
         /// Stop the tree module after alignment (before tree inference)
         #[arg(short, long, default_value="false")]
         no_inference: bool,
+        /// Choose which MSA to use for the tree reference
+        /// 0: Only use amino acid MSA
+        /// 1: Only use 3Di MSA
+        /// 2: Use partition model of amino acid and 3Di MSA
+        #[arg(short='m', long, default_value="0", verbatim_doc_comment)]
+        msa_for_tree: u8,
+        /// Path to the 3Di rate matrix.
+        // On default, it will think you are running from the main Unicore directory.
+        // Only compatible with --msa-for-tree 1 or 2
+        #[arg(long, default_value="rate_matrices/matrices.nex", verbatim_doc_comment)]
+        rate_matrix_3di: String,
+        /// Name of the 3Di rate matrix
+        #[arg(long, default_value="GH_AF_3DI")]
+        rate_matrix_3di_name: String,
         /// Phylogenetic tree builder [iqtree, fasttree, raxml-ng]
         #[arg(short='T', long, default_value="iqtree")]
         tree_builder: String,
@@ -158,6 +172,20 @@ pub enum Commands {
         /// Stop the tree module after alignment (before tree inference)
         #[arg(short, long, default_value="false")]
         no_inference: bool,
+        /// Choose which MSA to use for the tree reference
+        /// 0: Only use amino acid MSA
+        /// 1: Only use 3Di MSA
+        /// 2: Use partition model of amino acid and 3Di MSA
+        #[arg(short='m', long, default_value="0", verbatim_doc_comment)]
+        msa_for_tree: u8,
+        /// Path to the 3Di rate matrix.
+        // On default, it will think you are running from the main Unicore directory.
+        // Only compatible with --msa-for-tree 1 or 2
+        #[arg(long, default_value="rate_matrices/matrices.nex", verbatim_doc_comment)]
+        rate_matrix_3di: String,
+        /// Name of the 3Di rate matrix
+        #[arg(long, default_value="GH_AF_3DI")]
+        rate_matrix_3di_name: String,
         /// Phylogenetic tree builder [iqtree, fasttree, raxml-ng]
         #[arg(short='T', long, default_value="iqtree")]
         tree_builder: String,
@@ -312,6 +340,20 @@ pub enum Commands {
         /// Stop the tree module after alignment (before tree inference)
         #[arg(short, long, default_value="false")]
         no_inference: bool,
+        /// Choose which MSA to use for the tree reference
+        /// 0: Only use amino acid MSA
+        /// 1: Only use 3Di MSA
+        /// 2: Use partition model of amino acid and 3Di MSA
+        #[arg(short='m', long, default_value="0", verbatim_doc_comment)]
+        msa_for_tree: u8,
+        /// Path to the 3Di rate matrix.
+        // On default, it will think you are running from the main Unicore directory.
+        // Only compatible with --msa-for-tree 1 or 2
+        #[arg(long, default_value="rate_matrices/matrices.nex", verbatim_doc_comment)]
+        rate_matrix_3di: String,
+        /// Name of the 3Di rate matrix
+        #[arg(long, default_value="GH_AF_3DI")]
+        rate_matrix_3di_name: String,
         /// Options for tree builder; If not given, following options will be applied:
         /// iqtree:   -m JTT+F+I+G -B 1000
         /// fasttree: -gamma -boot 1000
@@ -442,6 +484,9 @@ pub struct Args {
     pub tree_output: Option<String>,
     pub tree_aligner: Option<String>,
     pub tree_no_inference: Option<bool>,
+    pub tree_msa_for_tree: Option<u8>,
+    pub tree_rate_matrix_3di: Option<String>,
+    pub tree_rate_matrix_3di_name: Option<String>,
     pub tree_tree_builder: Option<String>,
     pub tree_aligner_options: Option<Option<String>>,
     pub tree_tree_options: Option<Option<String>>,
@@ -637,6 +682,21 @@ impl Args {
             Some(EasyCore { no_inference, .. }) => Some(*no_inference),
             Some(EasySearch { no_inference, .. }) => Some(*no_inference), _ => None,
         };
+        let tree_msa_for_tree = match &args.command {
+            Some(Tree { msa_for_tree, .. }) => Some(*msa_for_tree),
+            Some(EasyCore { msa_for_tree, .. }) => Some(*msa_for_tree),
+            Some(EasySearch { msa_for_tree, .. }) => Some(*msa_for_tree), _ => None,
+        };
+        let tree_rate_matrix_3di = match &args.command {
+            Some(Tree { rate_matrix_3di, .. }) => Some(rate_matrix_3di.clone()),
+            Some(EasyCore { rate_matrix_3di, .. }) => Some(rate_matrix_3di.clone()),
+            Some(EasySearch { rate_matrix_3di, .. }) => Some(rate_matrix_3di.clone()), _ => None,
+        };
+        let tree_rate_matrix_3di_name = match &args.command {
+            Some(Tree { rate_matrix_3di_name, .. }) => Some(rate_matrix_3di_name.clone()),
+            Some(EasyCore { rate_matrix_3di_name, .. }) => Some(rate_matrix_3di_name.clone()),
+            Some(EasySearch { rate_matrix_3di_name, .. }) => Some(rate_matrix_3di_name.clone()), _ => None,
+        };
         let tree_tree_builder = match &args.command {
             Some(Tree { tree_builder, .. }) => Some(tree_builder.clone()),
             Some(EasyCore { tree_builder, .. }) => Some(tree_builder.clone()),
@@ -717,7 +777,7 @@ impl Args {
             profile_input_db, profile_input_tsv, profile_output, profile_threshold, profile_print_copiness,
             search_input, search_target, search_output, search_tmp, search_keep_aln_db, search_search_options,
             cluster_input, cluster_output, cluster_tmp, cluster_keep_cluster_db, cluster_cluster_options,
-            tree_db, tree_input, tree_output, tree_aligner, tree_no_inference, tree_tree_builder, tree_aligner_options, tree_tree_options, tree_threshold,
+            tree_db, tree_input, tree_output, tree_aligner, tree_no_inference, tree_msa_for_tree, tree_rate_matrix_3di, tree_rate_matrix_3di_name, tree_tree_builder, tree_aligner_options, tree_tree_options, tree_threshold,
             genetree_input, genetree_names, genetree_tree_builder, genetree_tree_options, genetree_realign, genetree_aligner, genetree_aligner_options, genetree_threshold,
             config_check, config_set_mmseqs, config_set_foldseek, config_set_foldmason, config_set_mafft, config_set_mafft_linsi, config_set_iqtree, config_set_fasttree, config_set_raxml,
         }
