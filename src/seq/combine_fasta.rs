@@ -33,9 +33,6 @@ pub fn combine_fasta(fasta_files: &Vec<String>, output: &String, msa_for_tree: &
     let output_file = Path::new(&output).join("combined.fasta");
     let partition_file = Path::new(&output).join("combined.fasta.partitions");
 
-    let rate_matrix_3di_path = Path::new(&rate_matrix_3di);
-    let rate_matrix_3di_name = rate_matrix_3di_path.file_stem().and_then(|name| name.to_str()).unwrap_or_else(|| { err::error(err::ERR_GENERAL, Some("Invalid rate matrix file path".to_string())); });
-    
     let mut partition = BufWriter::new(File::create(partition_file)?);
     let mut processed_fasta_files = HashMap::new();
     let mut di = false;
@@ -103,7 +100,7 @@ pub fn combine_fasta(fasta_files: &Vec<String>, output: &String, msa_for_tree: &
         // Write to partition file
         if di || *msa_for_tree == 1 {
             if tree_builder == "iqtree" || tree_builder == "fasttree" {
-                writeln!(partition, "{}+F+I+G, {}={}-{}", rate_matrix_3di_name, (hash.to_owned() + "_3di").to_string(), prev_len + 1, prev_len + add_this)?;
+                writeln!(partition, "{}+F+I+G, {}={}-{}", rate_matrix_3di.clone(), (hash.to_owned() + "_3di").to_string(), prev_len + 1, prev_len + add_this)?;
             } else if tree_builder == "raxml-ng" {
                 writeln!(partition, "PROTGTR{{{}}}+F+I+G, {}={}-{}", rate_matrix_3di.clone(), (hash.to_owned() + "_3di").to_string(), prev_len + 1, prev_len + add_this)?;
             } else {
