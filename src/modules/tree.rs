@@ -22,6 +22,7 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
     let aligner = args.tree_aligner.clone().unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("tree - aligner".to_string())); });
     let no_inference = args.tree_no_inference.unwrap_or(false);
     let msa_for_tree = args.tree_msa_for_tree.unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("tree - msa_for_tree".to_string())); });
+    let rate_matrix_3di = args.tree_rate_matrix_3di.clone().unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("tree - rate_matrix_3di".to_string())); });
     let tree_builder = args.tree_tree_builder.clone().unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("tree - tree_builder".to_string())); });
     let aligner_options = args.tree_aligner_options.clone().unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("tree - aligner_options".to_string())); });
     let tree_options = args.tree_tree_options.clone().unwrap_or_else(|| { err::error(err::ERR_ARGPARSE, Some("tree - tree_options".to_string())); });
@@ -56,8 +57,16 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
         Some(bin) => &bin.path,
         _none => { err::error(err::ERR_BINARY_NOT_FOUND, Some(tree_builder.clone())); }
     };
+
+    // Extract the rate matrix name from rate_matrix_3di and also the directory containing it
+    let rate_matrix_3di_path = Path::new(&rate_matrix_3di);
+    let rate_matrix_3di_name = rate_matrix_3di_path.file_stem().and_then(|name| name.to_str()).unwrap_or_else(|| { err::error(err::ERR_GENERAL, Some("Invalid rate matrix file path".to_string())); });
+    let rate_matrix_3di_dir = rate_matrix_3di_path.parent().and_then(|dir| dir.to_str()).unwrap_or_else(|| { err::error(err::ERR_GENERAL, Some("Invalid rate matrix file path".to_string())); });
+    // rate_matrix_3di_dir + "matrices.nex"
+    let matrix_dir = Path::new(rate_matrix_3di_dir).join("matrices.nex").display().to_string();
     
     let combined_fasta = Path::new(&output).join("combined.fasta");
+    let combined_fasta_partition = Path::new(&output).join("combined.fasta.partitions").display().to_string();
     // Check if combined fasta exists
     // If it does, skip the alignment step
     if !Path::new(&combined_fasta).exists() {
@@ -153,7 +162,7 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
         }
 
         // Combine alignment
-        cf::combine_fasta(&msa_list, &output, &msa_for_tree)?;
+        cf::combine_fasta(&msa_list, &output, &msa_for_tree, &tree_builder, &rate_matrix_3di)?;
 
         if no_inference {
             return Ok(());
@@ -165,11 +174,26 @@ pub fn run(args: &Args, bin: &crate::envs::variables::BinaryPaths) -> Result<(),
     // Define tree options
     let tree_options = if tree_options.is_some() {
         tree_options.unwrap()
-    } else {
+    } else if msa_for_tree == 0 {
         if tree_builder == "iqtree" { "-m JTT+F+I+G -B 1000".to_string() }
         else if tree_builder == "raxml-ng" { "--model JTT+F+I+G --seed 12345 --all --tree pars{90},rand{10}".to_string() }
         else if tree_builder == "fasttree" { "-gamma -boot 1000".to_string() }
         else { err::error(err::ERR_GENERAL, Some("Unrecognized tree builder".to_string())); }
+    } else if msa_for_tree == 1 {
+        // Only 3Di
+        if tree_builder == "iqtree" { format!("-m {}+F+I+G -mdef {} -B 1000", rate_matrix_3di_name, matrix_dir) }
+        else if tree_builder == "raxml-ng" { format!("--model PROTGTR{{{}}}+F+I+G --seed 12345 --all --tree pars{{90}},rand{{10}}", rate_matrix_3di) }
+        else if tree_builder == "fasttree" { err::error(err::ERR_GENERAL, Some("Support for FastTree is not yet implemented".to_string())); }
+        // else if tree_builder == "fasttree" { format!("-matrix {} -boot 1000", rate_matrix_3di) }
+        else { err::error(err::ERR_GENERAL, Some("Unrecognized tree builder".to_string())); }
+    } else if msa_for_tree == 2 {
+        // Partition file
+        if tree_builder == "iqtree" { format!("-q {} -mdef {} -B 1000", combined_fasta_partition, matrix_dir) }
+        else if tree_builder == "raxml-ng" { format!("--model {} --seed 12345 --all --tree pars{{90}},rand{{10}}", combined_fasta_partition) }
+        else if tree_builder == "fasttree" { err::error(err::ERR_GENERAL, Some("Partition method is not supported in FastTree".to_string())) }
+        else { err::error(err::ERR_GENERAL, Some("Unrecognized tree builder".to_string())); }
+    } else {
+        err::error(err::ERR_GENERAL, Some("Invalid value for msa_for_tree".to_string()));
     };
 
     // Build tree
