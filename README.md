@@ -230,6 +230,9 @@ Example command:
 unicore tree db/proteome_db -t iqtree --msa-for-tree 1 --rate-matrix-3di rate_matrices/matrices.nex --rate-matrix-3di-name GH_LLM_3DI result tree
 ```
 
+If you are using `GH_AF_3DI` or `GH_LLM_3Di` matrix, please cite:
+> Garg, Sriram G., and Georg KA Hochberg. "A general substitution matrix for structural phylogenetics." Molecular Biology and Evolution 42.6 (2025): msaf124. [doi.org/10.1093/molbev/msaf124](https://academic.oup.com/mbe/article/42/6/msaf124/8157654)
+
 ## Phylogenetic inference with partition model
 After running the `tree` module, you can modify the RAxML-style partition file named `combined.fasta.partitions` to run the phylogenetic inference with partition model.
 
