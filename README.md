@@ -18,6 +18,7 @@ Accepted manuscript is now published in _Genome Biology and Evolution_. Please c
   - [Input](#input)
   - [easy-core workflow](#easy-core-workflow)
   - [Modules](#modules)
+  - [Phylogenetic inference with 3Di MSA](#phylogenetic-inference-with-3di-msa)
   - [Phylogenetic inference with partition model](#phylogenetic-inference-with-partition-model)
 - [Build from Source](#build-from-source)
   - [Minimum requirements](#minimum-requirements)
